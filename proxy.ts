@@ -26,7 +26,7 @@ export async function proxy(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = req.nextUrl.pathname;
-  console.log('user', user);
+
   if (pathname.startsWith('/app') && !user) {
     return NextResponse.redirect(new URL('/login', req.url));
   }

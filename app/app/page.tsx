@@ -12,7 +12,7 @@ export default async function DashboardPage() {
 
   const entitlement = user ? await getEntitlements(user.id) : null;
   const premium = isPremium(entitlement);
-  console.log('Entitlement:', entitlement);
+
   const { data: creditsData } = await supabase
     .from('boost_credits')
     .select('credits')

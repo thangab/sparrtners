@@ -41,7 +41,7 @@ export default function LoginPage() {
         emailRedirectTo: `${window.location.origin}/api/auth/callback`,
       },
     });
-    console.log('error', error);
+
     if (error) {
       toast({
         title: 'Envoi du lien échoué',
