@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sparrtners MVP
 
-## Getting Started
+MVP Next.js App Router avec Supabase + Stripe.
 
-First, run the development server:
+## Stack
+
+- Next.js App Router + TypeScript
+- TailwindCSS + shadcn/ui
+- Supabase (Auth + Postgres + RLS)
+- Stripe (Checkout + Webhooks)
+
+## Setup local
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Variables d'environnement
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copie `.env.example` vers `.env.local` et configure :
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Supabase URL + ANON KEY + SERVICE ROLE
+- Stripe Secret Key + Webhook Secret
+- Price IDs Stripe
 
-## Learn More
+## Supabase CLI
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+supabase init
+supabase link --project-ref <your-project-ref>
+supabase db push
+supabase start # optionnel
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Stripe
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Crée les Price IDs pour `premium_monthly`, `premium_yearly`, `premium_lifetime`, `boost_pack_5`.
+- Configure le webhook Stripe vers `/api/stripe/webhook`.
+- En local: stripe listen --forward-to localhost:3000/api/stripe/webhook
 
-## Deploy on Vercel
+## Routes principales
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `/` landing
+- `/login`
+- `/app` dashboard
+- `/app/sessions/new`
+- `/find-sessions`
+- `/sessions/[id]`
+- `/app/me`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Auth Supabase
+
+- OAuth Google + email/password
+- Callback: `/api/auth/callback`
+- Logout: `/api/auth/logout`
+
+# Sparrtners MVP
+
+MVP Next.js App Router avec Supabase + Stripe.
+
+## Stack
+
+- Next.js App Router + TypeScript
+- TailwindCSS + shadcn/ui
+- Supabase (Auth + Postgres + RLS)
+- Stripe (Checkout + Webhooks)
+
+## Setup local
+
+```bash
+npm install
+npm run dev
+```
+
+## Variables d'environnement
+
+Copie `.env.example` vers `.env.local` et configure :
+
+- Supabase URL + ANON KEY + SERVICE ROLE
+- Stripe Secret Key + Webhook Secret
+- Price IDs Stripe
+
+## Supabase CLI
+
+```bash
+supabase init
+supabase link --project-ref <your-project-ref>
+supabase db push
+supabase start # optionnel
+```
+
+## Stripe
+
+- Crée les Price IDs pour `premium_monthly`, `premium_yearly`, `premium_lifetime`, `boost_pack_5`.
+- Configure le webhook Stripe vers `/api/stripe/webhook`.
+- En local: stripe listen --forward-to localhost:3000/api/stripe/webhook
+
+## Routes principales
+
+- `/` landing
+- `/login`
+- `/app` dashboard
+- `/app/sessions/new`
+- `/find-sessions`
+- `/sessions/[id]`
+- `/app/me`
+
+## Auth Supabase
+
+- OAuth Google + email/password
+- Callback: `/api/auth/callback`
+- Logout: `/api/auth/logout`
