@@ -11,7 +11,9 @@ export default async function SessionsPage() {
   const supabase = await createSupabaseServerClientReadOnly();
   const { data: sessions, error } = await supabase
     .from('session_listings')
-    .select('id, title, starts_at, place_name, city, is_boosted, disciplines')
+    .select(
+      'id, title, starts_at, place_name, city, is_boosted, disciplines, host_id, host_display_name, host_email',
+    )
     .order('is_boosted', { ascending: false })
     .order('starts_at', { ascending: true });
   const safeSessions = (sessions ?? []).filter((session) => !!session?.id);
@@ -156,8 +158,16 @@ export default async function SessionsPage() {
             </CardContent>
           </Card>
         ) : (
-          safeSessions.map((session) => (
-            <Card key={session.id} className="border-slate-200/70 bg-white/90">
+          safeSessions.map((session) => {
+            const hostLabel =
+              session.host_display_name ||
+              session.host_email ||
+              (session.host_id
+                ? `Combattant ${session.host_id.slice(0, 6).toUpperCase()}`
+                : 'Combattant');
+
+            return (
+              <Card key={session.id} className="border-slate-200/70 bg-white/90">
               <CardHeader className="space-y-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-xl">{session.title}</CardTitle>
@@ -191,12 +201,14 @@ export default async function SessionsPage() {
                 <div>
                   {session.place_name} {session.city ? `· ${session.city}` : ''}
                 </div>
+                <div>Posté par {hostLabel}</div>
                 <Button variant="outline" size="sm" asChild className="w-fit">
                   <Link href={`/sessions/${session.id}`}>Voir détail</Link>
                 </Button>
               </CardContent>
             </Card>
-          ))
+            );
+          })
         )}
       </section>
     </div>

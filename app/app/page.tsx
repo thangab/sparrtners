@@ -10,6 +10,14 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const now = new Date();
+  const monthStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+  );
+  const nextMonthStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
+  );
+
   const entitlement = user ? await getEntitlements(user.id) : null;
   const premium = isPremium(entitlement);
 
@@ -18,6 +26,18 @@ export default async function DashboardPage() {
     .select('credits')
     .eq('user_id', user?.id ?? '')
     .maybeSingle();
+
+  const { count: monthlySessionCount } =
+    !premium && user
+      ? await supabase
+          .from('sessions')
+          .select('id', { count: 'exact', head: true })
+          .eq('host_id', user.id)
+          .gte('created_at', monthStart.toISOString())
+          .lt('created_at', nextMonthStart.toISOString())
+      : { count: null };
+
+  const remainingSessions = Math.max(0, 4 - (monthlySessionCount ?? 0));
 
   return (
     <div className="space-y-6">
@@ -49,6 +69,16 @@ export default async function DashboardPage() {
                 </span>
               ) : null}
             </div>
+            {!premium ? (
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <p>
+                  Sessions restantes ce mois-ci:{' '}
+                  <span className="font-semibold text-foreground">
+                    {remainingSessions} / 4
+                  </span>
+                </p>
+              </div>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <CheckoutButton sku="premium_monthly" label="PRO mensuel" />
               <CheckoutButton
