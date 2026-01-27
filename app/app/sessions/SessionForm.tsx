@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectItem } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import { PlaceAutocomplete, PlaceSuggestion } from '@/components/app/place-autocomplete';
 
 type Option = { id: number; name: string };
 
@@ -26,6 +27,12 @@ type SessionDefaults = {
 };
 
 type SessionFormMode = 'create' | 'edit';
+type PlaceDetails = {
+  id: number;
+  name: string;
+  address?: string | null;
+  city?: string | null;
+};
 
 function toLocalDateTimeInput(value?: string) {
   if (!value) return '';
@@ -42,16 +49,16 @@ export function SessionForm({
   disciplines,
   skillLevels,
   trainingTypes,
-  places,
   defaultValues,
+  defaultPlace,
 }: {
   mode: SessionFormMode;
   sessionId?: string;
   disciplines: Option[];
   skillLevels: Option[];
   trainingTypes: Option[];
-  places: Option[];
   defaultValues?: SessionDefaults;
+  defaultPlace?: PlaceDetails | null;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -67,6 +74,51 @@ export function SessionForm({
         }))
       : [{ disciplineId: '', skillLevelId: '' }],
   );
+  const [selectedPlace, setSelectedPlace] = React.useState<PlaceDetails | null>(
+    defaultPlace ?? null,
+  );
+  const [placeLoading, setPlaceLoading] = React.useState(false);
+
+  const handlePlaceSelect = async (place: PlaceSuggestion) => {
+    if (!place.details?.mapbox_id || !place.details?.session_token) {
+      toast({
+        title: 'Lieu introuvable',
+        description: 'Merci de sélectionner une suggestion valide.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setPlaceLoading(true);
+    try {
+      const response = await fetch('/api/places/ensure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          place: {
+            mapbox_id: place.details.mapbox_id,
+            session_token: place.details.session_token,
+          },
+        }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json()) as { error?: string };
+        throw new Error(payload.error ?? 'Lieu introuvable');
+      }
+      const payload = (await response.json()) as { place: PlaceDetails };
+      setSelectedPlace(payload.place);
+    } catch (error) {
+      toast({
+        title: 'Lieu introuvable',
+        description:
+          error instanceof Error ? error.message : 'Merci de réessayer.',
+        variant: 'destructive',
+      });
+      setSelectedPlace(null);
+    } finally {
+      setPlaceLoading(false);
+    }
+  };
 
   const addEntry = () => {
     setEntries((current) => [
@@ -108,6 +160,16 @@ export function SessionForm({
       return;
     }
 
+    if (!selectedPlace?.id) {
+      toast({
+        title: 'Lieu requis',
+        description: 'Choisis un lieu via la recherche.',
+        variant: 'destructive',
+      });
+      setLoading(false);
+      return;
+    }
+
     const primaryEntry = selectedEntries[0];
 
     if (mode === 'create') {
@@ -130,7 +192,7 @@ export function SessionForm({
         discipline_id: Number(primaryEntry.disciplineId),
         skill_level_id: Number(primaryEntry.skillLevelId),
         training_type_id: Number(formData.get('training_type_id')),
-        place_id: Number(formData.get('place_id')),
+        place_id: selectedPlace.id,
         starts_at: new Date(startsAtValue).toISOString(),
         ends_at: new Date(endsAtValue).toISOString(),
         capacity: Number(formData.get('capacity')),
@@ -219,7 +281,7 @@ export function SessionForm({
       discipline_id: Number(primaryEntry.disciplineId),
       skill_level_id: Number(primaryEntry.skillLevelId),
       training_type_id: Number(formData.get('training_type_id')),
-      place_id: Number(formData.get('place_id')),
+      place_id: selectedPlace.id,
       starts_at: new Date(startsAtValue).toISOString(),
       ends_at: new Date(endsAtValue).toISOString(),
       capacity: Number(formData.get('capacity')),
@@ -331,22 +393,34 @@ export function SessionForm({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="place_id">Lieu</Label>
-          <Select
-            id="place_id"
-            name="place_id"
+          <PlaceAutocomplete
+            label="Lieu"
+            placeholder="Recherche un lieu (ex: Gymnase, club, adresse)"
             required
-            defaultValue={defaultValues?.place_id ?? ''}
-          >
-            <SelectItem value="" disabled>
-              Choisir
-            </SelectItem>
-            {places.map((item) => (
-              <SelectItem key={item.id} value={item.id}>
-                {item.name}
-              </SelectItem>
-            ))}
-          </Select>
+            defaultValue={
+              defaultPlace
+                ? `${defaultPlace.name}${
+                    defaultPlace.city ? ` · ${defaultPlace.city}` : ''
+                  }`
+                : ''
+            }
+            onSelect={handlePlaceSelect}
+            onQueryChange={() => {
+              if (selectedPlace) {
+                setSelectedPlace(null);
+              }
+            }}
+          />
+          <input type="hidden" name="place_id" value={selectedPlace?.id ?? ''} />
+          {selectedPlace ? (
+            <div className="text-xs text-muted-foreground">
+              {selectedPlace.address ?? selectedPlace.city ?? 'Lieu sélectionné'}
+            </div>
+          ) : placeLoading ? (
+            <div className="text-xs text-muted-foreground">
+              Vérification du lieu...
+            </div>
+          ) : null}
         </div>
         <div className="space-y-2">
           <Label htmlFor="starts_at">Début</Label>

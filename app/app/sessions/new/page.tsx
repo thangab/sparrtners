@@ -6,7 +6,6 @@ export default async function NewSessionPage() {
   const { data: disciplines } = await supabase.from("disciplines").select("id, name").order("name");
   const { data: skillLevels } = await supabase.from("skill_levels").select("id, name").order("id");
   const { data: trainingTypes } = await supabase.from("training_types").select("id, name").order("name");
-  const { data: places } = await supabase.from("places").select("id, name").order("name");
 
   return (
     <div className="space-y-4">
@@ -19,7 +18,6 @@ export default async function NewSessionPage() {
         disciplines={disciplines ?? []}
         skillLevels={skillLevels ?? []}
         trainingTypes={trainingTypes ?? []}
-        places={places ?? []}
       />
     </div>
   );

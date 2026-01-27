@@ -62,10 +62,14 @@ export default async function EditSessionPage({
     .from("training_types")
     .select("id, name")
     .order("name");
-  const { data: places } = await supabase
-    .from("places")
-    .select("id, name")
-    .order("name");
+  const { data: place } =
+    session.place_id
+      ? await supabase
+          .from("places")
+          .select("id, name, address, city")
+          .eq("id", session.place_id)
+          .maybeSingle()
+      : { data: null };
 
   return (
     <div className="space-y-4">
@@ -84,7 +88,7 @@ export default async function EditSessionPage({
         disciplines={disciplines ?? []}
         skillLevels={skillLevels ?? []}
         trainingTypes={trainingTypes ?? []}
-        places={places ?? []}
+        defaultPlace={place ?? undefined}
         defaultValues={{
           title: session.title,
           description: session.description,
