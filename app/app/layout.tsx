@@ -1,6 +1,6 @@
-import { createSupabaseServerClientReadOnly } from "@/lib/supabase/server";
-import { Sidebar } from "@/components/app/sidebar";
-import { LogoutButton } from "@/components/app/logout-button";
+import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
+import { Sidebar } from '@/components/app/sidebar';
+import { LogoutButton } from '@/components/app/logout-button';
 
 export default async function AppLayout({
   children,
@@ -15,7 +15,7 @@ export default async function AppLayout({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="flex min-h-screen w-full">
-        <Sidebar />
+        <Sidebar userId={user?.id} />
         <div className="flex flex-1 flex-col">
           <header className="flex items-center justify-between border-b border-border bg-background px-6 py-4">
             <div>
@@ -23,13 +23,13 @@ export default async function AppLayout({
                 Espace membre
               </div>
               <div className="text-lg font-semibold">
-                {user?.email ?? "Sportif"}
+                {user?.email ?? 'Sportif'}
               </div>
             </div>
             <LogoutButton />
           </header>
           <main className="flex-1 px-6 py-8">
-            <div className="rounded-[24px] border border-border bg-card p-6 shadow-sm">
+            <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
               {children}
             </div>
           </main>

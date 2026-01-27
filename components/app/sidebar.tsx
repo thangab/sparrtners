@@ -1,14 +1,14 @@
 import Link from 'next/link';
+export function Sidebar({ userId }: { userId?: string | null }) {
+  const navItems = [
+    { href: '/app', label: 'Dashboard' },
+    { href: '/find-sessions', label: 'Sessions publiques' },
+    { href: '/app/sessions/new', label: 'Créer une session' },
+    { href: '/app/sessions/requests', label: 'Mes demandes' },
+    { href: '/app/me', label: 'Mon profil' },
+    ...(userId ? [{ href: `/profile/${userId}`, label: 'Mon profil public' }] : []),
+  ];
 
-const navItems = [
-  { href: '/app', label: 'Dashboard' },
-  { href: '/find-sessions', label: 'Sessions publiques' },
-  { href: '/app/sessions/new', label: 'Créer une session' },
-  { href: '/app/sessions/requests', label: 'Mes demandes' },
-  { href: '/app/me', label: 'Mon profil' },
-];
-
-export function Sidebar() {
   return (
     <aside className="flex w-64 flex-col gap-6 border-r border-border bg-muted/30 p-6">
       <div>

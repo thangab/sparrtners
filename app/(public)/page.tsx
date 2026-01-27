@@ -1,29 +1,5 @@
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-
-const stats = [
-  { label: 'Clubs & gyms', value: '80+' },
-  { label: 'Sessions à venir', value: '260+' },
-  { label: 'Sparring verified', value: '140' },
-];
-
-const features = [
-  {
-    title: 'Annonces comme Blablacar',
-    text: 'Publie une annonce pour un sparring et précise le lieu, le niveau et le format.',
-  },
-  {
-    title: 'Matching par profil',
-    text: "Filtre par niveau, poids, taille, type d'entraînement et score de confiance.",
-  },
-  {
-    title: 'Communauté fiable',
-    text: "Notes, profils vérifiés et historique de sessions pour t'entraîner sereinement.",
-  },
-];
 
 export default function HomePage() {
   return (

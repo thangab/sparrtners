@@ -41,6 +41,11 @@ export default async function FighterProfilePage({
   }
 
   const supabase = await createSupabaseServerClientReadOnly();
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', id)
+    .maybeSingle();
   const { data: sportProfiles } = (await supabase
     .from('user_sport_profiles')
     .select(
@@ -51,7 +56,7 @@ export default async function FighterProfilePage({
     data: SportProfileRow[] | null;
   };
 
-  const displayName = `Combattant ${id.slice(0, 6).toUpperCase()}`;
+  const displayName = profile?.display_name ?? 'Nom non renseigné';
   const primaryProfile = sportProfiles?.[0];
   const primaryDisciplineName = extractName(primaryProfile?.discipline ?? null);
   const primarySkillName = extractName(primaryProfile?.skill_level ?? null);
@@ -62,14 +67,10 @@ export default async function FighterProfilePage({
         <Link className="transition hover:text-slate-900" href="/find-sessions">
           ← Retour aux sessions
         </Link>
-        <Badge variant="secondary">Profil public</Badge>
       </div>
 
-      <section className="grid gap-6 rounded-[32px] border border-slate-200/70 bg-white/90 p-8 shadow-sm md:grid-cols-[1.2fr_0.8fr]">
+      <section className="grid gap-6 rounded-4xl border border-slate-200/70 bg-white/90 p-8 shadow-sm md:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-4">
-          <Badge className="w-fit bg-slate-900 text-white hover:bg-slate-800">
-            Sparring ready
-          </Badge>
           <h1 className="text-3xl font-semibold text-slate-900">
             {displayName}
           </h1>
@@ -78,12 +79,6 @@ export default async function FighterProfilePage({
             d&apos;entraînement.
           </p>
           <div className="flex flex-wrap gap-3">
-            <Button
-              asChild
-              className="bg-emerald-600 text-white hover:bg-emerald-500"
-            >
-              <Link href="/login">Contacter</Link>
-            </Button>
             <Button variant="outline" asChild>
               <Link href="/find-sessions">Voir les annonces</Link>
             </Button>

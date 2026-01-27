@@ -151,7 +151,6 @@ export default async function SessionDetailPage({
         <Link className="transition hover:text-slate-900" href="/find-sessions">
           ← Retour aux sessions
         </Link>
-        <Badge variant="secondary">Session publique</Badge>
       </div>
 
       <Card className="border-slate-200/70 bg-white/90">
