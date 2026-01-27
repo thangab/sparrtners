@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import * as React from 'react';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
+import Link from 'next/link';
 
 type RequestItem = {
   id: string;
@@ -12,91 +13,160 @@ type RequestItem = {
   status: string;
   created_at: string;
   session_title: string | null;
+  conversation_id: string | null;
 };
 
-export function RequestsClient({ initialRequests }: { initialRequests: RequestItem[] }) {
+export function RequestsClient({
+  initialRequests,
+}: {
+  initialRequests: RequestItem[];
+}) {
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
   const { toast } = useToast();
-  const [requests, setRequests] = React.useState<RequestItem[]>(initialRequests);
+  const [requests, setRequests] =
+    React.useState<RequestItem[]>(initialRequests);
   const [loadingId, setLoadingId] = React.useState<string | null>(null);
 
-  const handleDecision = async (request: RequestItem, decision: "accepted" | "declined") => {
+  const handleDecision = async (
+    request: RequestItem,
+    decision: 'accepted' | 'declined',
+  ) => {
     setLoadingId(request.id);
+    const { data: userData } = await supabase.auth.getUser();
     const { data: updatedRequest, error: updateError } = await supabase
-      .from("session_requests")
+      .from('session_requests')
       .update({ status: decision })
-      .eq("id", request.id)
-      .select("id, status")
+      .eq('id', request.id)
+      .select('id, status')
       .maybeSingle();
 
     if (updateError || !updatedRequest) {
       toast({
-        title: "Erreur",
-        description: updateError?.message ?? "Mise à jour refusée par les règles RLS.",
-        variant: "destructive",
+        title: 'Erreur',
+        description:
+          updateError?.message ?? 'Mise à jour refusée par les règles RLS.',
+        variant: 'destructive',
       });
       setLoadingId(null);
       return;
     }
 
-    if (decision === "accepted") {
-      const { error: participantError } = await supabase.from("session_participants").insert({
-        session_id: request.session_id,
-        user_id: request.user_id,
-        role: "participant",
-      });
+    if (decision === 'accepted') {
+      const { error: participantError } = await supabase
+        .from('session_participants')
+        .insert({
+          session_id: request.session_id,
+          user_id: request.user_id,
+          role: 'participant',
+        });
 
       if (participantError) {
         toast({
-          title: "Erreur",
+          title: 'Erreur',
           description: participantError.message,
-          variant: "destructive",
+          variant: 'destructive',
         });
+      }
+
+      const hostId = userData?.user?.id;
+      if (hostId) {
+        const [userA, userB] = [hostId, request.user_id].sort();
+        const { data: conversation, error: convoError } = await supabase
+          .from('conversations')
+          .upsert(
+            {
+              session_id: request.session_id,
+              user_a: userA,
+              user_b: userB,
+            },
+            { onConflict: 'session_id,user_a,user_b' },
+          )
+          .select('id')
+          .maybeSingle();
+        if (convoError) {
+          toast({
+            title: 'Erreur',
+            description: convoError.message,
+            variant: 'destructive',
+          });
+        } else if (conversation?.id) {
+          setRequests((current) =>
+            current.map((item) =>
+              item.id === request.id
+                ? { ...item, conversation_id: conversation.id }
+                : item,
+            ),
+          );
+        }
       }
     }
 
     setRequests((current) =>
-      current.map((item) => (item.id === request.id ? { ...item, status: decision } : item))
+      current.map((item) =>
+        item.id === request.id ? { ...item, status: decision } : item,
+      ),
     );
-    toast({ title: "Mise à jour", description: `Demande ${decision === "accepted" ? "acceptée" : "refusée"}.` });
+    toast({
+      title: 'Mise à jour',
+      description: `Demande ${decision === 'accepted' ? 'acceptée' : 'refusée'}.`,
+    });
     setLoadingId(null);
   };
 
   return (
     <div className="space-y-4">
       {requests.length === 0 ? (
-        <div className="text-sm text-muted-foreground">Aucune demande en attente.</div>
+        <div className="text-sm text-muted-foreground">
+          Aucune demande en attente.
+        </div>
       ) : (
         requests.map((request) => (
           <div
             key={request.id}
-            className="flex flex-col gap-3 rounded-[var(--radius)] border border-border bg-white p-4"
+            className="flex flex-col gap-3 rounded-(--radius) border border-border bg-white p-4"
           >
             <div>
               <div className="text-sm text-muted-foreground">Session</div>
-              <div className="font-medium">{request.session_title ?? "Session"}</div>
+              <div className="font-medium">
+                {request.session_title ?? 'Session'}
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span>Statut: {request.status}</span>
               <span>•</span>
-              <span>{new Date(request.created_at).toLocaleString("fr-FR")}</span>
+              <span>
+                {new Date(request.created_at).toLocaleString('fr-FR')}
+              </span>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button
                 size="sm"
-                onClick={() => handleDecision(request, "accepted")}
-                disabled={loadingId === request.id || request.status !== "pending"}
+                onClick={() => handleDecision(request, 'accepted')}
+                disabled={
+                  loadingId === request.id || request.status !== 'pending'
+                }
               >
                 Accepter
               </Button>
               <Button
                 size="sm"
                 variant="secondary"
-                onClick={() => handleDecision(request, "declined")}
-                disabled={loadingId === request.id || request.status !== "pending"}
+                onClick={() => handleDecision(request, 'declined')}
+                disabled={
+                  loadingId === request.id || request.status !== 'pending'
+                }
               >
                 Refuser
               </Button>
+              {request.status === 'accepted' ? (
+                request.conversation_id ? (
+                  <Button size="sm" variant="outline" asChild>
+                    <Link href={`/app/chat/${request.conversation_id}`}>
+                      Ouvrir le chat
+                    </Link>
+                  </Button>
+                ) : null
+              ) : null}
             </div>
           </div>
         ))

@@ -24,14 +24,40 @@ export default async function RequestsPage() {
     .eq('sessions.host_id', user?.id ?? '')
     .order('created_at', { ascending: false });
 
-  const mappedRequests = (requests ?? []).map((item) => ({
-    id: item.id,
-    session_id: item.session_id,
-    user_id: item.user_id,
-    status: item.status,
-    created_at: item.created_at,
-    session_title: item.sessions?.[0]?.title ?? null,
-  }));
+  const requestItems = requests ?? [];
+  const sessionIds = Array.from(
+    new Set(requestItems.map((item) => item.session_id)),
+  );
+  const hostId = user?.id ?? '';
+  const { data: conversations } =
+    sessionIds.length > 0 && hostId
+      ? await supabase
+          .from('conversations')
+          .select('id, session_id, user_a, user_b')
+          .in('session_id', sessionIds)
+          .or(`user_a.eq.${hostId},user_b.eq.${hostId}`)
+      : { data: [] };
+
+  const conversationMap = new Map<string, string>();
+  (conversations ?? []).forEach((conversation) => {
+    const [userA, userB] = [conversation.user_a, conversation.user_b].sort();
+    const key = `${conversation.session_id}:${userA}:${userB}`;
+    conversationMap.set(key, conversation.id);
+  });
+
+  const mappedRequests = requestItems.map((item) => {
+    const [userA, userB] = [hostId, item.user_id].sort();
+    const key = `${item.session_id}:${userA}:${userB}`;
+    return {
+      id: item.id,
+      session_id: item.session_id,
+      user_id: item.user_id,
+      status: item.status,
+      created_at: item.created_at,
+      session_title: item.sessions?.[0]?.title ?? null,
+      conversation_id: conversationMap.get(key) ?? null,
+    };
+  });
 
   return (
     <div className="space-y-6">

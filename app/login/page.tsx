@@ -60,7 +60,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100">
+    <main className="min-h-screen bg-linear-to-b from-white via-slate-50 to-slate-100">
       <div className="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-16">
         <div>
           <h1 className="text-3xl font-semibold">Connexion Sparrtners</h1>

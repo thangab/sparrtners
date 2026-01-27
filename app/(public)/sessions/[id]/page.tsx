@@ -125,6 +125,26 @@ export default async function SessionDetailPage({
         .filter(Boolean)
     : [];
 
+  const { data: requestStatus } = user?.id
+    ? await supabase
+        .from('session_requests')
+        .select('status')
+        .eq('session_id', session.id)
+        .eq('user_id', user.id)
+        .maybeSingle()
+    : { data: null };
+
+  const { data: conversation } = user?.id
+    ? await supabase
+        .from('conversations')
+        .select('id')
+        .eq('session_id', session.id)
+        .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
+        .maybeSingle()
+    : { data: null };
+
+  const canChat = requestStatus?.status === 'accepted' && conversation?.id;
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 pb-20 pt-6">
       <div className="flex items-center justify-between text-sm text-slate-500">
@@ -172,6 +192,14 @@ export default async function SessionDetailPage({
         ) : (
           <RequestJoinButton sessionId={session.id} />
         )}
+        {canChat ? (
+          <Button
+            asChild
+            className="bg-slate-900 text-white hover:bg-slate-800"
+          >
+            <Link href={`/app/chat/${conversation?.id}`}>Ouvrir le chat</Link>
+          </Button>
+        ) : null}
       </div>
     </div>
   );
