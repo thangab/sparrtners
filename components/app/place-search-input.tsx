@@ -5,6 +5,7 @@ import {
   PlaceAutocomplete,
   PlaceSuggestion,
 } from '@/components/app/place-autocomplete';
+import { Button } from '@/components/ui/button';
 
 type PlaceSearchInputProps = {
   label?: string;
@@ -35,9 +36,42 @@ export function PlaceSearchInput({
     lng: number;
   } | null>(defaultCoords);
   const [loading, setLoading] = React.useState(false);
+  const [locating, setLocating] = React.useState(false);
+  const [geoError, setGeoError] = React.useState<string | null>(null);
   const shouldShowSelection = showSelection ?? variant === 'default';
   const isCompact = variant === 'compact';
   const [labelValue, setLabelValue] = React.useState(defaultLabel ?? '');
+
+  const handleLocate = () => {
+    setGeoError(null);
+    setSelected(null);
+
+    if (!navigator.geolocation) {
+      setGeoError("La géolocalisation n'est pas disponible.");
+      return;
+    }
+
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCoords({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        setLabelValue('Ma position');
+        setLocating(false);
+      },
+      () => {
+        setGeoError("Impossible d'obtenir votre position.");
+        setLocating(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000,
+      },
+    );
+  };
 
   return (
     <div
@@ -50,11 +84,25 @@ export function PlaceSearchInput({
         labelClassName={isCompact ? 'sr-only' : undefined}
         inputClassName={inputClassName}
         defaultValue={defaultLabel}
+        value={labelValue}
+        trailingElement={
+          <Button
+            type="button"
+            variant="outline"
+            size="md"
+            onClick={handleLocate}
+            disabled={locating}
+          >
+            {locating ? 'Localisation...' : 'Me localiser'}
+          </Button>
+        }
         onQueryChange={(value) => {
           setCoords(null);
           setLabelValue(value);
+          setGeoError(null);
         }}
         onSelect={async (place) => {
+          setGeoError(null);
           setLabelValue(
             place.structured_formatting?.main_text ?? place.description,
           );
@@ -94,6 +142,9 @@ export function PlaceSearchInput({
       <input type="hidden" name={nameLabel} value={labelValue} />
       <input type="hidden" name="place_lat" value={coords?.lat ?? ''} />
       <input type="hidden" name="place_lng" value={coords?.lng ?? ''} />
+      {geoError ? (
+        <div className="text-xs text-rose-500">{geoError}</div>
+      ) : null}
       {selected && shouldShowSelection ? (
         <div className="text-xs text-slate-500">
           {loading

@@ -27,12 +27,14 @@ type PlaceAutocompleteProps = {
   placeholder?: string;
   required?: boolean;
   defaultValue?: string;
+  value?: string;
   onSelect: (place: PlaceSuggestion) => void;
   onQueryChange?: (value: string) => void;
   containerClassName?: string;
   labelClassName?: string;
   inputClassName?: string;
   dropdownClassName?: string;
+  trailingElement?: React.ReactNode;
 };
 
 export function PlaceAutocomplete({
@@ -40,12 +42,14 @@ export function PlaceAutocomplete({
   placeholder,
   required,
   defaultValue,
+  value,
   onSelect,
   onQueryChange,
   containerClassName,
   labelClassName,
   inputClassName,
   dropdownClassName,
+  trailingElement,
 }: PlaceAutocompleteProps) {
   const [query, setQuery] = React.useState(defaultValue ?? '');
   const [suggestions, setSuggestions] = React.useState<PlaceSuggestion[]>([]);
@@ -56,6 +60,12 @@ export function PlaceAutocomplete({
   const [hasInteracted, setHasInteracted] = React.useState(false);
   const debounceRef = React.useRef<number | null>(null);
   const abortRef = React.useRef<AbortController | null>(null);
+
+  React.useEffect(() => {
+    if (typeof value !== 'string') return;
+    if (value === query) return;
+    setQuery(value);
+  }, [value, query]);
 
   React.useEffect(() => {
     if (!hasInteracted) return;
@@ -131,65 +141,73 @@ export function PlaceAutocomplete({
   return (
     <div className={`space-y-2 ${containerClassName ?? ''}`.trim()}>
       <Label className={labelClassName}>{label}</Label>
-      <div className="relative">
-        <Input
-          placeholder={placeholder}
-          value={query}
-          onFocus={() => {
-            if (suggestions.length > 0) setOpen(true);
-            setHasInteracted(true);
-          }}
-          onChange={(event) => {
-            const value = event.target.value;
-            setQuery(value);
-            onQueryChange?.(value);
-            setOpen(true);
-            setHasInteracted(true);
-          }}
-          required={required}
-          className={inputClassName}
-        />
-        {open && suggestions.length > 0 ? (
-          <div
-            className={`absolute z-20 mt-2 w-full rounded-2xl border border-slate-200 bg-white p-2 text-sm shadow-lg ${dropdownClassName ?? ''}`.trim()}
-          >
-            {suggestions.map((item) => {
-              const mainText =
-                item.structured_formatting?.main_text ?? item.description;
-              const secondaryText =
-                item.structured_formatting?.secondary_text ?? '';
+      <div className="flex items-start gap-2">
+        <div className="relative flex-1">
+          <Input
+            placeholder={placeholder}
+            value={value ?? query}
+            onFocus={() => {
+              if (suggestions.length > 0) setOpen(true);
+              setHasInteracted(true);
+            }}
+            onChange={(event) => {
+              const value = event.target.value;
+              setQuery(value);
+              onQueryChange?.(value);
+              setOpen(true);
+              setHasInteracted(true);
+            }}
+            required={required}
+            className={inputClassName}
+          />
+          {open && suggestions.length > 0 ? (
+            <div
+              className={`absolute z-20 mt-2 w-full rounded-2xl border border-slate-200 bg-white p-2 text-sm shadow-lg ${dropdownClassName ?? ''}`.trim()}
+            >
+              {suggestions.map((item) => {
+                const mainText =
+                  item.structured_formatting?.main_text ?? item.description;
+                const secondaryText =
+                  item.structured_formatting?.secondary_text ?? '';
 
-              return (
-                <button
-                  key={item.place_id}
-                  type="button"
-                  className="flex w-full flex-col gap-1 rounded-xl px-3 py-2 text-left text-slate-700 transition hover:bg-slate-100"
-                  onClick={() => {
-                    const label =
-                      item.structured_formatting?.main_text ?? item.description;
-                    setQuery(label);
-                    setSuppressNextSearch(true);
-                    setOpen(false);
-                    setSuggestions([]);
-                    abortRef.current?.abort();
-                    onSelect(item);
-                  }}
-                >
-                  <span className="font-medium text-slate-900">{mainText}</span>
-                  {secondaryText ? (
-                    <span className="text-xs text-slate-500">
-                      {secondaryText}
+                return (
+                  <button
+                    key={item.place_id}
+                    type="button"
+                    className="flex w-full flex-col gap-1 rounded-xl px-3 py-2 text-left text-slate-700 transition hover:bg-slate-100"
+                    onClick={() => {
+                      const label =
+                        item.structured_formatting?.main_text ??
+                        item.description;
+                      setQuery(label);
+                      setSuppressNextSearch(true);
+                      setOpen(false);
+                      setSuggestions([]);
+                      abortRef.current?.abort();
+                      onSelect(item);
+                    }}
+                  >
+                    <span className="font-medium text-slate-900">
+                      {mainText}
                     </span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-        {loading ? (
-          <div className="absolute right-3 top-3 text-xs text-slate-400">
-            Chargement...
-          </div>
+                    {secondaryText ? (
+                      <span className="text-xs text-slate-500">
+                        {secondaryText}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          {loading ? (
+            <div className="absolute right-3 top-3 text-xs text-slate-400">
+              Chargement...
+            </div>
+          ) : null}
+        </div>
+        {trailingElement ? (
+          <div className="pt-0.5">{trailingElement}</div>
         ) : null}
       </div>
     </div>
