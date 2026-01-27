@@ -25,23 +25,33 @@ export function ChatClient({
   const [messages, setMessages] = React.useState<Message[]>(initialMessages);
   const [text, setText] = React.useState('');
   const endRef = React.useRef<HTMLDivElement | null>(null);
+  const channelRef = React.useRef<ReturnType<typeof supabase.channel> | null>(
+    null,
+  );
+  const tokenRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages.length]);
 
   React.useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    let active = true;
+    let cancelled = false;
 
     const subscribe = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!active) return;
-      if (data.session?.access_token) {
-        supabase.realtime.setAuth(data.session.access_token);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
 
-      channel = supabase
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      const token = data.session?.access_token ?? null;
+      if (token && token !== tokenRef.current) {
+        supabase.realtime.setAuth(token);
+        tokenRef.current = token;
+      }
+
+      const channel = supabase
         .channel(`messages:${conversationId}`)
         .on(
           'postgres_changes',
@@ -52,7 +62,6 @@ export function ChatClient({
             filter: `conversation_id=eq.${conversationId}`,
           },
           (payload) => {
-            console.log('realtime message', payload);
             const newMessage = payload.new as Message;
             setMessages((current) => {
               if (current.some((message) => message.id === newMessage.id)) {
@@ -62,17 +71,21 @@ export function ChatClient({
             });
           },
         )
-        .subscribe((status) => {
-          console.log('realtime status', status);
-        });
+        .subscribe();
+      channelRef.current = channel;
+      if (cancelled) {
+        supabase.removeChannel(channel);
+        channelRef.current = null;
+      }
     };
 
     void subscribe();
 
     return () => {
-      active = false;
-      if (channel) {
-        supabase.removeChannel(channel);
+      cancelled = true;
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
     };
   }, [conversationId, supabase]);
