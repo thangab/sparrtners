@@ -18,14 +18,18 @@ type RequestItem = {
 
 export function RequestsClient({
   initialRequests,
+  mode,
 }: {
   initialRequests: RequestItem[];
+  mode: 'host' | 'requester';
 }) {
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
   const { toast } = useToast();
   const [requests, setRequests] =
     React.useState<RequestItem[]>(initialRequests);
   const [loadingId, setLoadingId] = React.useState<string | null>(null);
+  const emptyLabel =
+    mode === 'host' ? 'Aucune demande en attente.' : 'Aucune demande envoyée.';
 
   const handleDecision = async (
     request: RequestItem,
@@ -116,9 +120,7 @@ export function RequestsClient({
   return (
     <div className="space-y-4">
       {requests.length === 0 ? (
-        <div className="text-sm text-muted-foreground">
-          Aucune demande en attente.
-        </div>
+        <div className="text-sm text-muted-foreground">{emptyLabel}</div>
       ) : (
         requests.map((request) => (
           <div
@@ -139,25 +141,29 @@ export function RequestsClient({
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                onClick={() => handleDecision(request, 'accepted')}
-                disabled={
-                  loadingId === request.id || request.status !== 'pending'
-                }
-              >
-                Accepter
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => handleDecision(request, 'declined')}
-                disabled={
-                  loadingId === request.id || request.status !== 'pending'
-                }
-              >
-                Refuser
-              </Button>
+              {mode === 'host' ? (
+                <>
+                  <Button
+                    size="sm"
+                    onClick={() => handleDecision(request, 'accepted')}
+                    disabled={
+                      loadingId === request.id || request.status !== 'pending'
+                    }
+                  >
+                    Accepter
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => handleDecision(request, 'declined')}
+                    disabled={
+                      loadingId === request.id || request.status !== 'pending'
+                    }
+                  >
+                    Refuser
+                  </Button>
+                </>
+              ) : null}
               {request.status === 'accepted' ? (
                 request.conversation_id ? (
                   <Button size="sm" variant="outline" asChild>

@@ -16,26 +16,37 @@ export default async function RequestsPage() {
     .eq('host_id', user?.id ?? '')
     .order('starts_at', { ascending: true });
 
-  const { data: requests } = await supabase
+  const { data: incomingRequests } = await supabase
     .from('session_requests')
     .select(
-      'id, session_id, user_id, status, created_at, sessions!inner(title)',
+      'id, session_id, user_id, status, created_at, sessions!inner(title, host_id)',
     )
     .eq('sessions.host_id', user?.id ?? '')
     .order('created_at', { ascending: false });
 
-  const requestItems = requests ?? [];
+  const { data: outgoingRequests } = await supabase
+    .from('session_requests')
+    .select(
+      'id, session_id, user_id, status, created_at, sessions!inner(title, host_id)',
+    )
+    .eq('user_id', user?.id ?? '')
+    .order('created_at', { ascending: false });
+
+  const requestItems = [
+    ...(incomingRequests ?? []),
+    ...(outgoingRequests ?? []),
+  ];
   const sessionIds = Array.from(
     new Set(requestItems.map((item) => item.session_id)),
   );
-  const hostId = user?.id ?? '';
+  const currentUserId = user?.id ?? '';
   const { data: conversations } =
-    sessionIds.length > 0 && hostId
+    sessionIds.length > 0 && currentUserId
       ? await supabase
           .from('conversations')
           .select('id, session_id, user_a, user_b')
           .in('session_id', sessionIds)
-          .or(`user_a.eq.${hostId},user_b.eq.${hostId}`)
+          .or(`user_a.eq.${currentUserId},user_b.eq.${currentUserId}`)
       : { data: [] };
 
   const conversationMap = new Map<string, string>();
@@ -45,17 +56,40 @@ export default async function RequestsPage() {
     conversationMap.set(key, conversation.id);
   });
 
-  const mappedRequests = requestItems.map((item) => {
-    const [userA, userB] = [hostId, item.user_id].sort();
+  const getSession = (item: {
+    sessions?: { title?: string | null; host_id?: string | null }[] | { title?: string | null; host_id?: string | null } | null;
+  }) => (Array.isArray(item.sessions) ? item.sessions[0] : item.sessions);
+
+  const mappedIncomingRequests = (incomingRequests ?? []).map((item) => {
+    const [userA, userB] = [currentUserId, item.user_id].sort();
     const key = `${item.session_id}:${userA}:${userB}`;
+    const session = getSession(item);
     return {
       id: item.id,
       session_id: item.session_id,
       user_id: item.user_id,
       status: item.status,
       created_at: item.created_at,
-      session_title: item.sessions?.[0]?.title ?? null,
+      session_title: session?.title ?? null,
       conversation_id: conversationMap.get(key) ?? null,
+    };
+  });
+
+  const mappedOutgoingRequests = (outgoingRequests ?? []).map((item) => {
+    const session = getSession(item);
+    const hostId = session?.host_id ?? null;
+    const key =
+      hostId && currentUserId
+        ? `${item.session_id}:${[currentUserId, hostId].sort().join(':')}`
+        : null;
+    return {
+      id: item.id,
+      session_id: item.session_id,
+      user_id: item.user_id,
+      status: item.status,
+      created_at: item.created_at,
+      session_title: session?.title ?? null,
+      conversation_id: key ? conversationMap.get(key) ?? null : null,
     };
   });
 
@@ -98,7 +132,18 @@ export default async function RequestsPage() {
             <CardTitle>Demandes de participation</CardTitle>
           </CardHeader>
           <CardContent>
-            <RequestsClient initialRequests={mappedRequests} />
+            <RequestsClient initialRequests={mappedIncomingRequests} mode="host" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Mes demandes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RequestsClient
+              initialRequests={mappedOutgoingRequests}
+              mode="requester"
+            />
           </CardContent>
         </Card>
       </div>
