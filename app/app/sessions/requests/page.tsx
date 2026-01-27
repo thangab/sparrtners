@@ -64,12 +64,18 @@ export default async function RequestsPage() {
     const [userA, userB] = [currentUserId, item.user_id].sort();
     const key = `${item.session_id}:${userA}:${userB}`;
     const session = getSession(item);
+    const createdAtLabel = new Intl.DateTimeFormat('fr-FR', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'Europe/Paris',
+    }).format(new Date(item.created_at));
     return {
       id: item.id,
       session_id: item.session_id,
       user_id: item.user_id,
       status: item.status,
       created_at: item.created_at,
+      created_at_label: createdAtLabel,
       session_title: session?.title ?? null,
       conversation_id: conversationMap.get(key) ?? null,
     };
@@ -82,12 +88,18 @@ export default async function RequestsPage() {
       hostId && currentUserId
         ? `${item.session_id}:${[currentUserId, hostId].sort().join(':')}`
         : null;
+    const createdAtLabel = new Intl.DateTimeFormat('fr-FR', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'Europe/Paris',
+    }).format(new Date(item.created_at));
     return {
       id: item.id,
       session_id: item.session_id,
       user_id: item.user_id,
       status: item.status,
       created_at: item.created_at,
+      created_at_label: createdAtLabel,
       session_title: session?.title ?? null,
       conversation_id: key ? conversationMap.get(key) ?? null : null,
     };

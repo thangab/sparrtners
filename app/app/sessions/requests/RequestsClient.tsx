@@ -12,6 +12,7 @@ type RequestItem = {
   user_id: string;
   status: string;
   created_at: string;
+  created_at_label: string;
   session_title: string | null;
   conversation_id: string | null;
 };
@@ -136,9 +137,7 @@ export function RequestsClient({
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span>Statut: {request.status}</span>
               <span>•</span>
-              <span>
-                {new Date(request.created_at).toLocaleString('fr-FR')}
-              </span>
+              <span>{request.created_at_label}</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {mode === 'host' ? (
