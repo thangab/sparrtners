@@ -1,12 +1,9 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectItem } from '@/components/ui/select';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
-import { PlaceSearchInput } from '@/components/app/place-search-input';
+import { SessionSearchForm } from '@/components/app/session-search-form';
+import { Button } from '@/components/ui/button';
 
 type SearchCoords = { lat: number; lng: number };
 type SessionWithDistance = {
@@ -128,119 +125,11 @@ export default async function SessionsPage({
             </p>
           </div>
         </div>
-        <form className="flex flex-col gap-3 md:flex-row" method="get">
-          <PlaceSearchInput
-            variant="compact"
-            placeholder="Recherche par lieu..."
-            inputClassName="bg-white"
-            defaultLabel={defaultLabel}
-            defaultCoords={defaultCoords}
-          />
-          <Button type="submit" variant="outline">
-            Filtrer
-          </Button>
-        </form>
-        <form
-          className="grid gap-4 rounded-3xl border border-slate-200/70 bg-white p-6 md:grid-cols-3"
-          method="get"
-        >
-          <input type="hidden" name="place_label" value={defaultLabel} />
-          <input type="hidden" name="place_lat" value={placeLatValue} />
-          <input type="hidden" name="place_lng" value={placeLngValue} />
-          <div className="space-y-2">
-            <Label htmlFor="level">Niveau</Label>
-            <Select id="level" name="level" defaultValue="">
-              <SelectItem value="" disabled>
-                Tous niveaux
-              </SelectItem>
-              <SelectItem value="beginner">Débutant</SelectItem>
-              <SelectItem value="intermediate">Intermédiaire</SelectItem>
-              <SelectItem value="advanced">Avancé</SelectItem>
-              <SelectItem value="pro">Pro / Compétition</SelectItem>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="training_type">Type d&apos;entraînement</Label>
-            <Select id="training_type" name="training_type" defaultValue="">
-              <SelectItem value="" disabled>
-                Tous types
-              </SelectItem>
-              <SelectItem value="sparring">Sparring</SelectItem>
-              <SelectItem value="technique">Technique</SelectItem>
-              <SelectItem value="cardio">Cardio</SelectItem>
-              <SelectItem value="grappling">Grappling</SelectItem>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="trust">Score de confiance minimum</Label>
-            <Select id="trust" name="trust" defaultValue="">
-              <SelectItem value="" disabled>
-                Tous scores
-              </SelectItem>
-              <SelectItem value="3">3+</SelectItem>
-              <SelectItem value="4">4+</SelectItem>
-              <SelectItem value="4.5">4.5+</SelectItem>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="weight_min">Poids (kg)</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                id="weight_min"
-                name="weight_min"
-                placeholder="Min"
-                type="number"
-              />
-              <Input
-                id="weight_max"
-                name="weight_max"
-                placeholder="Max"
-                type="number"
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="height_min">Taille (cm)</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                id="height_min"
-                name="height_min"
-                placeholder="Min"
-                type="number"
-              />
-              <Input
-                id="height_max"
-                name="height_max"
-                placeholder="Max"
-                type="number"
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="discipline">Discipline</Label>
-            <Select id="discipline" name="discipline" defaultValue="">
-              <SelectItem value="" disabled>
-                Toutes disciplines
-              </SelectItem>
-              <SelectItem value="boxing">Boxe anglaise</SelectItem>
-              <SelectItem value="muay-thai">Muay thaï</SelectItem>
-              <SelectItem value="kickboxing">Kickboxing</SelectItem>
-              <SelectItem value="mma">MMA</SelectItem>
-              <SelectItem value="grappling">Grappling</SelectItem>
-            </Select>
-          </div>
-          <div className="md:col-span-3 flex flex-wrap items-center gap-3">
-            <Button
-              type="submit"
-              className="bg-slate-900 text-white hover:bg-slate-800"
-            >
-              Appliquer les filtres
-            </Button>
-            <Button type="reset" variant="outline">
-              Réinitialiser
-            </Button>
-          </div>
-        </form>
+        <SessionSearchForm
+          defaultLabel={defaultLabel}
+          defaultCoords={defaultCoords}
+          defaultShowAdvanced={true}
+        />
       </section>
 
       <section className="grid gap-4 grid-cols-1">
@@ -265,13 +154,22 @@ export default async function SessionsPage({
           </Card>
         ) : (
           sortedSessions.map((session) => {
-            const hostLabel =
-              session.host_display_name ||
-              session.host_email ||
-              (session.host_id
-                ? `Combattant ${session.host_id.slice(0, 6).toUpperCase()}`
-                : 'Combattant');
-            const sessionTitle = session.title ?? 'Session';
+            const hostLabel = session.host_display_name || 'Combattant';
+            const disciplineLabel = Array.isArray(session.disciplines)
+              ? (session.disciplines
+                  .map(
+                    (item: {
+                      discipline_name?: string;
+                      skill_level_name?: string;
+                    }) => {
+                      const name = item.discipline_name ?? 'Discipline';
+                      return item.skill_level_name
+                        ? `${name} - ${item.skill_level_name}`
+                        : name;
+                    },
+                  )
+                  .filter(Boolean)[0] ?? 'Session')
+              : 'Session';
 
             return (
               <Card
@@ -280,7 +178,9 @@ export default async function SessionsPage({
               >
                 <CardHeader className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl">{sessionTitle}</CardTitle>
+                    <CardTitle className="text-xl">
+                      Session de {disciplineLabel}
+                    </CardTitle>
                     {session.is_boosted ? (
                       <Badge className="bg-amber-200 text-amber-900 hover:bg-amber-200">
                         Boostée
@@ -292,30 +192,24 @@ export default async function SessionsPage({
                       Distance: {formatDistance(session.distance * 1000)}
                     </div>
                   ) : null}
-                  <div>Par {hostLabel}</div>
+                  <div>
+                    Par{' '}
+                    <Link
+                      target="_blank"
+                      href={`/profile/${session.host_id}`}
+                      className="font-medium text-slate-900 underline"
+                    >
+                      {hostLabel}
+                    </Link>
+                  </div>
                   <div className="text-sm text-slate-600">
-                    {(Array.isArray(session.disciplines)
-                      ? session.disciplines
-                          .map(
-                            (item: {
-                              discipline_name?: string;
-                              skill_level_name?: string;
-                            }) => {
-                              const name = item.discipline_name ?? 'Discipline';
-                              return item.skill_level_name
-                                ? `${name} (${item.skill_level_name})`
-                                : name;
-                            },
-                          )
-                          .filter(Boolean)
-                          .join(' · ')
-                      : '') || 'Disciplines'}{' '}
-                    · {new Date(session.starts_at).toLocaleString('fr-FR')}
+                    Prévu le{' '}
+                    {new Date(session.starts_at).toLocaleString('fr-FR')}
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3 text-sm text-slate-600">
                   <div>
-                    {session.place_name}{' '}
+                    Lieu : {session.place_name}{' '}
                     {session.city ? `· ${session.city}` : ''}
                   </div>
 
