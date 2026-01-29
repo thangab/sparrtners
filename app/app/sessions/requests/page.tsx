@@ -127,7 +127,7 @@ export default async function RequestsPage() {
                   key={session.id}
                   className="flex items-center justify-between"
                 >
-                  <span>{session.title}</span>
+                  <span>{session.title ?? 'Session'}</span>
                   <span>
                     {new Date(session.starts_at).toLocaleDateString('fr-FR')}
                   </span>

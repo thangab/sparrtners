@@ -11,7 +11,7 @@ import { PlaceSearchInput } from '@/components/app/place-search-input';
 type SearchCoords = { lat: number; lng: number };
 type SessionWithDistance = {
   id: string;
-  title: string;
+  title: string | null;
   starts_at: string;
   place_name: string | null;
   city: string | null;
@@ -271,6 +271,7 @@ export default async function SessionsPage({
               (session.host_id
                 ? `Combattant ${session.host_id.slice(0, 6).toUpperCase()}`
                 : 'Combattant');
+            const sessionTitle = session.title ?? 'Session';
 
             return (
               <Card
@@ -279,7 +280,7 @@ export default async function SessionsPage({
               >
                 <CardHeader className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl">{session.title}</CardTitle>
+                    <CardTitle className="text-xl">{sessionTitle}</CardTitle>
                     {session.is_boosted ? (
                       <Badge className="bg-amber-200 text-amber-900 hover:bg-amber-200">
                         Boostée

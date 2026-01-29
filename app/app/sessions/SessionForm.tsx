@@ -9,7 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectItem } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { PlaceAutocomplete, PlaceSuggestion } from '@/components/app/place-autocomplete';
+import { Slider } from '@/components/ui/slider';
+import {
+  PlaceAutocomplete,
+  PlaceSuggestion,
+} from '@/components/app/place-autocomplete';
 
 type Option = { id: number; name: string };
 
@@ -21,8 +25,13 @@ type SessionDefaults = {
   training_type_id?: number | null;
   place_id?: number | null;
   starts_at?: string;
-  ends_at?: string;
   capacity?: number;
+  weight_min?: number | null;
+  weight_max?: number | null;
+  height_min?: number | null;
+  height_max?: number | null;
+  dominant_hand?: string | null;
+  glove_size?: string | null;
   disciplines?: { discipline_id: number; skill_level_id: number | null }[];
 };
 
@@ -78,6 +87,44 @@ export function SessionForm({
     defaultPlace ?? null,
   );
   const [placeLoading, setPlaceLoading] = React.useState(false);
+  const hasWeightDefaults =
+    typeof defaultValues?.weight_min === 'number' ||
+    typeof defaultValues?.weight_max === 'number';
+  const hasHeightDefaults =
+    typeof defaultValues?.height_min === 'number' ||
+    typeof defaultValues?.height_max === 'number';
+  const [weightTouched, setWeightTouched] = React.useState(hasWeightDefaults);
+  const [heightTouched, setHeightTouched] = React.useState(hasHeightDefaults);
+  const [weightRange, setWeightRange] = React.useState<[number, number]>(() => {
+    const minDefault =
+      typeof defaultValues?.weight_min === 'number'
+        ? defaultValues.weight_min
+        : typeof defaultValues?.weight_max === 'number'
+          ? defaultValues.weight_max
+          : 60;
+    const maxDefault =
+      typeof defaultValues?.weight_max === 'number'
+        ? defaultValues.weight_max
+        : typeof defaultValues?.weight_min === 'number'
+          ? defaultValues.weight_min
+          : 90;
+    return [Math.min(minDefault, maxDefault), Math.max(minDefault, maxDefault)];
+  });
+  const [heightRange, setHeightRange] = React.useState<[number, number]>(() => {
+    const minDefault =
+      typeof defaultValues?.height_min === 'number'
+        ? defaultValues.height_min
+        : typeof defaultValues?.height_max === 'number'
+          ? defaultValues.height_max
+          : 165;
+    const maxDefault =
+      typeof defaultValues?.height_max === 'number'
+        ? defaultValues.height_max
+        : typeof defaultValues?.height_min === 'number'
+          ? defaultValues.height_min
+          : 190;
+    return [Math.min(minDefault, maxDefault), Math.max(minDefault, maxDefault)];
+  });
 
   const handlePlaceSelect = async (place: PlaceSuggestion) => {
     if (!place.details?.mapbox_id || !place.details?.session_token) {
@@ -145,7 +192,21 @@ export function SessionForm({
 
     const formData = new FormData(event.currentTarget);
     const startsAtValue = String(formData.get('starts_at'));
-    const endsAtValue = String(formData.get('ends_at'));
+    const descriptionValue = String(formData.get('description') ?? '').trim();
+    const toOptionalInt = (value: FormDataEntryValue | null) => {
+      if (value === null) return null;
+      const trimmed = String(value).trim();
+      if (!trimmed) return null;
+      const parsed = Number.parseInt(trimmed, 10);
+      return Number.isNaN(parsed) ? null : parsed;
+    };
+    const weightMin = toOptionalInt(formData.get('weight_min'));
+    const weightMax = toOptionalInt(formData.get('weight_max'));
+    const heightMin = toOptionalInt(formData.get('height_min'));
+    const heightMax = toOptionalInt(formData.get('height_max'));
+    const dominantHand =
+      String(formData.get('dominant_hand') ?? '').trim() || null;
+    const gloveSize = String(formData.get('glove_size') ?? '').trim() || null;
 
     const selectedEntries = entries.filter(
       (entry) => entry.disciplineId && entry.skillLevelId,
@@ -185,17 +246,24 @@ export function SessionForm({
         return;
       }
 
+      const titleValue = String(formData.get('title') ?? '').trim();
+      const titleLabel = titleValue || 'Session';
       const payload = {
         host_id: userData.user.id,
-        title: String(formData.get('title') || ''),
-        description: String(formData.get('description') || ''),
+        title: titleValue || null,
+        description: descriptionValue || null,
         discipline_id: Number(primaryEntry.disciplineId),
         skill_level_id: Number(primaryEntry.skillLevelId),
         training_type_id: Number(formData.get('training_type_id')),
         place_id: selectedPlace.id,
         starts_at: new Date(startsAtValue).toISOString(),
-        ends_at: new Date(endsAtValue).toISOString(),
         capacity: Number(formData.get('capacity')),
+        weight_min: weightMin,
+        weight_max: weightMax,
+        height_min: heightMin,
+        height_max: heightMax,
+        dominant_hand: dominantHand,
+        glove_size: gloveSize,
         is_published: true,
       };
 
@@ -250,7 +318,7 @@ export function SessionForm({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               to: userData.user.email,
-              sessionTitle: payload.title,
+              sessionTitle: titleLabel,
               startsAt: payload.starts_at,
             }),
           });
@@ -275,16 +343,22 @@ export function SessionForm({
       return;
     }
 
+    const titleValue = String(formData.get('title') ?? '').trim();
     const payload = {
-      title: String(formData.get('title') || ''),
-      description: String(formData.get('description') || ''),
+      title: titleValue || null,
+      description: descriptionValue || null,
       discipline_id: Number(primaryEntry.disciplineId),
       skill_level_id: Number(primaryEntry.skillLevelId),
       training_type_id: Number(formData.get('training_type_id')),
       place_id: selectedPlace.id,
       starts_at: new Date(startsAtValue).toISOString(),
-      ends_at: new Date(endsAtValue).toISOString(),
       capacity: Number(formData.get('capacity')),
+      weight_min: weightMin,
+      weight_max: weightMax,
+      height_min: heightMin,
+      height_max: heightMax,
+      dominant_hand: dominantHand,
+      glove_size: gloveSize,
     };
 
     const { error: updateError } = await supabase
@@ -354,45 +428,7 @@ export function SessionForm({
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="title">Titre</Label>
-          <Input
-            id="title"
-            name="title"
-            defaultValue={defaultValues?.title ?? ''}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="capacity">Capacité</Label>
-          <Input
-            id="capacity"
-            name="capacity"
-            type="number"
-            min={1}
-            defaultValue={defaultValues?.capacity ?? 2}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="training_type_id">Type dentraînement</Label>
-          <Select
-            id="training_type_id"
-            name="training_type_id"
-            required
-            defaultValue={defaultValues?.training_type_id ?? ''}
-          >
-            <SelectItem value="" disabled>
-              Choisir
-            </SelectItem>
-            {trainingTypes.map((item) => (
-              <SelectItem key={item.id} value={item.id}>
-                {item.name}
-              </SelectItem>
-            ))}
-          </Select>
-        </div>
-        <div className="space-y-2">
+        <div className="space-y-2 md:col-span-2">
           <PlaceAutocomplete
             label="Lieu"
             placeholder="Recherche un lieu (ex: Gymnase, club, adresse)"
@@ -411,10 +447,16 @@ export function SessionForm({
               }
             }}
           />
-          <input type="hidden" name="place_id" value={selectedPlace?.id ?? ''} />
+          <input
+            type="hidden"
+            name="place_id"
+            value={selectedPlace?.id ?? ''}
+          />
           {selectedPlace ? (
             <div className="text-xs text-muted-foreground">
-              {selectedPlace.address ?? selectedPlace.city ?? 'Lieu sélectionné'}
+              {selectedPlace.address ??
+                selectedPlace.city ??
+                'Lieu sélectionné'}
             </div>
           ) : placeLoading ? (
             <div className="text-xs text-muted-foreground">
@@ -422,25 +464,46 @@ export function SessionForm({
             </div>
           ) : null}
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="starts_at">Début</Label>
-          <Input
-            id="starts_at"
-            name="starts_at"
-            type="datetime-local"
-            defaultValue={toLocalDateTimeInput(defaultValues?.starts_at)}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="ends_at">Fin</Label>
-          <Input
-            id="ends_at"
-            name="ends_at"
-            type="datetime-local"
-            defaultValue={toLocalDateTimeInput(defaultValues?.ends_at)}
-            required
-          />
+        <div className="grid gap-4 md:col-span-2 md:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="starts_at">Date et heure</Label>
+            <Input
+              id="starts_at"
+              name="starts_at"
+              type="datetime-local"
+              defaultValue={toLocalDateTimeInput(defaultValues?.starts_at)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="training_type_id">Type dentraînement</Label>
+            <Select
+              id="training_type_id"
+              name="training_type_id"
+              required
+              defaultValue={defaultValues?.training_type_id ?? ''}
+            >
+              <SelectItem value="" disabled>
+                Choisir
+              </SelectItem>
+              {trainingTypes.map((item) => (
+                <SelectItem key={item.id} value={item.id}>
+                  {item.name}
+                </SelectItem>
+              ))}
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="capacity">Capacité</Label>
+            <Input
+              id="capacity"
+              name="capacity"
+              type="number"
+              min={1}
+              defaultValue={defaultValues?.capacity ?? 2}
+              required
+            />
+          </div>
         </div>
       </div>
 
@@ -509,13 +572,135 @@ export function SessionForm({
         </div>
       </div>
 
+      <div className="space-y-3">
+        <div>
+          <div className="text-sm font-medium text-foreground">
+            Profil recherché (optionnel)
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Renseigne des critères pour ton sparring partner.
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="weight_range">Poids (kg)</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setWeightTouched(false)}
+              >
+                Effacer
+              </Button>
+            </div>
+            <Slider
+              id="weight_range"
+              min={30}
+              max={150}
+              step={1}
+              value={weightRange}
+              onValueChange={(value) => {
+                setWeightRange(value as [number, number]);
+                setWeightTouched(true);
+              }}
+            />
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Min: {weightTouched ? weightRange[0] : '—'}</span>
+              <span>Max: {weightTouched ? weightRange[1] : '—'}</span>
+            </div>
+            <input
+              type="hidden"
+              name="weight_min"
+              value={weightTouched ? String(weightRange[0]) : ''}
+            />
+            <input
+              type="hidden"
+              name="weight_max"
+              value={weightTouched ? String(weightRange[1]) : ''}
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="height_range">Taille (cm)</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setHeightTouched(false)}
+              >
+                Effacer
+              </Button>
+            </div>
+            <Slider
+              id="height_range"
+              min={140}
+              max={210}
+              step={1}
+              value={heightRange}
+              onValueChange={(value) => {
+                setHeightRange(value as [number, number]);
+                setHeightTouched(true);
+              }}
+            />
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Min: {heightTouched ? heightRange[0] : '—'}</span>
+              <span>Max: {heightTouched ? heightRange[1] : '—'}</span>
+            </div>
+            <input
+              type="hidden"
+              name="height_min"
+              value={heightTouched ? String(heightRange[0]) : ''}
+            />
+            <input
+              type="hidden"
+              name="height_max"
+              value={heightTouched ? String(heightRange[1]) : ''}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dominant_hand">Main forte</Label>
+            <Select
+              id="dominant_hand"
+              name="dominant_hand"
+              defaultValue={defaultValues?.dominant_hand ?? ''}
+            >
+              <SelectItem value="" disabled>
+                Choisir
+              </SelectItem>
+              <SelectItem value="right">Droitier</SelectItem>
+              <SelectItem value="left">Gaucher</SelectItem>
+              <SelectItem value="both">Les deux</SelectItem>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="glove_size">Taille des gants</Label>
+            <Select
+              id="glove_size"
+              name="glove_size"
+              defaultValue={defaultValues?.glove_size ?? ''}
+            >
+              <SelectItem value="" disabled>
+                Choisir
+              </SelectItem>
+              <SelectItem value="8oz">8 oz</SelectItem>
+              <SelectItem value="10oz">10 oz</SelectItem>
+              <SelectItem value="12oz">12 oz</SelectItem>
+              <SelectItem value="14oz">14 oz</SelectItem>
+              <SelectItem value="16oz">16 oz</SelectItem>
+            </Select>
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">Plus dinfos</Label>
         <Textarea
           id="description"
           name="description"
           defaultValue={defaultValues?.description ?? ''}
-          required
         />
       </div>
       <Button type="submit" disabled={loading}>

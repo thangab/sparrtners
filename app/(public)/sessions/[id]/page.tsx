@@ -33,7 +33,7 @@ export default async function SessionDetailPage({
   const { data: listing } = await supabase
     .from('session_listings')
     .select(
-      'id, title, description, starts_at, ends_at, training_type_id, place_id, host_id, training_type_name, place_name, city, is_boosted, disciplines',
+      'id, title, description, starts_at, training_type_id, place_id, host_id, training_type_name, place_name, city, is_boosted, disciplines',
     )
     .eq('id', id)
     .maybeSingle();
@@ -43,7 +43,7 @@ export default async function SessionDetailPage({
     : await supabase
         .from('sessions')
         .select(
-          'id, title, description, starts_at, ends_at, discipline_id, training_type_id, place_id, host_id',
+          'id, title, description, starts_at, discipline_id, training_type_id, place_id, host_id',
         )
         .eq('id', id)
         .maybeSingle();
@@ -105,6 +105,7 @@ export default async function SessionDetailPage({
 
   const isHost = user?.id === session.host_id;
   const isBoosted = !!boostRes.data?.ends_at;
+  const sessionTitle = session.title ?? 'Session';
   const disciplineLabels = Array.isArray(disciplinesRes.data)
     ? disciplinesRes.data
         .map(
@@ -156,7 +157,7 @@ export default async function SessionDetailPage({
       <Card className="border-slate-200/70 bg-white/90">
         <CardHeader className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <CardTitle className="text-2xl">{session.title}</CardTitle>
+            <CardTitle className="text-2xl">{sessionTitle}</CardTitle>
             {isBoosted ? (
               <Badge className="bg-amber-200 text-amber-900 hover:bg-amber-200">
                 Boostée
@@ -172,10 +173,15 @@ export default async function SessionDetailPage({
         </CardHeader>
         <CardContent className="grid gap-6 text-sm text-slate-600 md:grid-cols-[1.4fr_0.6fr]">
           <div className="space-y-3">
-            <p className="leading-relaxed">{session.description}</p>
+            {session.description ? (
+              <p className="leading-relaxed">{session.description}</p>
+            ) : (
+              <p className="leading-relaxed text-slate-400">
+                Pas de description.
+              </p>
+            )}
             <div>
-              {new Date(session.starts_at).toLocaleString('fr-FR')} →{' '}
-              {new Date(session.ends_at).toLocaleString('fr-FR')}
+              {new Date(session.starts_at).toLocaleString('fr-FR')}
             </div>
             <div>
               {placeRes.data?.name ?? 'Lieu'}{' '}
