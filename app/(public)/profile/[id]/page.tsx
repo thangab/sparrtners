@@ -43,7 +43,7 @@ export default async function FighterProfilePage({
   const supabase = await createSupabaseServerClientReadOnly();
   const { data: profile } = await supabase
     .from('profiles')
-    .select('display_name')
+    .select('display_name, created_at, bio, club, dominant_hand')
     .eq('id', id)
     .maybeSingle();
   const { data: sportProfiles } = (await supabase
@@ -55,11 +55,19 @@ export default async function FighterProfilePage({
     .order('discipline_id', { ascending: true })) as {
     data: SportProfileRow[] | null;
   };
-
   const displayName = profile?.display_name ?? 'Nom non renseigné';
-  const primaryProfile = sportProfiles?.[0];
-  const primaryDisciplineName = extractName(primaryProfile?.discipline ?? null);
-  const primarySkillName = extractName(primaryProfile?.skill_level ?? null);
+  const joinedLabel = profile?.created_at
+    ? new Date(profile.created_at).toLocaleDateString('fr-FR')
+    : 'Date inconnue';
+  const clubLabel = profile?.club?.trim() ? profile.club : 'Non renseigné';
+  const dominantHandLabel =
+    profile?.dominant_hand === 'right'
+      ? 'Droitier'
+      : profile?.dominant_hand === 'left'
+        ? 'Gaucher'
+        : profile?.dominant_hand === 'both'
+          ? 'Les deux'
+          : 'Non renseigné';
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 pb-20 pt-6">
@@ -90,39 +98,19 @@ export default async function FighterProfilePage({
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm text-slate-700">
             <div>
-              <div className="text-xs text-slate-500">Discipline</div>
-              <div className="font-medium">
-                {primaryDisciplineName ?? 'Non renseigné'}
-              </div>
+              <div className="text-xs text-slate-500">Club</div>
+              <div className="font-medium">{clubLabel}</div>
             </div>
             <div>
-              <div className="text-xs text-slate-500">Niveau</div>
-              <div className="font-medium">
-                {primarySkillName ?? 'Non renseigné'}
-              </div>
+              <div className="text-xs text-slate-500">Main forte</div>
+              <div className="font-medium">{dominantHandLabel}</div>
             </div>
             <div>
-              <div className="text-xs text-slate-500">Poids</div>
-              <div className="font-medium">
-                {primaryProfile?.weight_kg
-                  ? `${primaryProfile.weight_kg} kg`
-                  : 'Non renseigné'}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-slate-500">Taille</div>
-              <div className="font-medium">
-                {primaryProfile?.height_cm
-                  ? `${primaryProfile.height_cm} cm`
-                  : 'Non renseigné'}
-              </div>
+              <div className="text-xs text-slate-500">Inscrit le</div>
+              <div className="font-medium">{joinedLabel}</div>
             </div>
             <div>
               <div className="text-xs text-slate-500">Score confiance</div>
-              <div className="font-medium">À venir</div>
-            </div>
-            <div>
-              <div className="text-xs text-slate-500">Sessions</div>
               <div className="font-medium">À venir</div>
             </div>
           </div>
@@ -157,16 +145,8 @@ export default async function FighterProfilePage({
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-slate-600">
             <div className="flex items-center justify-between">
-              <span>Muay thaï · Lyon 7e</span>
-              <Badge variant="secondary">Validée</Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Boxe anglaise · Paris 11e</span>
-              <Badge variant="secondary">Validée</Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Grappling · Bordeaux</span>
-              <Badge variant="secondary">Validée</Badge>
+              <span>Pas disponible</span>
+              <Badge variant="secondary">...</Badge>
             </div>
           </CardContent>
         </Card>

@@ -29,6 +29,8 @@ export function ProfileForm({
     city?: string | null;
     languages?: string[] | null;
     bio?: string | null;
+    club?: string | null;
+    dominant_hand?: string | null;
   };
 }) {
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
@@ -96,6 +98,8 @@ export function ProfileForm({
       city: String(formData.get("city") || "").trim() || null,
       languages: languagesRaw.length ? languagesRaw : null,
       bio: String(formData.get("bio") || "").trim() || null,
+      club: String(formData.get("club") || "").trim() || null,
+      dominant_hand: String(formData.get("dominant_hand") || "").trim() || null,
     };
 
     const { error: profileError } = await supabase.from("profiles").upsert(profilePayload);
@@ -195,6 +199,21 @@ export function ProfileForm({
         <div className="space-y-2">
           <Label htmlFor="weight_kg">Poids (kg)</Label>
           <Input id="weight_kg" name="weight_kg" type="number" defaultValue={defaultValues.weight_kg ?? ""} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="club">Club</Label>
+          <Input id="club" name="club" placeholder="Nom du club (optionnel)" defaultValue={defaultValues.club ?? ""} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="dominant_hand">Main forte</Label>
+          <Select id="dominant_hand" name="dominant_hand" defaultValue={defaultValues.dominant_hand ?? ""}>
+            <SelectItem value="" disabled>
+              Choisir
+            </SelectItem>
+            <SelectItem value="right">Droitier</SelectItem>
+            <SelectItem value="left">Gaucher</SelectItem>
+            <SelectItem value="both">Les deux</SelectItem>
+          </Select>
         </div>
       </div>
       <div className="space-y-4">
