@@ -33,22 +33,12 @@ export default async function SessionDetailPage({
   const { data: listing } = await supabase
     .from('session_listings')
     .select(
-      'id, title, description, starts_at, training_type_id, place_id, host_id, training_type_name, place_name, city, is_boosted, disciplines',
+      'id, title, description, starts_at, host_id, host_display_name, host_email, training_type_name, place_name, city, is_boosted, disciplines',
     )
     .eq('id', id)
     .maybeSingle();
 
-  const { data: session } = listing
-    ? { data: listing }
-    : await supabase
-        .from('sessions')
-        .select(
-          'id, title, description, starts_at, discipline_id, training_type_id, place_id, host_id',
-        )
-        .eq('id', id)
-        .maybeSingle();
-
-  if (!session) {
+  if (!listing) {
     return (
       <Card>
         <CardHeader>
@@ -60,64 +50,23 @@ export default async function SessionDetailPage({
       </Card>
     );
   }
-
-  const [trainingTypeRes, placeRes, boostRes, disciplinesRes] =
-    await Promise.all([
-      listing?.training_type_name
-        ? Promise.resolve({ data: { name: listing.training_type_name } })
-        : supabase
-            .from('training_types')
-            .select('name')
-            .eq('id', session.training_type_id)
-            .maybeSingle(),
-      listing?.place_name
-        ? Promise.resolve({
-            data: { name: listing.place_name, city: listing.city },
-          })
-        : supabase
-            .from('places')
-            .select('name, city')
-            .eq('id', session.place_id)
-            .maybeSingle(),
-      listing
-        ? Promise.resolve({
-            data: {
-              ends_at: listing.is_boosted ? new Date().toISOString() : null,
-            },
-          })
-        : supabase
-            .from('session_boosts')
-            .select('ends_at')
-            .eq('session_id', session.id)
-            .gt('ends_at', new Date().toISOString())
-            .order('ends_at', { ascending: false })
-            .limit(1)
-            .maybeSingle(),
-      Array.isArray(listing?.disciplines)
-        ? Promise.resolve({ data: listing?.disciplines })
-        : supabase
-            .from('session_disciplines')
-            .select(
-              'discipline:disciplines(name), skill_level:skill_levels(name)',
-            )
-            .eq('session_id', session.id),
-    ]);
-
-  const isHost = user?.id === session.host_id;
-  const isBoosted = !!boostRes.data?.ends_at;
-  const sessionTitle = session.title ?? 'Session';
-  const disciplineLabels = Array.isArray(disciplinesRes.data)
-    ? disciplinesRes.data
+  const isHost = user?.id === listing.host_id;
+  const hostLabel =
+    listing.host_display_name ||
+    listing.host_email ||
+    (listing.host_id
+      ? `Combattant ${listing.host_id.slice(0, 6).toUpperCase()}`
+      : 'Combattant');
+  const isBoosted = !!listing.is_boosted;
+  const sessionTitle = listing.training_type_name
+    ? `Session de ${listing.training_type_name}`
+    : 'Session';
+  const disciplineLabels = Array.isArray(listing.disciplines)
+    ? listing.disciplines
         .map(
-          (item: {
-            discipline_name?: string;
-            skill_level_name?: string;
-            discipline?: { name?: string };
-            skill_level?: { name?: string };
-          }) => {
-            const disciplineName =
-              item.discipline_name ?? item.discipline?.name ?? 'Discipline';
-            const levelName = item.skill_level_name ?? item.skill_level?.name;
+          (item: { discipline_name?: string; skill_level_name?: string }) => {
+            const disciplineName = item.discipline_name ?? 'Discipline';
+            const levelName = item.skill_level_name;
             return levelName
               ? `${disciplineName} (${levelName})`
               : disciplineName;
@@ -130,7 +79,7 @@ export default async function SessionDetailPage({
     ? await supabase
         .from('session_requests')
         .select('status')
-        .eq('session_id', session.id)
+        .eq('session_id', listing.id)
         .eq('user_id', user.id)
         .maybeSingle()
     : { data: null };
@@ -139,7 +88,7 @@ export default async function SessionDetailPage({
     ? await supabase
         .from('conversations')
         .select('id')
-        .eq('session_id', session.id)
+        .eq('session_id', listing.id)
         .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
         .maybeSingle()
     : { data: null };
@@ -150,7 +99,7 @@ export default async function SessionDetailPage({
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 pb-20 pt-6">
       <div className="flex items-center justify-between text-sm text-slate-500">
         <Link className="transition hover:text-slate-900" href="/find-sessions">
-          ← Retour aux sessions
+          ← Retour
         </Link>
       </div>
 
@@ -168,34 +117,37 @@ export default async function SessionDetailPage({
             {disciplineLabels.length > 0
               ? disciplineLabels.join(' · ')
               : 'Disciplines'}{' '}
-            · {trainingTypeRes.data?.name ?? 'Type'}
+            · {listing.training_type_name ?? 'Type'}
           </div>
         </CardHeader>
         <CardContent className="grid gap-6 text-sm text-slate-600 md:grid-cols-[1.4fr_0.6fr]">
           <div className="space-y-3">
-            {session.description ? (
-              <p className="leading-relaxed">{session.description}</p>
-            ) : (
-              <p className="leading-relaxed text-slate-400">
-                Pas de description.
-              </p>
-            )}
             <div>
-              {new Date(session.starts_at).toLocaleString('fr-FR')}
+              Par{' '}
+              <Link
+                href={`/profile/${listing.host_id}`}
+                className="font-medium text-slate-900 underline"
+              >
+                {hostLabel}
+              </Link>
             </div>
+            <div>{new Date(listing.starts_at).toLocaleString('fr-FR')}</div>
             <div>
-              {placeRes.data?.name ?? 'Lieu'}{' '}
-              {placeRes.data?.city ? `· ${placeRes.data?.city}` : ''}
+              {listing.place_name ?? 'Lieu'}{' '}
+              {listing.city ? `· ${listing.city}` : ''}
             </div>
+            {listing.description ? (
+              <p className="leading-relaxed">{listing.description}</p>
+            ) : null}
           </div>
         </CardContent>
       </Card>
 
       <div className="flex flex-wrap gap-3">
         {isHost ? (
-          <BoostSessionButton sessionId={session.id} />
+          <BoostSessionButton sessionId={listing.id} />
         ) : (
-          <RequestJoinButton sessionId={session.id} />
+          <RequestJoinButton sessionId={listing.id} />
         )}
         {canChat ? (
           <Button

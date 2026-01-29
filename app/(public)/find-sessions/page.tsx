@@ -10,6 +10,7 @@ type SessionWithDistance = {
   id: string;
   title: string | null;
   starts_at: string;
+  training_type_name?: string | null;
   place_name: string | null;
   city: string | null;
   place_lat: number | null;
@@ -42,6 +43,11 @@ function distanceKm(a: SearchCoords, b: SearchCoords) {
 function formatDistance(meters: number) {
   if (meters < 1000) return `${Math.round(meters)} m`;
   return `${(meters / 1000).toFixed(1)} km`;
+}
+
+function formatDistanceKm(km: number) {
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  return `${km.toFixed(1)} km`;
 }
 
 export default async function SessionsPage({
@@ -102,7 +108,7 @@ export default async function SessionsPage({
     : await supabase
         .from('session_listings')
         .select(
-          'id, title, starts_at, place_name, city, place_lat, place_lng, is_boosted, disciplines, host_id, host_display_name, host_email',
+          'id, title, starts_at, training_type_name, place_name, city, place_lat, place_lng, is_boosted, disciplines, host_id, host_display_name, host_email',
         )
         .order('is_boosted', { ascending: false })
         .order('starts_at', { ascending: true })
@@ -131,7 +137,8 @@ export default async function SessionsPage({
     searchCoords && typeof radiusKm === 'number'
       ? sessionsWithDistance.filter(
           (session) =>
-            typeof session.distance === 'number' && session.distance <= radiusKm,
+            typeof session.distance === 'number' &&
+            session.distance <= radiusKm,
         )
       : sessionsWithDistance;
   const sortedSessions = searchCoords
@@ -141,6 +148,7 @@ export default async function SessionsPage({
         return aDist - bDist;
       })
     : filteredSessions;
+
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 pb-20 pt-6">
       <section className="flex flex-col gap-6 rounded-4xl border border-slate-200/70 bg-white/85 p-8 shadow-sm">
@@ -185,7 +193,7 @@ export default async function SessionsPage({
           sortedSessions.map((session: SessionWithDistance) => {
             const hostLabel = session.host_display_name || 'Combattant';
             const disciplineLabel = Array.isArray(session.disciplines)
-              ? (session.disciplines
+              ? session.disciplines
                   .map(
                     (item: {
                       discipline_name?: string;
@@ -197,8 +205,9 @@ export default async function SessionsPage({
                         : name;
                     },
                   )
-                  .filter(Boolean)[0] ?? 'Session')
-              : 'Session';
+                  .filter(Boolean)
+                  .join(' · ')
+              : '';
 
             return (
               <Card
@@ -208,7 +217,7 @@ export default async function SessionsPage({
                 <CardHeader className="space-y-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-xl">
-                      Session de {disciplineLabel}
+                      Session de {session.training_type_name ?? 'training'}
                     </CardTitle>
                     {session.is_boosted ? (
                       <Badge className="bg-amber-200 text-amber-900 hover:bg-amber-200">
@@ -216,9 +225,18 @@ export default async function SessionsPage({
                       </Badge>
                     ) : null}
                   </div>
-                  {typeof session.distance === 'number' ? (
+                  {disciplineLabel ? (
+                    <div className="text-sm text-slate-600">
+                      {disciplineLabel}
+                    </div>
+                  ) : null}
+                  {typeof session.distance_km === 'number' ||
+                  typeof session.distance === 'number' ? (
                     <div>
-                      Distance: {formatDistance(session.distance * 1000)}
+                      Distance:{' '}
+                      {typeof session.distance_km === 'number'
+                        ? formatDistanceKm(session.distance_km)
+                        : formatDistance((session.distance ?? 0) * 1000)}
                     </div>
                   ) : null}
                   <div>

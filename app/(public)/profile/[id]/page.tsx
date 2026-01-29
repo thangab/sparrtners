@@ -65,7 +65,7 @@ export default async function FighterProfilePage({
   const joinedLabel = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('fr-FR')
     : 'Date inconnue';
-  const clubLabel = profile?.club?.trim() ? profile.club : 'Non renseigné';
+
   const dominantHandLabel =
     profile?.dominant_hand === 'right'
       ? 'Droitier'
@@ -77,12 +77,6 @@ export default async function FighterProfilePage({
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 pb-20 pt-6">
-      <div className="flex items-center justify-between text-sm text-slate-500">
-        <Link className="transition hover:text-slate-900" href="/find-sessions">
-          ← Retour aux sessions
-        </Link>
-      </div>
-
       <section className="grid gap-6 rounded-4xl border border-slate-200/70 bg-white/90 p-8 shadow-sm md:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-4">
           <h1 className="text-3xl font-semibold text-slate-900">
@@ -102,10 +96,12 @@ export default async function FighterProfilePage({
             Infos
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm text-slate-700">
-            <div>
-              <div className="text-xs text-slate-500">Club</div>
-              <div className="font-medium">{clubLabel}</div>
-            </div>
+            {profile?.club?.trim() && (
+              <div>
+                <div className="text-xs text-slate-500">Club</div>
+                <div className="font-medium">{profile.club}</div>
+              </div>
+            )}
             <div>
               <div className="text-xs text-slate-500">Main forte</div>
               <div className="font-medium">{dominantHandLabel}</div>
