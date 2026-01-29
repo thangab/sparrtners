@@ -13,6 +13,7 @@ type RequestItem = {
   status: string;
   created_at: string;
   created_at_label: string;
+  participant_count: number;
   session_title: string | null;
   conversation_id: string | null;
 };
@@ -138,6 +139,8 @@ export function RequestsClient({
               <span>Statut: {request.status}</span>
               <span>•</span>
               <span>{request.created_at_label}</span>
+              <span>•</span>
+              <span>Participants: {request.participant_count}</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {mode === 'host' ? (

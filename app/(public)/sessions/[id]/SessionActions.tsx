@@ -3,12 +3,16 @@
 import * as React from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/components/ui/use-toast";
 
 export function RequestJoinButton({ sessionId }: { sessionId: string }) {
   const { toast } = useToast();
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
   const [loading, setLoading] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
+  const [participants, setParticipants] = React.useState("1");
 
   const handleRequest = async () => {
     setLoading(true);
@@ -23,10 +27,12 @@ export function RequestJoinButton({ sessionId }: { sessionId: string }) {
       return;
     }
 
+    const count = Math.max(1, Number.parseInt(participants, 10) || 1);
     const { error } = await supabase.from("session_requests").insert({
       session_id: sessionId,
       user_id: userData.user.id,
       status: "pending",
+      participant_count: count,
     });
 
     if (error) {
@@ -53,13 +59,39 @@ export function RequestJoinButton({ sessionId }: { sessionId: string }) {
       title: "Demande envoyée",
       description: "Le host va recevoir ta demande.",
     });
+    setOpen(false);
     setLoading(false);
   };
 
   return (
-    <Button onClick={handleRequest} disabled={loading} className="bg-emerald-600 text-white hover:bg-emerald-500">
-      Demander à rejoindre
-    </Button>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          disabled={loading}
+          className="bg-emerald-600 text-white hover:bg-emerald-500"
+        >
+          Demander à rejoindre
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="space-y-3">
+        <div className="text-sm font-medium text-slate-900">
+          Nombre de participants
+        </div>
+        <Input
+          type="number"
+          min={1}
+          value={participants}
+          onChange={(event) => setParticipants(event.target.value)}
+        />
+        <Button
+          onClick={handleRequest}
+          disabled={loading}
+          className="w-full bg-emerald-600 text-white hover:bg-emerald-500"
+        >
+          Confirmer la demande
+        </Button>
+      </PopoverContent>
+    </Popover>
   );
 }
 

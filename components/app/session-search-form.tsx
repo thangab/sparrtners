@@ -19,8 +19,7 @@ export function SessionSearchForm({
   defaultShowAdvanced = false,
   action,
 }: SessionSearchFormProps) {
-  const [showAdvanced, setShowAdvanced] =
-    React.useState(defaultShowAdvanced);
+  const [showAdvanced, setShowAdvanced] = React.useState(defaultShowAdvanced);
   const [heightRange, setHeightRange] = React.useState<[number, number]>([
     0, 250,
   ]);
@@ -70,6 +69,24 @@ export function SessionSearchForm({
 
       {showAdvanced ? (
         <div className="space-y-6">
+          <div className="space-y-3 md:col-span-2">
+            <div className="text-sm font-medium text-slate-700">
+              Distance autour de moi
+            </div>
+            <Slider
+              min={1}
+              max={100}
+              step={1}
+              value={[radiusKm]}
+              onValueChange={(value) => setRadiusKm(value[0] ?? 25)}
+            />
+            <div className="flex items-center justify-between text-xs text-slate-500">
+              <span>1 km</span>
+              <span>{radiusKm} km</span>
+              <span>100 km</span>
+            </div>
+            <input type="hidden" name="radius_km" value={radiusKm} />
+          </div>
           <div className="space-y-3">
             <h3 className="text-lg font-medium text-slate-900">
               Disciplines recherchées
@@ -134,24 +151,6 @@ export function SessionSearchForm({
                 </div>
                 <input type="hidden" name="weight_min" value={weightRange[0]} />
                 <input type="hidden" name="weight_max" value={weightRange[1]} />
-              </div>
-              <div className="space-y-3 md:col-span-2">
-                <div className="text-sm font-medium text-slate-700">
-                  Distance autour de moi
-                </div>
-                <Slider
-                  min={1}
-                  max={100}
-                  step={1}
-                  value={[radiusKm]}
-                  onValueChange={(value) => setRadiusKm(value[0] ?? 25)}
-                />
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span>1 km</span>
-                  <span>{radiusKm} km</span>
-                  <span>100 km</span>
-                </div>
-                <input type="hidden" name="radius_km" value={radiusKm} />
               </div>
               <div className="space-y-3">
                 <div className="text-sm font-medium text-slate-700">

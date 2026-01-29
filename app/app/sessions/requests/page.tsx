@@ -19,7 +19,7 @@ export default async function RequestsPage() {
   const { data: incomingRequests } = await supabase
     .from('session_requests')
     .select(
-      'id, session_id, user_id, status, created_at, sessions!inner(title, host_id)',
+      'id, session_id, user_id, status, created_at, participant_count, sessions!inner(title, host_id)',
     )
     .eq('sessions.host_id', user?.id ?? '')
     .order('created_at', { ascending: false });
@@ -27,7 +27,7 @@ export default async function RequestsPage() {
   const { data: outgoingRequests } = await supabase
     .from('session_requests')
     .select(
-      'id, session_id, user_id, status, created_at, sessions!inner(title, host_id)',
+      'id, session_id, user_id, status, created_at, participant_count, sessions!inner(title, host_id)',
     )
     .eq('user_id', user?.id ?? '')
     .order('created_at', { ascending: false });
@@ -76,6 +76,7 @@ export default async function RequestsPage() {
       status: item.status,
       created_at: item.created_at,
       created_at_label: createdAtLabel,
+      participant_count: item.participant_count ?? 1,
       session_title: session?.title ?? null,
       conversation_id: conversationMap.get(key) ?? null,
     };
@@ -100,6 +101,7 @@ export default async function RequestsPage() {
       status: item.status,
       created_at: item.created_at,
       created_at_label: createdAtLabel,
+      participant_count: item.participant_count ?? 1,
       session_title: session?.title ?? null,
       conversation_id: key ? conversationMap.get(key) ?? null : null,
     };
