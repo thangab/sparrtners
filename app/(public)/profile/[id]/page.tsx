@@ -1,13 +1,10 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
 
 type RelatedName = { name: string } | { name: string }[] | null;
 type SportProfileRow = {
-  height_cm: number | null;
-  weight_kg: number | null;
   discipline_id: number;
   skill_level_id: number | null;
   discipline: RelatedName;
@@ -43,19 +40,28 @@ export default async function FighterProfilePage({
   const supabase = await createSupabaseServerClientReadOnly();
   const { data: profile } = await supabase
     .from('profiles')
-    .select('display_name, created_at, bio, club, dominant_hand')
+    .select(
+      'display_name, city, created_at, bio, club, dominant_hand, height_cm, weight_kg',
+    )
     .eq('id', id)
     .maybeSingle();
   const { data: sportProfiles } = (await supabase
     .from('user_sport_profiles')
     .select(
-      'height_cm, weight_kg, discipline_id, skill_level_id, discipline:disciplines(name), skill_level:skill_levels(name)',
+      'discipline_id, skill_level_id, discipline:disciplines(name), skill_level:skill_levels(name)',
     )
     .eq('user_id', id)
     .order('discipline_id', { ascending: true })) as {
     data: SportProfileRow[] | null;
   };
-  const displayName = profile?.display_name ?? 'Nom non renseigné';
+  const { data: activeSessions } = await supabase
+    .from('session_listings')
+    .select('id, starts_at, place_name, city, disciplines')
+    .eq('host_id', id)
+    .gt('starts_at', new Date().toISOString())
+    .order('starts_at', { ascending: true });
+  console.log('profile', profile);
+  const displayName = profile?.display_name ?? 'Non renseigné';
   const joinedLabel = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('fr-FR')
     : 'Date inconnue';
@@ -81,20 +87,19 @@ export default async function FighterProfilePage({
         <div className="space-y-4">
           <h1 className="text-3xl font-semibold text-slate-900">
             {displayName}
+            {profile?.city && ` · ${profile.city}`}
           </h1>
           <p className="text-slate-600">
-            Profil public pour organiser des sessions de sparring et
-            d&apos;entraînement.
+            {profile?.height_cm ? `Taille : ${profile.height_cm} cm` : ''}
           </p>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" asChild>
-              <Link href="/find-sessions">Voir les annonces</Link>
-            </Button>
-          </div>
+          <p className="text-slate-600">
+            {profile?.weight_kg ? `Poids : ${profile.weight_kg} kg` : ''}
+          </p>
+          <p className="text-slate-600">{profile?.bio ? profile.bio : ''}</p>
         </div>
         <div className="grid gap-3 rounded-3xl border border-slate-200/70 bg-slate-50/70 p-6">
           <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Infos clés
+            Infos
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm text-slate-700">
             <div>
@@ -141,13 +146,54 @@ export default async function FighterProfilePage({
         </Card>
         <Card className="border-slate-200/70 bg-white/90">
           <CardHeader>
-            <CardTitle>Dernières sessions</CardTitle>
+            <CardTitle>Sessions actives</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-slate-600">
-            <div className="flex items-center justify-between">
-              <span>Pas disponible</span>
-              <Badge variant="secondary">...</Badge>
-            </div>
+            {activeSessions && activeSessions.length > 0 ? (
+              activeSessions.map((session) => {
+                const disciplines = Array.isArray(session.disciplines)
+                  ? session.disciplines
+                  : [];
+                const primary = disciplines[0] as
+                  | { discipline_name?: string; skill_level_name?: string }
+                  | undefined;
+                const disciplineName = primary?.discipline_name ?? 'Session';
+                const levelName = primary?.skill_level_name;
+                const sessionTitle = levelName
+                  ? `Session de ${disciplineName} - ${levelName}`
+                  : `Session de ${disciplineName}`;
+                const placeLabel = `${session.place_name ?? 'Lieu'}${
+                  session.city ? ` · ${session.city}` : ''
+                }`;
+                return (
+                  <div
+                    key={session.id}
+                    className="flex items-center justify-between"
+                  >
+                    <div>
+                      <div className="font-medium text-slate-900">
+                        {sessionTitle}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {placeLabel} ·{' '}
+                        {new Date(session.starts_at).toLocaleDateString(
+                          'fr-FR',
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      <Button variant="outline" asChild>
+                        <Link href={`/sessions/${session.id}`}>
+                          Plus de détails
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div>Aucune session active.</div>
+            )}
           </CardContent>
         </Card>
       </section>

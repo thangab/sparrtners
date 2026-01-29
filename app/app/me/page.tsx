@@ -11,13 +11,13 @@ export default async function ProfilePage() {
   const { data: skillLevels } = await supabase.from("skill_levels").select("id, name").order("id");
   const { data: sportProfiles } = await supabase
     .from("user_sport_profiles")
-    .select("height_cm, weight_kg, discipline_id, skill_level_id")
+    .select("discipline_id, skill_level_id")
     .eq("user_id", user?.id ?? "")
     .order("discipline_id", { ascending: true });
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("firstname, lastname, nickname, birthdate, city, languages, bio, club, dominant_hand")
+    .select("firstname, lastname, nickname, birthdate, city, languages, bio, club, dominant_hand, height_cm, weight_kg")
     .eq("id", user?.id ?? "")
     .maybeSingle();
 
@@ -31,8 +31,8 @@ export default async function ProfilePage() {
         disciplines={disciplines ?? []}
         skillLevels={skillLevels ?? []}
         defaultValues={{
-          height_cm: sportProfiles?.[0]?.height_cm ?? null,
-          weight_kg: sportProfiles?.[0]?.weight_kg ?? null,
+          height_cm: profile?.height_cm ?? null,
+          weight_kg: profile?.weight_kg ?? null,
           sportProfiles: sportProfiles ?? [],
           ...(profile ?? {}),
         }}

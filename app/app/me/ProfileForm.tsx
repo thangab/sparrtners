@@ -1,14 +1,17 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectItem } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
-import { PlaceAutocomplete, PlaceSuggestion } from "@/components/app/place-autocomplete";
-import { Slider } from "@/components/ui/slider";
+import * as React from 'react';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectItem } from '@/components/ui/select';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  PlaceAutocomplete,
+  PlaceSuggestion,
+} from '@/components/app/place-autocomplete';
+import { Slider } from '@/components/ui/slider';
 
 type Option = { id: number; name: string };
 type DisciplineEntry = { disciplineId: string; skillLevelId: string };
@@ -23,7 +26,9 @@ export function ProfileForm({
   defaultValues: {
     height_cm?: number | null;
     weight_kg?: number | null;
-    sportProfiles?: { discipline_id: number; skill_level_id: number | null }[] | null;
+    sportProfiles?:
+      | { discipline_id: number; skill_level_id: number | null }[]
+      | null;
     firstname?: string | null;
     lastname?: string | null;
     nickname?: string | null;
@@ -38,28 +43,33 @@ export function ProfileForm({
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(false);
-  const [cityLabel, setCityLabel] = React.useState(defaultValues.city ?? "");
+  const [cityLabel, setCityLabel] = React.useState(defaultValues.city ?? '');
   const [entries, setEntries] = React.useState<DisciplineEntry[]>(
     defaultValues.sportProfiles && defaultValues.sportProfiles.length > 0
       ? defaultValues.sportProfiles.map((profile) => ({
           disciplineId: String(profile.discipline_id),
-          skillLevelId: profile.skill_level_id ? String(profile.skill_level_id) : "",
+          skillLevelId: profile.skill_level_id
+            ? String(profile.skill_level_id)
+            : '',
         }))
-      : [{ disciplineId: "", skillLevelId: "" }]
+      : [{ disciplineId: '', skillLevelId: '' }],
   );
-  const hasHeightDefault = typeof defaultValues.height_cm === "number";
-  const hasWeightDefault = typeof defaultValues.weight_kg === "number";
+  const hasHeightDefault = typeof defaultValues.height_cm === 'number';
+  const hasWeightDefault = typeof defaultValues.weight_kg === 'number';
   const [heightTouched, setHeightTouched] = React.useState(hasHeightDefault);
   const [weightTouched, setWeightTouched] = React.useState(hasWeightDefault);
   const [heightValue, setHeightValue] = React.useState(() =>
-    typeof defaultValues.height_cm === "number" ? defaultValues.height_cm : 175
+    typeof defaultValues.height_cm === 'number' ? defaultValues.height_cm : 175,
   );
   const [weightValue, setWeightValue] = React.useState(() =>
-    typeof defaultValues.weight_kg === "number" ? defaultValues.weight_kg : 70
+    typeof defaultValues.weight_kg === 'number' ? defaultValues.weight_kg : 70,
   );
 
   const addEntry = () => {
-    setEntries((current) => [...current, { disciplineId: "", skillLevelId: "" }]);
+    setEntries((current) => [
+      ...current,
+      { disciplineId: '', skillLevelId: '' },
+    ]);
   };
 
   const removeEntry = (index: number) => {
@@ -68,7 +78,9 @@ export function ProfileForm({
 
   const updateEntry = (index: number, patch: Partial<DisciplineEntry>) => {
     setEntries((current) =>
-      current.map((entry, idx) => (idx === index ? { ...entry, ...patch } : entry))
+      current.map((entry, idx) =>
+        idx === index ? { ...entry, ...patch } : entry,
+      ),
     );
   };
 
@@ -79,24 +91,30 @@ export function ProfileForm({
     const { data: userData } = await supabase.auth.getUser();
 
     if (!userData?.user) {
-      toast({ title: "Connexion requise", description: "Merci de vous reconnecter.", variant: "destructive" });
+      toast({
+        title: 'Connexion requise',
+        description: 'Merci de vous reconnecter.',
+        variant: 'destructive',
+      });
       setLoading(false);
       return;
     }
 
-    const heightRaw = String(formData.get("height_cm") || "");
-    const weightRaw = String(formData.get("weight_kg") || "");
-    const languagesRaw = String(formData.get("languages") || "")
-      .split(",")
+    const heightRaw = String(formData.get('height_cm') || '');
+    const weightRaw = String(formData.get('weight_kg') || '');
+    const languagesRaw = String(formData.get('languages') || '')
+      .split(',')
       .map((lang) => lang.trim())
       .filter(Boolean);
 
-    const selectedEntries = entries.filter((entry) => entry.disciplineId && entry.skillLevelId);
+    const selectedEntries = entries.filter(
+      (entry) => entry.disciplineId && entry.skillLevelId,
+    );
     if (selectedEntries.length === 0) {
       toast({
-        title: "Discipline requise",
-        description: "Ajoute au moins une discipline avec un niveau.",
-        variant: "destructive",
+        title: 'Discipline requise',
+        description: 'Ajoute au moins une discipline avec un niveau.',
+        variant: 'destructive',
       });
       setLoading(false);
       return;
@@ -104,37 +122,49 @@ export function ProfileForm({
 
     const profilePayload = {
       id: userData.user.id,
-      firstname: String(formData.get("firstname") || "").trim() || null,
-      lastname: String(formData.get("lastname") || "").trim() || null,
-      nickname: String(formData.get("nickname") || "").trim() || null,
-      birthdate: String(formData.get("birthdate") || "").trim() || null,
-      city: String(formData.get("city") || "").trim() || null,
+      firstname: String(formData.get('firstname') || '').trim() || null,
+      lastname: String(formData.get('lastname') || '').trim() || null,
+      nickname: String(formData.get('nickname') || '').trim() || null,
+      birthdate: String(formData.get('birthdate') || '').trim() || null,
+      city: String(formData.get('city') || '').trim() || null,
       languages: languagesRaw.length ? languagesRaw : null,
-      bio: String(formData.get("bio") || "").trim() || null,
-      club: String(formData.get("club") || "").trim() || null,
-      dominant_hand: String(formData.get("dominant_hand") || "").trim() || null,
+      bio: String(formData.get('bio') || '').trim() || null,
+      club: String(formData.get('club') || '').trim() || null,
+      dominant_hand: String(formData.get('dominant_hand') || '').trim() || null,
+      height_cm: heightRaw ? Number(heightRaw) : null,
+      weight_kg: weightRaw ? Number(weightRaw) : null,
     };
 
-    const { error: profileError } = await supabase.from("profiles").upsert(profilePayload);
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert(profilePayload);
 
     if (profileError) {
-      toast({ title: "Mise à jour échouée", description: profileError.message, variant: "destructive" });
+      toast({
+        title: 'Mise à jour échouée',
+        description: profileError.message,
+        variant: 'destructive',
+      });
       setLoading(false);
       return;
     }
 
-    const heightValue = heightRaw ? Number(heightRaw) : null;
-    const weightValue = weightRaw ? Number(weightRaw) : null;
-    const selectedDisciplineIds = selectedEntries.map((entry) => Number(entry.disciplineId));
+    const selectedDisciplineIds = selectedEntries.map((entry) =>
+      Number(entry.disciplineId),
+    );
 
     if (selectedDisciplineIds.length > 0) {
       const { error: deleteError } = await supabase
-        .from("user_sport_profiles")
+        .from('user_sport_profiles')
         .delete()
-        .eq("user_id", userData.user.id)
-        .not("discipline_id", "in", `(${selectedDisciplineIds.join(",")})`);
+        .eq('user_id', userData.user.id)
+        .not('discipline_id', 'in', `(${selectedDisciplineIds.join(',')})`);
       if (deleteError) {
-        toast({ title: "Mise à jour échouée", description: deleteError.message, variant: "destructive" });
+        toast({
+          title: 'Mise à jour échouée',
+          description: deleteError.message,
+          variant: 'destructive',
+        });
         setLoading(false);
         return;
       }
@@ -144,21 +174,26 @@ export function ProfileForm({
       user_id: userData.user.id,
       discipline_id: Number(entry.disciplineId),
       skill_level_id: Number(entry.skillLevelId),
-      height_cm: heightValue,
-      weight_kg: weightValue,
     }));
 
     const { error: sportError } = await supabase
-      .from("user_sport_profiles")
-      .upsert(sportPayloads, { onConflict: "user_id,discipline_id" });
+      .from('user_sport_profiles')
+      .upsert(sportPayloads, { onConflict: 'user_id,discipline_id' });
 
     if (sportError) {
-      toast({ title: "Mise à jour échouée", description: sportError.message, variant: "destructive" });
+      toast({
+        title: 'Mise à jour échouée',
+        description: sportError.message,
+        variant: 'destructive',
+      });
       setLoading(false);
       return;
     }
 
-    toast({ title: "Profil mis à jour", description: "Tes infos sportives sont enregistrées." });
+    toast({
+      title: 'Profil mis à jour',
+      description: 'Tes infos sportives sont enregistrées.',
+    });
     setLoading(false);
   };
 
@@ -167,25 +202,42 @@ export function ProfileForm({
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="firstname">Prénom</Label>
-          <Input id="firstname" name="firstname" defaultValue={defaultValues.firstname ?? ""} />
+          <Input
+            id="firstname"
+            name="firstname"
+            defaultValue={defaultValues.firstname ?? ''}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="lastname">Nom</Label>
-          <Input id="lastname" name="lastname" defaultValue={defaultValues.lastname ?? ""} />
+          <Input
+            id="lastname"
+            name="lastname"
+            defaultValue={defaultValues.lastname ?? ''}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="nickname">Pseudo</Label>
-          <Input id="nickname" name="nickname" defaultValue={defaultValues.nickname ?? ""} />
+          <Input
+            id="nickname"
+            name="nickname"
+            defaultValue={defaultValues.nickname ?? ''}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="birthdate">Date de naissance</Label>
-          <Input id="birthdate" name="birthdate" type="date" defaultValue={defaultValues.birthdate ?? ""} />
+          <Input
+            id="birthdate"
+            name="birthdate"
+            type="date"
+            defaultValue={defaultValues.birthdate ?? ''}
+          />
         </div>
         <div className="space-y-2">
           <PlaceAutocomplete
             label="Ville"
             placeholder="Rechercher une ville"
-            defaultValue={defaultValues.city ?? ""}
+            defaultValue={defaultValues.city ?? ''}
             value={cityLabel}
             types="place"
             onQueryChange={(value) => setCityLabel(value)}
@@ -203,7 +255,7 @@ export function ProfileForm({
             id="languages"
             name="languages"
             placeholder="fr, en"
-            defaultValue={defaultValues.languages?.join(", ") ?? ""}
+            defaultValue={defaultValues.languages?.join(', ') ?? ''}
           />
         </div>
         <div className="space-y-2 md:col-span-2">
@@ -211,8 +263,8 @@ export function ProfileForm({
           <textarea
             id="bio"
             name="bio"
-            className="min-h-[120px] w-full rounded-[var(--radius)] border border-border bg-white px-3 py-2 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            defaultValue={defaultValues.bio ?? ""}
+            className="min-h-30 w-full rounded-(--radius) border border-border bg-white px-3 py-2 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            defaultValue={defaultValues.bio ?? ''}
           />
         </div>
       </div>
@@ -231,12 +283,12 @@ export function ProfileForm({
             }}
           />
           <div className="text-xs text-muted-foreground">
-            {heightTouched ? `${heightValue} cm` : "—"}
+            {heightTouched ? `${heightValue} cm` : '—'}
           </div>
           <input
             type="hidden"
             name="height_cm"
-            value={heightTouched ? String(heightValue) : ""}
+            value={heightTouched ? String(heightValue) : ''}
           />
         </div>
         <div className="space-y-2">
@@ -253,21 +305,30 @@ export function ProfileForm({
             }}
           />
           <div className="text-xs text-muted-foreground">
-            {weightTouched ? `${weightValue} kg` : "—"}
+            {weightTouched ? `${weightValue} kg` : '—'}
           </div>
           <input
             type="hidden"
             name="weight_kg"
-            value={weightTouched ? String(weightValue) : ""}
+            value={weightTouched ? String(weightValue) : ''}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="club">Club</Label>
-          <Input id="club" name="club" placeholder="Nom du club (optionnel)" defaultValue={defaultValues.club ?? ""} />
+          <Input
+            id="club"
+            name="club"
+            placeholder="Nom du club (optionnel)"
+            defaultValue={defaultValues.club ?? ''}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="dominant_hand">Main forte</Label>
-          <Select id="dominant_hand" name="dominant_hand" defaultValue={defaultValues.dominant_hand ?? ""}>
+          <Select
+            id="dominant_hand"
+            name="dominant_hand"
+            defaultValue={defaultValues.dominant_hand ?? ''}
+          >
             <SelectItem value="" disabled>
               Choisir
             </SelectItem>
@@ -280,7 +341,9 @@ export function ProfileForm({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-foreground">Disciplines & niveaux</div>
+            <div className="text-sm font-medium text-foreground">
+              Disciplines & niveaux
+            </div>
             <div className="text-xs text-muted-foreground">
               Ajoute toutes tes disciplines, chacune avec un niveau spécifique.
             </div>
@@ -291,10 +354,15 @@ export function ProfileForm({
         </div>
         <div className="space-y-3">
           {entries.map((entry, index) => (
-            <div key={`${entry.disciplineId}-${index}`} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+            <div
+              key={`${entry.disciplineId}-${index}`}
+              className="grid gap-3 md:grid-cols-[1fr_1fr_auto]"
+            >
               <Select
                 value={entry.disciplineId}
-                onChange={(event) => updateEntry(index, { disciplineId: event.target.value })}
+                onChange={(event) =>
+                  updateEntry(index, { disciplineId: event.target.value })
+                }
                 required
               >
                 <SelectItem value="" disabled>
@@ -308,7 +376,9 @@ export function ProfileForm({
               </Select>
               <Select
                 value={entry.skillLevelId}
-                onChange={(event) => updateEntry(index, { skillLevelId: event.target.value })}
+                onChange={(event) =>
+                  updateEntry(index, { skillLevelId: event.target.value })
+                }
                 required
               >
                 <SelectItem value="" disabled>
