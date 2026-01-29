@@ -24,6 +24,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q');
   const sessionToken = searchParams.get('session_token');
+  const types = searchParams.get('types');
 
   if (!query) {
     return NextResponse.json({ error: 'Missing query' }, { status: 400 });
@@ -51,6 +52,9 @@ export async function GET(request: Request) {
   url.searchParams.set('language', 'fr');
   url.searchParams.set('country', 'fr');
   url.searchParams.set('limit', '5');
+  if (types) {
+    url.searchParams.set('types', types);
+  }
 
   const response = await fetch(url.toString());
   if (!response.ok) {

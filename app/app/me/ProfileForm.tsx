@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectItem } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { PlaceAutocomplete, PlaceSuggestion } from "@/components/app/place-autocomplete";
+import { Slider } from "@/components/ui/slider";
 
 type Option = { id: number; name: string };
 type DisciplineEntry = { disciplineId: string; skillLevelId: string };
@@ -36,6 +38,7 @@ export function ProfileForm({
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(false);
+  const [cityLabel, setCityLabel] = React.useState(defaultValues.city ?? "");
   const [entries, setEntries] = React.useState<DisciplineEntry[]>(
     defaultValues.sportProfiles && defaultValues.sportProfiles.length > 0
       ? defaultValues.sportProfiles.map((profile) => ({
@@ -43,6 +46,16 @@ export function ProfileForm({
           skillLevelId: profile.skill_level_id ? String(profile.skill_level_id) : "",
         }))
       : [{ disciplineId: "", skillLevelId: "" }]
+  );
+  const hasHeightDefault = typeof defaultValues.height_cm === "number";
+  const hasWeightDefault = typeof defaultValues.weight_kg === "number";
+  const [heightTouched, setHeightTouched] = React.useState(hasHeightDefault);
+  const [weightTouched, setWeightTouched] = React.useState(hasWeightDefault);
+  const [heightValue, setHeightValue] = React.useState(() =>
+    typeof defaultValues.height_cm === "number" ? defaultValues.height_cm : 175
+  );
+  const [weightValue, setWeightValue] = React.useState(() =>
+    typeof defaultValues.weight_kg === "number" ? defaultValues.weight_kg : 70
   );
 
   const addEntry = () => {
@@ -169,8 +182,20 @@ export function ProfileForm({
           <Input id="birthdate" name="birthdate" type="date" defaultValue={defaultValues.birthdate ?? ""} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="city">Ville</Label>
-          <Input id="city" name="city" defaultValue={defaultValues.city ?? ""} />
+          <PlaceAutocomplete
+            label="Ville"
+            placeholder="Rechercher une ville"
+            defaultValue={defaultValues.city ?? ""}
+            value={cityLabel}
+            types="place"
+            onQueryChange={(value) => setCityLabel(value)}
+            onSelect={(place: PlaceSuggestion) => {
+              const label =
+                place.structured_formatting?.main_text ?? place.description;
+              setCityLabel(label);
+            }}
+          />
+          <input type="hidden" name="city" value={cityLabel} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="languages">Langues</Label>
@@ -194,11 +219,47 @@ export function ProfileForm({
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="height_cm">Taille (cm)</Label>
-          <Input id="height_cm" name="height_cm" type="number" defaultValue={defaultValues.height_cm ?? ""} />
+          <Slider
+            id="height_cm"
+            min={140}
+            max={210}
+            step={1}
+            value={[heightValue]}
+            onValueChange={(value) => {
+              setHeightValue(value[0] ?? 175);
+              setHeightTouched(true);
+            }}
+          />
+          <div className="text-xs text-muted-foreground">
+            {heightTouched ? `${heightValue} cm` : "—"}
+          </div>
+          <input
+            type="hidden"
+            name="height_cm"
+            value={heightTouched ? String(heightValue) : ""}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="weight_kg">Poids (kg)</Label>
-          <Input id="weight_kg" name="weight_kg" type="number" defaultValue={defaultValues.weight_kg ?? ""} />
+          <Slider
+            id="weight_kg"
+            min={30}
+            max={150}
+            step={1}
+            value={[weightValue]}
+            onValueChange={(value) => {
+              setWeightValue(value[0] ?? 70);
+              setWeightTouched(true);
+            }}
+          />
+          <div className="text-xs text-muted-foreground">
+            {weightTouched ? `${weightValue} kg` : "—"}
+          </div>
+          <input
+            type="hidden"
+            name="weight_kg"
+            value={weightTouched ? String(weightValue) : ""}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="club">Club</Label>

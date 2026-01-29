@@ -28,6 +28,7 @@ type PlaceAutocompleteProps = {
   required?: boolean;
   defaultValue?: string;
   value?: string;
+  types?: string;
   onSelect: (place: PlaceSuggestion) => void;
   onQueryChange?: (value: string) => void;
   containerClassName?: string;
@@ -43,6 +44,7 @@ export function PlaceAutocomplete({
   required,
   defaultValue,
   value,
+  types,
   onSelect,
   onQueryChange,
   containerClassName,
@@ -100,8 +102,14 @@ export function PlaceAutocomplete({
         const token = sessionToken ?? crypto.randomUUID();
         if (!sessionToken) setSessionToken(token);
 
+        const params = new URLSearchParams({
+          q: query,
+          session_token: token,
+        });
+        if (types) params.set('types', types);
+
         const response = await fetch(
-          `/api/mapbox/autocomplete?q=${encodeURIComponent(query)}&session_token=${encodeURIComponent(token)}`,
+          `/api/mapbox/autocomplete?${params.toString()}`,
           { signal: controller.signal },
         );
         if (!response.ok) {
