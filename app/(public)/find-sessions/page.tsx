@@ -19,6 +19,7 @@ type SessionWithDistance = {
   host_id: string | null;
   host_display_name: string | null;
   host_email: string | null;
+  distance_km?: number | null;
   distance: number | null;
 };
 
@@ -75,6 +76,10 @@ export default async function SessionsPage({
     typeof resolvedSearchParams?.place_lng === 'string'
       ? Number(resolvedSearchParams.place_lng)
       : null;
+  const radiusParam =
+    typeof resolvedSearchParams?.radius_km === 'string'
+      ? Number(resolvedSearchParams.radius_km)
+      : null;
   const searchCoords =
     typeof latParam === 'number' &&
     !Number.isNaN(latParam) &&
@@ -82,36 +87,60 @@ export default async function SessionsPage({
     !Number.isNaN(lngParam)
       ? { lat: latParam, lng: lngParam }
       : null;
+  const radiusKm =
+    typeof radiusParam === 'number' && !Number.isNaN(radiusParam)
+      ? radiusParam
+      : 25;
 
   const supabase = await createSupabaseServerClientReadOnly();
-  const { data: sessions, error } = await supabase
-    .from('session_listings')
-    .select(
-      'id, title, starts_at, place_name, city, place_lat, place_lng, is_boosted, disciplines, host_id, host_display_name, host_email',
-    )
-    .order('is_boosted', { ascending: false })
-    .order('starts_at', { ascending: true });
-  const safeSessions = (sessions ?? []).filter((session) => !!session?.id);
+  const { data: sessions, error } = searchCoords
+    ? await supabase.rpc('sessions_nearby', {
+        p_lat: searchCoords.lat,
+        p_lng: searchCoords.lng,
+        p_radius_km: radiusKm,
+      })
+    : await supabase
+        .from('session_listings')
+        .select(
+          'id, title, starts_at, place_name, city, place_lat, place_lng, is_boosted, disciplines, host_id, host_display_name, host_email',
+        )
+        .order('is_boosted', { ascending: false })
+        .order('starts_at', { ascending: true })
+        .limit(10);
+  const safeSessions = (sessions ?? []).filter(
+    (session: SessionWithDistance) => !!session?.id,
+  );
   const sessionsWithDistance: SessionWithDistance[] = safeSessions.map(
-    (session) => {
+    (session: SessionWithDistance) => {
       const lat = session.place_lat;
       const lng = session.place_lng;
       if (searchCoords && typeof lat === 'number' && typeof lng === 'number') {
+        const distance =
+          typeof session.distance_km === 'number'
+            ? session.distance_km
+            : distanceKm(searchCoords, { lat, lng });
         return {
           ...session,
-          distance: distanceKm(searchCoords, { lat, lng }),
+          distance,
         } as SessionWithDistance;
       }
       return { ...session, distance: null } as SessionWithDistance;
     },
   );
+  const filteredSessions =
+    searchCoords && typeof radiusKm === 'number'
+      ? sessionsWithDistance.filter(
+          (session) =>
+            typeof session.distance === 'number' && session.distance <= radiusKm,
+        )
+      : sessionsWithDistance;
   const sortedSessions = searchCoords
-    ? [...sessionsWithDistance].sort((a, b) => {
+    ? [...filteredSessions].sort((a, b) => {
         const aDist = a.distance ?? Number.POSITIVE_INFINITY;
         const bDist = b.distance ?? Number.POSITIVE_INFINITY;
         return aDist - bDist;
       })
-    : sessionsWithDistance;
+    : filteredSessions;
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 pb-20 pt-6">
       <section className="flex flex-col gap-6 rounded-4xl border border-slate-200/70 bg-white/85 p-8 shadow-sm">
@@ -153,7 +182,7 @@ export default async function SessionsPage({
             </CardContent>
           </Card>
         ) : (
-          sortedSessions.map((session) => {
+          sortedSessions.map((session: SessionWithDistance) => {
             const hostLabel = session.host_display_name || 'Combattant';
             const disciplineLabel = Array.isArray(session.disciplines)
               ? (session.disciplines
