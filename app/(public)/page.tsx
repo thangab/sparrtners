@@ -1,4 +1,5 @@
-import { SessionSearchForm } from '@/components/app/session-search-form';
+import { PlaceSearchInput } from '@/components/app/place-search-input';
+import { Button } from '@/components/ui/button';
 
 export default async function HomePage({
   searchParams,
@@ -20,15 +21,28 @@ export default async function HomePage({
             Trouve ton sparring partenaire près de chez toi
           </h1>
           <p className="max-w-xl text-lg text-slate-600">
-            Rejoins ou publie tes sessions d&apos;entraînement en quelques
-            clics.
+            Rejoins ou publie tes sessions d&apos;entraînement en un coup.
           </p>
-          <div className="max-w-3xl">
-            <SessionSearchForm
-              defaultLabel={defaultLabel}
+          <div className="max-w-5xl">
+            <form
+              method="get"
               action="/find-sessions"
-              defaultShowAdvanced={false}
-            />
+              className="flex flex-col gap-3 sm:flex-row"
+            >
+              <PlaceSearchInput
+                variant="compact"
+                placeholder="Où ?"
+                containerClassName="flex-1"
+                inputClassName="h-11 rounded-full bg-white"
+                defaultLabel={defaultLabel}
+              />
+              <Button
+                type="submit"
+                className="h-11 rounded-full bg-slate-900 px-6 text-white"
+              >
+                Rechercher
+              </Button>
+            </form>
           </div>
         </div>
       </section>

@@ -8,10 +8,12 @@ export default function PublicLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-[#f7f4ef] text-slate-900">
-      <div className="relative flex-1 overflow-hidden">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-100 via-[#f7f4ef] to-transparent" />
-        <div className="pointer-events-none absolute -left-24 top-24 h-64 w-64 rounded-full bg-emerald-200/50 blur-3xl" />
-        <div className="pointer-events-none absolute right-[-10%] top-0 h-72 w-72 rounded-full bg-amber-200/60 blur-3xl" />
+      <div className="relative flex-1">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-120 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-amber-100 via-[#f7f4ef] to-transparent" />
+          <div className="absolute -left-24 top-24 h-64 w-64 rounded-full bg-emerald-200/50 blur-3xl" />
+          <div className="absolute right-[-10%] top-0 h-72 w-72 rounded-full bg-amber-200/60 blur-3xl" />
+        </div>
         <header className="relative z-10">
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
             <Link className="transition hover:text-slate-900" href="/">

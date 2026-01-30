@@ -3,7 +3,8 @@ import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
-import { SessionSearchForm } from '@/components/app/session-search-form';
+import { SessionFiltersPanel } from '@/components/app/session-filters-panel';
+import { PlaceSearchInput } from '@/components/app/place-search-input';
 import { Button } from '@/components/ui/button';
 
 type SessionWithDistance = {
@@ -66,6 +67,32 @@ export default async function SessionsPage({
     typeof resolvedSearchParams?.radius_km === 'string'
       ? Number(resolvedSearchParams.radius_km)
       : null;
+  const heightMinParam =
+    typeof resolvedSearchParams?.height_min === 'string'
+      ? Number(resolvedSearchParams.height_min)
+      : null;
+  const heightMaxParam =
+    typeof resolvedSearchParams?.height_max === 'string'
+      ? Number(resolvedSearchParams.height_max)
+      : null;
+  const weightMinParam =
+    typeof resolvedSearchParams?.weight_min === 'string'
+      ? Number(resolvedSearchParams.weight_min)
+      : null;
+  const weightMaxParam =
+    typeof resolvedSearchParams?.weight_max === 'string'
+      ? Number(resolvedSearchParams.weight_max)
+      : null;
+  const dominantParam = resolvedSearchParams?.dominant_hand;
+  const disciplinesParam = resolvedSearchParams?.disciplines;
+  const dateStartParam =
+    typeof resolvedSearchParams?.date_start === 'string'
+      ? resolvedSearchParams.date_start
+      : undefined;
+  const dateEndParam =
+    typeof resolvedSearchParams?.date_end === 'string'
+      ? resolvedSearchParams.date_end
+      : undefined;
   const searchCoords =
     typeof latParam === 'number' &&
     !Number.isNaN(latParam) &&
@@ -77,6 +104,32 @@ export default async function SessionsPage({
     typeof radiusParam === 'number' && !Number.isNaN(radiusParam)
       ? radiusParam
       : 25;
+  const heightRange: [number, number] = [
+    typeof heightMinParam === 'number' && !Number.isNaN(heightMinParam)
+      ? heightMinParam
+      : 0,
+    typeof heightMaxParam === 'number' && !Number.isNaN(heightMaxParam)
+      ? heightMaxParam
+      : 250,
+  ];
+  const weightRange: [number, number] = [
+    typeof weightMinParam === 'number' && !Number.isNaN(weightMinParam)
+      ? weightMinParam
+      : 0,
+    typeof weightMaxParam === 'number' && !Number.isNaN(weightMaxParam)
+      ? weightMaxParam
+      : 200,
+  ];
+  const dominantHands = Array.isArray(dominantParam)
+    ? dominantParam
+    : dominantParam
+      ? [dominantParam]
+      : [];
+  const disciplines = Array.isArray(disciplinesParam)
+    ? disciplinesParam
+    : disciplinesParam
+      ? [disciplinesParam]
+      : [];
 
   const supabase = await createSupabaseServerClientReadOnly();
   const { data: sessions, error } = searchCoords
@@ -135,135 +188,159 @@ export default async function SessionsPage({
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 pb-20 pt-6">
-      <section className="flex flex-col gap-6 rounded-4xl border border-slate-200/70 bg-white/85 p-8 shadow-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
+      <form method="get" className="space-y-8">
+        <section className="flex flex-col gap-6 rounded-3xl border border-slate-200/70 bg-white/85 p-6 shadow-sm md:p-8">
+          <div className="space-y-4">
             <h1 className="text-3xl font-semibold text-slate-900">
               Trouve une session près de toi
             </h1>
-            <p className="text-slate-600">
-              Les prochaines sessions disponibles, triées par boost et date.
-            </p>
-          </div>
-        </div>
-        <SessionSearchForm
-          defaultLabel={defaultLabel}
-          defaultCoords={defaultCoords}
-          defaultShowAdvanced={true}
-        />
-      </section>
-
-      <section className="grid gap-4 grid-cols-1">
-        {error ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Erreur de chargement</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-slate-600">
-              Impossible de charger les sessions.
-            </CardContent>
-          </Card>
-        ) : safeSessions.length === 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Aucune session</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-slate-600">
-              Publie une session pour commencer à matcher avec d&apos;autres
-              sportifs.
-            </CardContent>
-          </Card>
-        ) : (
-          sortedSessions.map((session: SessionWithDistance) => {
-            const hostLabel = session.host_display_name || 'Combattant';
-            const disciplineLabel = Array.isArray(session.disciplines)
-              ? session.disciplines
-                  .map(
-                    (item: {
-                      discipline_name?: string;
-                      skill_level_name?: string;
-                    }) => {
-                      const name = item.discipline_name ?? 'Discipline';
-                      return item.skill_level_name
-                        ? `${name} - ${item.skill_level_name}`
-                        : name;
-                    },
-                  )
-                  .filter(Boolean)
-                  .join(' · ')
-              : '';
-
-            return (
-              <Card
-                key={session.id}
-                className="border-slate-200/70 bg-white/90"
+            <div className="flex flex-col gap-3 md:flex-row md:items-center">
+              <PlaceSearchInput
+                variant="compact"
+                placeholder="Où ?"
+                containerClassName="flex-1"
+                inputClassName="h-11 rounded-full bg-white"
+                defaultLabel={defaultLabel}
+                defaultCoords={defaultCoords}
+              />
+              <Button
+                type="submit"
+                className="h-11 rounded-full bg-slate-900 px-6 text-white"
               >
-                <div className="grid gap-6 p-6 md:grid-cols-[180px_1fr]">
-                  <div className="flex flex-col items-start gap-3">
-                    {session.host_avatar_url ? (
-                      <Image
-                        src={session.host_avatar_url}
-                        alt={hostLabel}
-                        width={56}
-                        height={56}
-                        className="h-14 w-14 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-14 w-14 rounded-full bg-slate-200" />
-                    )}
-                    <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                      Host
-                    </div>
-                    <Link
-                      target="_blank"
-                      href={`/profile/${session.host_id}`}
-                      className="font-medium text-slate-900 underline"
-                    >
-                      {hostLabel}
-                    </Link>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-xl">
-                        Session de {session.training_type_name ?? 'training'}
-                      </CardTitle>
-                      {session.is_boosted ? (
-                        <Badge className="bg-amber-200 text-amber-900 hover:bg-amber-200">
-                          Boostée
-                        </Badge>
-                      ) : null}
-                    </div>
-                    {disciplineLabel ? (
-                      <div className="text-sm text-slate-600">
-                        {disciplineLabel}
-                      </div>
-                    ) : null}
-                    {typeof session.distance === 'number' ? (
-                      <div>Distance: {formatDistanceKm(session.distance)}</div>
-                    ) : null}
-                    <div className="text-sm text-slate-600">
-                      Prévu le{' '}
-                      {new Date(session.starts_at).toLocaleString('fr-FR')}
-                    </div>
-                    <div className="text-sm text-slate-600">
-                      Lieu : {session.place_name}{' '}
-                      {session.city ? `· ${session.city}` : ''}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      asChild
-                      className="w-fit"
-                    >
-                      <Link href={`/sessions/${session.id}`}>Voir détail</Link>
-                    </Button>
-                  </div>
-                </div>
+                Rechercher
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <div className="grid gap-8 lg:grid-cols-[300px_1fr] lg:items-start">
+          <SessionFiltersPanel
+            radiusKm={radiusKm}
+            heightRange={heightRange}
+            weightRange={weightRange}
+            defaultDominantHands={dominantHands}
+            defaultDisciplines={disciplines}
+            defaultDateStart={dateStartParam}
+            defaultDateEnd={dateEndParam}
+          />
+          <section className="grid gap-4">
+            {error ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Erreur de chargement</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-slate-600">
+                  Impossible de charger les sessions.
+                </CardContent>
               </Card>
-            );
-          })
-        )}
-      </section>
+            ) : safeSessions.length === 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Aucune session</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-slate-600">
+                  Publie une session pour commencer à matcher avec d&apos;autres
+                  sportifs.
+                </CardContent>
+              </Card>
+            ) : (
+              sortedSessions.map((session: SessionWithDistance) => {
+                const hostLabel = session.host_display_name || 'Combattant';
+                const disciplineLabel = Array.isArray(session.disciplines)
+                  ? session.disciplines
+                      .map(
+                        (item: {
+                          discipline_name?: string;
+                          skill_level_name?: string;
+                        }) => {
+                          const name = item.discipline_name ?? 'Discipline';
+                          return item.skill_level_name
+                            ? `${name} - ${item.skill_level_name}`
+                            : name;
+                        },
+                      )
+                      .filter(Boolean)
+                      .join(' · ')
+                  : '';
+
+                return (
+                  <Card
+                    key={session.id}
+                    className="border-slate-200/70 bg-white/90"
+                  >
+                    <div className="grid gap-6 p-6 md:grid-cols-[160px_1fr]">
+                      <div className="flex flex-col items-start gap-3">
+                        {session.host_avatar_url ? (
+                          <Image
+                            src={session.host_avatar_url}
+                            alt={hostLabel}
+                            width={56}
+                            height={56}
+                            className="h-14 w-14 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-14 w-14 rounded-full bg-slate-200" />
+                        )}
+                        <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                          Host
+                        </div>
+                        <Link
+                          target="_blank"
+                          href={`/profile/${session.host_id}`}
+                          className="font-medium text-slate-900 underline"
+                        >
+                          {hostLabel}
+                        </Link>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-xl">
+                            Session de{' '}
+                            {session.training_type_name ?? 'training'}
+                          </CardTitle>
+                          {session.is_boosted ? (
+                            <Badge className="bg-amber-200 text-amber-900 hover:bg-amber-200">
+                              Boostée
+                            </Badge>
+                          ) : null}
+                        </div>
+                        {disciplineLabel ? (
+                          <div className="text-sm text-slate-600">
+                            {disciplineLabel}
+                          </div>
+                        ) : null}
+                        {typeof session.distance === 'number' ? (
+                          <div>
+                            Distance: {formatDistanceKm(session.distance)}
+                          </div>
+                        ) : null}
+                        <div className="text-sm text-slate-600">
+                          Prévu le{' '}
+                          {new Date(session.starts_at).toLocaleString('fr-FR')}
+                        </div>
+                        <div className="text-sm text-slate-600">
+                          Lieu : {session.place_name}{' '}
+                          {session.city ? `· ${session.city}` : ''}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          asChild
+                          className="w-fit"
+                        >
+                          <Link href={`/sessions/${session.id}`}>
+                            Voir détail
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })
+            )}
+          </section>
+        </div>
+      </form>
     </div>
   );
 }
