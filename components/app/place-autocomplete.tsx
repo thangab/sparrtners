@@ -58,10 +58,11 @@ export function PlaceAutocomplete({
   const [loading, setLoading] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const [suppressNextSearch, setSuppressNextSearch] = React.useState(false);
-  const [sessionToken, setSessionToken] = React.useState<string | null>(null);
   const [hasInteracted, setHasInteracted] = React.useState(false);
   const debounceRef = React.useRef<number | null>(null);
   const abortRef = React.useRef<AbortController | null>(null);
+  const sessionTokenRef = React.useRef<string | null>(null);
+  const cacheRef = React.useRef<Map<string, PlaceSuggestion[]>>(new Map());
 
   React.useEffect(() => {
     if (typeof value !== 'string') return;
@@ -80,16 +81,16 @@ export function PlaceAutocomplete({
     if (!query.trim()) {
       setSuggestions([]);
       setOpen(false);
-      setSessionToken(null);
       return;
     }
 
     if (debounceRef.current) {
       window.clearTimeout(debounceRef.current);
     }
-
-    if (!sessionToken) {
-      setSessionToken(crypto.randomUUID());
+    if (query.trim().length < 3) {
+      setSuggestions([]);
+      setOpen(false);
+      return;
     }
 
     debounceRef.current = window.setTimeout(async () => {
@@ -99,8 +100,18 @@ export function PlaceAutocomplete({
 
       setLoading(true);
       try {
-        const token = sessionToken ?? crypto.randomUUID();
-        if (!sessionToken) setSessionToken(token);
+        if (!sessionTokenRef.current) {
+          sessionTokenRef.current = crypto.randomUUID();
+        }
+        const token = sessionTokenRef.current;
+
+        const cacheKey = `${types ?? ''}:${query.trim().toLowerCase()}`;
+        const cached = cacheRef.current.get(cacheKey);
+        if (cached) {
+          setSuggestions(cached);
+          setOpen(true);
+          return;
+        }
 
         const params = new URLSearchParams({
           q: query,
@@ -127,6 +138,7 @@ export function PlaceAutocomplete({
             session_token: token,
           },
         }));
+        cacheRef.current.set(cacheKey, enriched);
         setSuggestions(enriched);
         setOpen(true);
       } catch (error) {
@@ -154,10 +166,13 @@ export function PlaceAutocomplete({
           <Input
             placeholder={placeholder}
             value={value ?? query}
-            onFocus={() => {
-              if (suggestions.length > 0) setOpen(true);
-              setHasInteracted(true);
-            }}
+          onFocus={() => {
+            if (suggestions.length > 0) setOpen(true);
+            setHasInteracted(true);
+            if (!sessionTokenRef.current) {
+              sessionTokenRef.current = crypto.randomUUID();
+            }
+          }}
             onChange={(event) => {
               const value = event.target.value;
               setQuery(value);
