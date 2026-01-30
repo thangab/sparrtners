@@ -119,13 +119,19 @@ export default async function SessionsPage({
             session.distance <= radiusKm,
         )
       : sessionsWithDistance;
-  const sortedSessions = searchCoords
+  const sortedByDistance = searchCoords
     ? [...filteredSessions].sort((a, b) => {
         const aDist = a.distance ?? Number.POSITIVE_INFINITY;
         const bDist = b.distance ?? Number.POSITIVE_INFINITY;
         return aDist - bDist;
       })
     : filteredSessions;
+  const sortedSessions = searchCoords
+    ? [
+        ...sortedByDistance.filter((session) => session.is_boosted),
+        ...sortedByDistance.filter((session) => !session.is_boosted),
+      ]
+    : sortedByDistance;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 pb-20 pt-6">
