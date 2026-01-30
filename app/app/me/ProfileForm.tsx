@@ -40,6 +40,7 @@ export function ProfileForm({
     club?: string | null;
     dominant_hand?: string | null;
     avatar_url?: string | null;
+    display_name?: string | null;
   };
 }) {
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
@@ -184,6 +185,7 @@ export function ProfileForm({
 
     const profilePayload = {
       id: userData.user.id,
+      display_name: String(formData.get('display_name') || '').trim() || null,
       firstname: String(formData.get('firstname') || '').trim() || null,
       lastname: String(formData.get('lastname') || '').trim() || null,
       nickname: String(formData.get('nickname') || '').trim() || null,
@@ -266,45 +268,56 @@ export function ProfileForm({
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="avatar">Photo de profil</Label>
-          <div className="flex flex-wrap items-center gap-4 rounded-(--radius) border border-border bg-white p-4">
-            <div className="h-16 w-16 overflow-hidden rounded-full border border-border bg-slate-100">
-              {avatarUrl ? (
-                <Image
-                  src={avatarUrl}
-                  alt="Avatar"
-                  width={56}
-                  height={56}
-                  className="h-full w-full  rounded-full object-cover"
+        <div className="grid gap-4 md:col-span-2 md:grid-cols-[auto_1fr]">
+          <div className="space-y-2">
+            <Label htmlFor="avatar">Photo de profil</Label>
+            <div className="flex flex-wrap items-center gap-4 rounded-(--radius) border border-border bg-white p-4">
+              <div className="h-16 w-16 overflow-hidden rounded-full border border-border bg-slate-100">
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt="Avatar"
+                    width={56}
+                    height={56}
+                    className="h-full w-full  rounded-full object-cover"
+                  />
+                ) : null}
+              </div>
+              <div className="flex flex-col gap-2">
+                <Input
+                  id="avatar"
+                  name="avatar"
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    if (file && file.size > 2 * 1024 * 1024) {
+                      toast({
+                        title: 'Image trop lourde',
+                        description: 'Taille max: 2 MB.',
+                        variant: 'destructive',
+                      });
+                      event.target.value = '';
+                      setAvatarFile(null);
+                      return;
+                    }
+                    setAvatarFile(file);
+                    if (file) {
+                      setAvatarUrl(URL.createObjectURL(file));
+                    }
+                  }}
                 />
-              ) : null}
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <Input
-                id="avatar"
-                name="avatar"
-                type="file"
-                accept="image/*"
-                onChange={(event) => {
-                  const file = event.target.files?.[0] ?? null;
-                  if (file && file.size > 2 * 1024 * 1024) {
-                    toast({
-                      title: 'Image trop lourde',
-                      description: 'Taille max: 2 MB.',
-                      variant: 'destructive',
-                    });
-                    event.target.value = '';
-                    setAvatarFile(null);
-                    return;
-                  }
-                  setAvatarFile(file);
-                  if (file) {
-                    setAvatarUrl(URL.createObjectURL(file));
-                  }
-                }}
-              />
-            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="display_name">Nom public</Label>
+            <Input
+              id="display_name"
+              name="display_name"
+              placeholder="Ex: Samira K."
+              defaultValue={defaultValues.display_name ?? ''}
+            />
           </div>
         </div>
         <div className="space-y-2">
