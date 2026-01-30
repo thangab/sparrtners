@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,7 @@ export default async function SessionDetailPage({
   const { data: listing } = await supabase
     .from('session_listings')
     .select(
-      'id, title, description, starts_at, host_id, host_display_name, host_email, training_type_name, place_name, city, is_boosted, disciplines',
+      'id, title, description, starts_at, host_id, host_display_name, host_email, host_avatar_url, training_type_name, place_name, city, is_boosted, disciplines',
     )
     .eq('id', id)
     .maybeSingle();
@@ -50,8 +51,15 @@ export default async function SessionDetailPage({
       </Card>
     );
   }
+  const { data: hostProfile } = await supabase
+    .from('profiles')
+    .select('display_name, city, club, dominant_hand, height_cm, weight_kg')
+    .eq('id', listing.host_id)
+    .maybeSingle();
+
   const isHost = user?.id === listing.host_id;
   const hostLabel =
+    hostProfile?.display_name ||
     listing.host_display_name ||
     listing.host_email ||
     (listing.host_id
@@ -103,34 +111,82 @@ export default async function SessionDetailPage({
         </Link>
       </div>
 
-      <Card className="border-slate-200/70 bg-white/90">
-        <CardHeader className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <CardTitle className="text-2xl">{sessionTitle}</CardTitle>
-            {isBoosted ? (
-              <Badge className="bg-amber-200 text-amber-900 hover:bg-amber-200">
-                Boostée
-              </Badge>
-            ) : null}
-          </div>
-          <div className="text-sm text-slate-600">
-            {disciplineLabels.length > 0
-              ? disciplineLabels.join(' · ')
-              : 'Disciplines'}{' '}
-            · {listing.training_type_name ?? 'Type'}
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-6 text-sm text-slate-600 md:grid-cols-[1.4fr_0.6fr]">
-          <div className="space-y-3">
-            <div>
-              Par{' '}
-              <Link
-                href={`/profile/${listing.host_id}`}
-                className="font-medium text-slate-900 underline"
-              >
-                {hostLabel}
-              </Link>
+      <div className="grid gap-6 md:grid-cols-[0.7fr_1.3fr]">
+        <Card className="border-slate-200/70 bg-white/90">
+          <CardHeader>
+            <CardTitle>Host</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm text-slate-600">
+            <div className="flex items-center gap-3">
+              {listing.host_avatar_url ? (
+                <Image
+                  src={listing.host_avatar_url}
+                  alt={hostLabel}
+                  width={56}
+                  height={56}
+                  className="h-14 w-14 rounded-full object-cover"
+                />
+              ) : (
+                <div className="h-14 w-14 rounded-full bg-slate-200" />
+              )}
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                  Profil
+                </div>
+                <Link
+                  href={`/profile/${listing.host_id}`}
+                  className="text-base font-medium text-slate-900 underline"
+                >
+                  {hostLabel}
+                </Link>
+              </div>
             </div>
+            <div className="grid gap-2 text-xs text-slate-500">
+              <div>Ville : {hostProfile?.city ?? 'Non renseigné'}</div>
+              <div>Club : {hostProfile?.club ?? 'Non renseigné'}</div>
+              <div>
+                Main forte :{' '}
+                {hostProfile?.dominant_hand
+                  ? hostProfile.dominant_hand === 'right'
+                    ? 'Droitier'
+                    : hostProfile.dominant_hand === 'left'
+                      ? 'Gaucher'
+                      : 'Les deux'
+                  : 'Non renseigné'}
+              </div>
+              <div>
+                Taille :{' '}
+                {hostProfile?.height_cm
+                  ? `${hostProfile.height_cm} cm`
+                  : 'Non renseigné'}
+              </div>
+              <div>
+                Poids :{' '}
+                {hostProfile?.weight_kg
+                  ? `${hostProfile.weight_kg} kg`
+                  : 'Non renseigné'}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200/70 bg-white/90">
+          <CardHeader className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <CardTitle className="text-2xl">{sessionTitle}</CardTitle>
+              {isBoosted ? (
+                <Badge className="bg-amber-200 text-amber-900 hover:bg-amber-200">
+                  Boostée
+                </Badge>
+              ) : null}
+            </div>
+            <div className="text-sm text-slate-600">
+              {disciplineLabels.length > 0
+                ? disciplineLabels.join(' · ')
+                : 'Disciplines'}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-slate-600">
             <div>{new Date(listing.starts_at).toLocaleString('fr-FR')}</div>
             <div>
               {listing.place_name ?? 'Lieu'}{' '}
@@ -139,9 +195,9 @@ export default async function SessionDetailPage({
             {listing.description ? (
               <p className="leading-relaxed">{listing.description}</p>
             ) : null}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="flex flex-wrap gap-3">
         {isHost ? (

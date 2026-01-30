@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import * as React from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ export function ProfileForm({
     bio?: string | null;
     club?: string | null;
     dominant_hand?: string | null;
+    avatar_url?: string | null;
   };
 }) {
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
@@ -64,6 +66,29 @@ export function ProfileForm({
   const [weightValue, setWeightValue] = React.useState(() =>
     typeof defaultValues.weight_kg === 'number' ? defaultValues.weight_kg : 70,
   );
+  const [avatarUrl, setAvatarUrl] = React.useState(
+    defaultValues.avatar_url ?? '',
+  );
+  const [storedAvatarUrl, setStoredAvatarUrl] = React.useState(
+    defaultValues.avatar_url ?? '',
+  );
+  const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
+  const [googleAvatarUrl, setGoogleAvatarUrl] = React.useState('');
+
+  React.useEffect(() => {
+    const loadUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      const meta = data.user?.user_metadata as
+        | { avatar_url?: string; picture?: string }
+        | undefined;
+      const googleUrl = meta?.avatar_url ?? meta?.picture ?? '';
+      if (!avatarUrl && googleUrl) {
+        setAvatarUrl(googleUrl);
+      }
+      setGoogleAvatarUrl(googleUrl);
+    };
+    void loadUser();
+  }, [avatarUrl, supabase]);
 
   const addEntry = () => {
     setEntries((current) => [
@@ -120,6 +145,43 @@ export function ProfileForm({
       return;
     }
 
+    let finalAvatarUrl = storedAvatarUrl || avatarUrl;
+    if (avatarFile && userData?.user) {
+      const fileExt = avatarFile.name.split('.').pop() || 'jpg';
+      const filePath = `${userData.user.id}/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, avatarFile, { upsert: true });
+      if (uploadError) {
+        toast({
+          title: 'Upload échoué',
+          description: uploadError.message,
+          variant: 'destructive',
+        });
+        setLoading(false);
+        return;
+      }
+
+      const { data: publicUrl } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+      finalAvatarUrl = publicUrl.publicUrl ?? '';
+
+      const baseUrl = supabase.storage.from('avatars').getPublicUrl('')
+        .data.publicUrl;
+      const publicPrefix = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+      if (
+        storedAvatarUrl &&
+        storedAvatarUrl.startsWith(publicPrefix) &&
+        storedAvatarUrl !== finalAvatarUrl
+      ) {
+        const previousPath = storedAvatarUrl.replace(publicPrefix, '');
+        if (previousPath) {
+          await supabase.storage.from('avatars').remove([previousPath]);
+        }
+      }
+    }
+
     const profilePayload = {
       id: userData.user.id,
       firstname: String(formData.get('firstname') || '').trim() || null,
@@ -133,6 +195,7 @@ export function ProfileForm({
       dominant_hand: String(formData.get('dominant_hand') || '').trim() || null,
       height_cm: heightRaw ? Number(heightRaw) : null,
       weight_kg: weightRaw ? Number(weightRaw) : null,
+      avatar_url: finalAvatarUrl || null,
     };
 
     const { error: profileError } = await supabase
@@ -147,6 +210,9 @@ export function ProfileForm({
       });
       setLoading(false);
       return;
+    }
+    if (finalAvatarUrl && finalAvatarUrl !== storedAvatarUrl) {
+      setStoredAvatarUrl(finalAvatarUrl);
     }
 
     const selectedDisciplineIds = selectedEntries.map((entry) =>
@@ -200,6 +266,47 @@ export function ProfileForm({
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
       <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="avatar">Photo de profil</Label>
+          <div className="flex flex-wrap items-center gap-4 rounded-(--radius) border border-border bg-white p-4">
+            <div className="h-16 w-16 overflow-hidden rounded-full border border-border bg-slate-100">
+              {avatarUrl ? (
+                <Image
+                  src={avatarUrl}
+                  alt="Avatar"
+                  width={56}
+                  height={56}
+                  className="h-full w-full  rounded-full object-cover"
+                />
+              ) : null}
+            </div>
+            <div className="flex flex-col gap-2">
+              <Input
+                id="avatar"
+                name="avatar"
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null;
+                  if (file && file.size > 2 * 1024 * 1024) {
+                    toast({
+                      title: 'Image trop lourde',
+                      description: 'Taille max: 2 MB.',
+                      variant: 'destructive',
+                    });
+                    event.target.value = '';
+                    setAvatarFile(null);
+                    return;
+                  }
+                  setAvatarFile(file);
+                  if (file) {
+                    setAvatarUrl(URL.createObjectURL(file));
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
         <div className="space-y-2">
           <Label htmlFor="firstname">Prénom</Label>
           <Input
