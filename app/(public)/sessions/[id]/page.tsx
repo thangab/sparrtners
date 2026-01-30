@@ -53,7 +53,7 @@ export default async function SessionDetailPage({
   }
   const { data: hostProfile } = await supabase
     .from('profiles')
-    .select('display_name, city, club, dominant_hand, height_cm, weight_kg')
+    .select('display_name, city, dominant_hand, height_cm, weight_kg')
     .eq('id', listing.host_id)
     .maybeSingle();
 
@@ -143,7 +143,6 @@ export default async function SessionDetailPage({
             </div>
             <div className="grid gap-2 text-xs text-slate-500">
               <div>Ville : {hostProfile?.city ?? 'Non renseigné'}</div>
-              <div>Club : {hostProfile?.club ?? 'Non renseigné'}</div>
               <div>
                 Main forte :{' '}
                 {hostProfile?.dominant_hand

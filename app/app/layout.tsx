@@ -20,7 +20,7 @@ export default async function AppLayout({
           <header className="flex items-center justify-between border-b border-border bg-background px-6 py-4">
             <div>
               <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Espace membre
+                Mon espace
               </div>
               <div className="text-lg font-semibold">
                 {user?.email ?? 'Sportif'}

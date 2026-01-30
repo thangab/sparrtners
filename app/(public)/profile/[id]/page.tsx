@@ -41,7 +41,7 @@ export default async function FighterProfilePage({
   const { data: profile } = await supabase
     .from('profiles')
     .select(
-      'display_name, city, created_at, bio, club, dominant_hand, height_cm, weight_kg',
+      'display_name, city, created_at, bio, club, dominant_hand, height_cm, weight_kg, gender',
     )
     .eq('id', id)
     .maybeSingle();
@@ -60,7 +60,6 @@ export default async function FighterProfilePage({
     .eq('host_id', id)
     .gt('starts_at', new Date().toISOString())
     .order('starts_at', { ascending: true });
-  console.log('profile', profile);
   const displayName = profile?.display_name ?? 'Non renseigné';
   const joinedLabel = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('fr-FR')
@@ -73,6 +72,14 @@ export default async function FighterProfilePage({
         ? 'Gaucher'
         : profile?.dominant_hand === 'both'
           ? 'Les deux'
+          : 'Non renseigné';
+  const genderLabel =
+    profile?.gender === 'female'
+      ? 'Femme'
+      : profile?.gender === 'male'
+        ? 'Homme'
+        : profile?.gender === 'other'
+          ? 'Autre'
           : 'Non renseigné';
 
   return (
@@ -96,6 +103,10 @@ export default async function FighterProfilePage({
             Infos
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm text-slate-700">
+            <div>
+              <div className="text-xs text-slate-500">Genre</div>
+              <div className="font-medium">{genderLabel}</div>
+            </div>
             {profile?.club?.trim() && (
               <div>
                 <div className="text-xs text-slate-500">Club</div>

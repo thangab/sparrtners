@@ -41,6 +41,7 @@ export function ProfileForm({
     dominant_hand?: string | null;
     avatar_url?: string | null;
     display_name?: string | null;
+    gender?: string | null;
   };
 }) {
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
@@ -186,6 +187,7 @@ export function ProfileForm({
     const profilePayload = {
       id: userData.user.id,
       display_name: String(formData.get('display_name') || '').trim() || null,
+      gender: String(formData.get('gender') || '').trim() || null,
       firstname: String(formData.get('firstname') || '').trim() || null,
       lastname: String(formData.get('lastname') || '').trim() || null,
       nickname: String(formData.get('nickname') || '').trim() || null,
@@ -343,6 +345,17 @@ export function ProfileForm({
             name="nickname"
             defaultValue={defaultValues.nickname ?? ''}
           />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="gender">Genre</Label>
+          <Select id="gender" name="gender" defaultValue={defaultValues.gender ?? ''}>
+            <SelectItem value="" disabled>
+              Choisir
+            </SelectItem>
+            <SelectItem value="female">Femme</SelectItem>
+            <SelectItem value="male">Homme</SelectItem>
+            <SelectItem value="other">Autre</SelectItem>
+          </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="birthdate">Date de naissance</Label>
