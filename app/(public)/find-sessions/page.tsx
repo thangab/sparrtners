@@ -39,60 +39,34 @@ export default async function SessionsPage({
     | Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const resolvedSearchParams = await Promise.resolve(searchParams);
-  const defaultLabel =
-    typeof resolvedSearchParams?.place_label === 'string'
-      ? resolvedSearchParams.place_label
-      : '';
-  const placeLatValue =
-    typeof resolvedSearchParams?.place_lat === 'string'
-      ? resolvedSearchParams.place_lat
-      : '';
-  const placeLngValue =
-    typeof resolvedSearchParams?.place_lng === 'string'
-      ? resolvedSearchParams.place_lng
-      : '';
+  const getNumberParam = (value?: string | string[]) => {
+    if (typeof value !== 'string') return null;
+    if (!value.trim()) return null;
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  };
+  const getStringParam = (value?: string | string[]) => {
+    if (typeof value !== 'string') return '';
+    return value.trim();
+  };
+  const defaultLabel = getStringParam(resolvedSearchParams?.place_label);
+  const placeLatValue = getNumberParam(resolvedSearchParams?.place_lat);
+  const placeLngValue = getNumberParam(resolvedSearchParams?.place_lng);
   const defaultCoords =
-    placeLatValue && placeLngValue
-      ? { lat: Number(placeLatValue), lng: Number(placeLngValue) }
+    typeof placeLatValue === 'number' && typeof placeLngValue === 'number'
+      ? { lat: placeLatValue, lng: placeLngValue }
       : null;
-  const latParam =
-    typeof resolvedSearchParams?.place_lat === 'string'
-      ? Number(resolvedSearchParams.place_lat)
-      : null;
-  const lngParam =
-    typeof resolvedSearchParams?.place_lng === 'string'
-      ? Number(resolvedSearchParams.place_lng)
-      : null;
-  const radiusParam =
-    typeof resolvedSearchParams?.radius_km === 'string'
-      ? Number(resolvedSearchParams.radius_km)
-      : null;
-  const heightMinParam =
-    typeof resolvedSearchParams?.height_min === 'string'
-      ? Number(resolvedSearchParams.height_min)
-      : null;
-  const heightMaxParam =
-    typeof resolvedSearchParams?.height_max === 'string'
-      ? Number(resolvedSearchParams.height_max)
-      : null;
-  const weightMinParam =
-    typeof resolvedSearchParams?.weight_min === 'string'
-      ? Number(resolvedSearchParams.weight_min)
-      : null;
-  const weightMaxParam =
-    typeof resolvedSearchParams?.weight_max === 'string'
-      ? Number(resolvedSearchParams.weight_max)
-      : null;
+  const latParam = placeLatValue;
+  const lngParam = placeLngValue;
+  const radiusParam = getNumberParam(resolvedSearchParams?.radius_km);
+  const heightMinParam = getNumberParam(resolvedSearchParams?.height_min);
+  const heightMaxParam = getNumberParam(resolvedSearchParams?.height_max);
+  const weightMinParam = getNumberParam(resolvedSearchParams?.weight_min);
+  const weightMaxParam = getNumberParam(resolvedSearchParams?.weight_max);
   const dominantParam = resolvedSearchParams?.dominant_hand;
   const disciplinesParam = resolvedSearchParams?.disciplines;
-  const dateStartParam =
-    typeof resolvedSearchParams?.date_start === 'string'
-      ? resolvedSearchParams.date_start
-      : undefined;
-  const dateEndParam =
-    typeof resolvedSearchParams?.date_end === 'string'
-      ? resolvedSearchParams.date_end
-      : undefined;
+  const dateStartParam = getStringParam(resolvedSearchParams?.date_start);
+  const dateEndParam = getStringParam(resolvedSearchParams?.date_end);
   const searchCoords =
     typeof latParam === 'number' &&
     !Number.isNaN(latParam) &&
