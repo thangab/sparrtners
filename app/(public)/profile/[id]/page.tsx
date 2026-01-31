@@ -39,7 +39,7 @@ export default async function FighterProfilePage({
 
   const supabase = await createSupabaseServerClientReadOnly();
   const { data: profile } = await supabase
-    .from('profiles')
+    .from('public_profiles')
     .select(
       'display_name, city, created_at, bio, club, dominant_hand, height_cm, weight_kg, gender',
     )
