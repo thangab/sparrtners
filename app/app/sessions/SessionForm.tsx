@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -78,6 +79,7 @@ export function SessionForm({
   const formRef = React.useRef<HTMLFormElement | null>(null);
   const showStep1 = !isCreate || step === 1;
   const showStep2 = !isCreate || step === 2;
+  const requireStep1 = !isCreate || showStep1;
   const [entries, setEntries] = React.useState<DisciplineEntry[]>(
     defaultValues?.disciplines && defaultValues.disciplines.length > 0
       ? defaultValues.disciplines.map((entry) => ({
@@ -92,6 +94,9 @@ export function SessionForm({
     defaultPlace ?? null,
   );
   const [placeLoading, setPlaceLoading] = React.useState(false);
+  const [descriptionText, setDescriptionText] = React.useState(
+    defaultValues?.description ?? '',
+  );
   const hasWeightDefaults =
     typeof defaultValues?.weight_min === 'number' ||
     typeof defaultValues?.weight_max === 'number';
@@ -254,6 +259,10 @@ export function SessionForm({
     setLoading(true);
 
     const formData = new FormData(form);
+    if (isCreate && !validateBasics(formData)) {
+      setLoading(false);
+      return;
+    }
     const startsAtValue = String(formData.get('starts_at'));
     const descriptionValue = String(formData.get('description') ?? '').trim();
     const toOptionalInt = (value: FormDataEntryValue | null) => {
@@ -524,7 +533,11 @@ export function SessionForm({
     <form className="space-y-6" onSubmit={handleSubmit} ref={formRef}>
       {isCreate ? (
         <div className="flex items-center gap-4 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm text-slate-600">
-          <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setStep(1)}
+            className="flex items-center gap-2"
+          >
             <span
               className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
                 step === 1
@@ -537,9 +550,13 @@ export function SessionForm({
             <span className={step === 1 ? 'text-slate-900' : ''}>
               Infos session
             </span>
-          </div>
+          </button>
           <div className="h-px flex-1 bg-slate-200" />
-          <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setStep(2)}
+            className="flex items-center gap-2"
+          >
             <span
               className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
                 step === 2
@@ -552,7 +569,7 @@ export function SessionForm({
             <span className={step === 2 ? 'text-slate-900' : ''}>
               Profil recherché
             </span>
-          </div>
+          </button>
         </div>
       ) : null}
       <div className={showStep1 ? 'space-y-6' : 'hidden'}>
@@ -561,7 +578,7 @@ export function SessionForm({
             <PlaceAutocomplete
               label="Lieu"
               placeholder="Recherche un lieu (ex: Gymnase, club, adresse)"
-              required
+              required={requireStep1}
               defaultValue={
                 defaultPlace
                   ? `${defaultPlace.name}${
@@ -600,7 +617,7 @@ export function SessionForm({
               name="starts_at"
               type="datetime-local"
               defaultValue={toLocalDateTimeInput(defaultValues?.starts_at)}
-              required
+              required={requireStep1}
             />
           </div>
         </div>
@@ -611,7 +628,7 @@ export function SessionForm({
             <Select
               id="training_type_id"
               name="training_type_id"
-              required
+              required={requireStep1}
               defaultValue={defaultValues?.training_type_id ?? 1}
             >
               <SelectItem value="" disabled>
@@ -632,7 +649,7 @@ export function SessionForm({
               type="number"
               min={1}
               defaultValue={defaultValues?.capacity ?? 1}
-              required
+              required={requireStep1}
             />
           </div>
         </div>
@@ -662,7 +679,7 @@ export function SessionForm({
                   onChange={(event) =>
                     updateEntry(index, { disciplineId: event.target.value })
                   }
-                  required
+                  required={requireStep1}
                 >
                   <SelectItem value="" disabled>
                     Discipline
@@ -678,7 +695,7 @@ export function SessionForm({
                   onChange={(event) =>
                     updateEntry(index, { skillLevelId: event.target.value })
                   }
-                  required
+                  required={requireStep1}
                 >
                   <SelectItem value="" disabled>
                     Niveau
@@ -701,142 +718,175 @@ export function SessionForm({
             ))}
           </div>
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="description_step1">Plus d&apos;infos</Label>
+          <Textarea
+            id="description_step1"
+            name="description"
+            value={descriptionText}
+            onChange={(event) => setDescriptionText(event.target.value)}
+          />
+        </div>
       </div>
 
       <div className={showStep2 ? 'space-y-3' : 'hidden'}>
-        <div>
-          <div className="text-sm font-medium text-foreground">
-            Profil recherché (optionnel)
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Renseigne des critères pour ton sparring partner.
-          </div>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="weight_range">Poids (kg)</Label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => setWeightTouched(false)}
-              >
-                Effacer
-              </Button>
+        <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr] md:items-start">
+          <div className="space-y-3">
+            <div>
+              <div className="text-sm font-medium text-foreground">
+                Profil recherché (optionnel)
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Renseigne des critères pour ton sparring partner.
+              </div>
             </div>
-            <Slider
-              id="weight_range"
-              min={30}
-              max={150}
-              step={1}
-              value={weightRange}
-              onValueChange={(value) => {
-                setWeightRange(value as [number, number]);
-                setWeightTouched(true);
-              }}
-            />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Min: {weightTouched ? weightRange[0] : '—'}</span>
-              <span>Max: {weightTouched ? weightRange[1] : '—'}</span>
+            <div className="grid gap-4 md:grid-cols-1">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="weight_range">Poids (kg)</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setWeightTouched(false)}
+                  >
+                    Effacer
+                  </Button>
+                </div>
+                <Slider
+                  id="weight_range"
+                  min={30}
+                  max={150}
+                  step={1}
+                  value={weightRange}
+                  onValueChange={(value) => {
+                    setWeightRange(value as [number, number]);
+                    setWeightTouched(true);
+                  }}
+                />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Min: {weightTouched ? weightRange[0] : '—'}</span>
+                  <span>Max: {weightTouched ? weightRange[1] : '—'}</span>
+                </div>
+                <input
+                  type="hidden"
+                  name="weight_min"
+                  value={weightTouched ? String(weightRange[0]) : ''}
+                />
+                <input
+                  type="hidden"
+                  name="weight_max"
+                  value={weightTouched ? String(weightRange[1]) : ''}
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="height_range">Taille (cm)</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setHeightTouched(false)}
+                  >
+                    Effacer
+                  </Button>
+                </div>
+                <Slider
+                  id="height_range"
+                  min={140}
+                  max={210}
+                  step={1}
+                  value={heightRange}
+                  onValueChange={(value) => {
+                    setHeightRange(value as [number, number]);
+                    setHeightTouched(true);
+                  }}
+                />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Min: {heightTouched ? heightRange[0] : '—'}</span>
+                  <span>Max: {heightTouched ? heightRange[1] : '—'}</span>
+                </div>
+                <input
+                  type="hidden"
+                  name="height_min"
+                  value={heightTouched ? String(heightRange[0]) : ''}
+                />
+                <input
+                  type="hidden"
+                  name="height_max"
+                  value={heightTouched ? String(heightRange[1]) : ''}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dominant_hand">Main forte</Label>
+                <Select
+                  id="dominant_hand"
+                  name="dominant_hand"
+                  defaultValue={defaultValues?.dominant_hand ?? ''}
+                >
+                  <SelectItem value="" disabled>
+                    Choisir
+                  </SelectItem>
+                  <SelectItem value="right">Droitier</SelectItem>
+                  <SelectItem value="left">Gaucher</SelectItem>
+                  <SelectItem value="both">Les deux</SelectItem>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="glove_size">Taille des gants</Label>
+                <Select
+                  id="glove_size"
+                  name="glove_size"
+                  defaultValue={defaultValues?.glove_size ?? ''}
+                >
+                  <SelectItem value="" disabled>
+                    Choisir
+                  </SelectItem>
+                  <SelectItem value="8oz">8 oz</SelectItem>
+                  <SelectItem value="10oz">10 oz</SelectItem>
+                  <SelectItem value="12oz">12 oz</SelectItem>
+                  <SelectItem value="14oz">14 oz</SelectItem>
+                  <SelectItem value="16oz">16 oz</SelectItem>
+                </Select>
+              </div>
             </div>
-            <input
-              type="hidden"
-              name="weight_min"
-              value={weightTouched ? String(weightRange[0]) : ''}
-            />
-            <input
-              type="hidden"
-              name="weight_max"
-              value={weightTouched ? String(weightRange[1]) : ''}
-            />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="height_range">Taille (cm)</Label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => setHeightTouched(false)}
-              >
-                Effacer
-              </Button>
+            <div className="space-y-2">
+              <Label htmlFor="description_step2">Plus d&apos;infos</Label>
+              <Textarea
+                id="description_step2"
+                name="description"
+                value={descriptionText}
+                onChange={(event) => setDescriptionText(event.target.value)}
+              />
             </div>
-            <Slider
-              id="height_range"
-              min={140}
-              max={210}
-              step={1}
-              value={heightRange}
-              onValueChange={(value) => {
-                setHeightRange(value as [number, number]);
-                setHeightTouched(true);
-              }}
-            />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Min: {heightTouched ? heightRange[0] : '—'}</span>
-              <span>Max: {heightTouched ? heightRange[1] : '—'}</span>
+          </div>
+          <div className="flex justify-center md:justify-end">
+            <div className="w-full max-w-xs">
+              <Image
+                src="/illustration-fighter.webp"
+                alt="Sparring"
+                width={420}
+                height={520}
+                className="h-auto w-full object-cover"
+              />
             </div>
-            <input
-              type="hidden"
-              name="height_min"
-              value={heightTouched ? String(heightRange[0]) : ''}
-            />
-            <input
-              type="hidden"
-              name="height_max"
-              value={heightTouched ? String(heightRange[1]) : ''}
-            />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="dominant_hand">Main forte</Label>
-            <Select
-              id="dominant_hand"
-              name="dominant_hand"
-              defaultValue={defaultValues?.dominant_hand ?? ''}
-            >
-              <SelectItem value="" disabled>
-                Choisir
-              </SelectItem>
-              <SelectItem value="right">Droitier</SelectItem>
-              <SelectItem value="left">Gaucher</SelectItem>
-              <SelectItem value="both">Les deux</SelectItem>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="glove_size">Taille des gants</Label>
-            <Select
-              id="glove_size"
-              name="glove_size"
-              defaultValue={defaultValues?.glove_size ?? ''}
-            >
-              <SelectItem value="" disabled>
-                Choisir
-              </SelectItem>
-              <SelectItem value="8oz">8 oz</SelectItem>
-              <SelectItem value="10oz">10 oz</SelectItem>
-              <SelectItem value="12oz">12 oz</SelectItem>
-              <SelectItem value="14oz">14 oz</SelectItem>
-              <SelectItem value="16oz">16 oz</SelectItem>
-            </Select>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="description">Plus dinfos</Label>
-          <Textarea
-            id="description"
-            name="description"
-            defaultValue={defaultValues?.description ?? ''}
-          />
         </div>
       </div>
 
       {isCreate ? (
         step === 1 ? (
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-3">
+            <Button
+              type="submit"
+              variant="ghost"
+              onClick={handleSkipOptional}
+              disabled={loading}
+            >
+              Ignorer l&apos;étape suivante et publier
+            </Button>
             <Button type="button" onClick={handleNextStep} disabled={loading}>
               Continuer
             </Button>
@@ -852,14 +902,6 @@ export function SessionForm({
               Retour
             </Button>
             <div className="flex flex-wrap gap-3">
-              <Button
-                type="submit"
-                variant="ghost"
-                onClick={handleSkipOptional}
-                disabled={loading}
-              >
-                Ignorer cette étape et publier
-              </Button>
               <Button type="submit" disabled={loading}>
                 Publier la session
               </Button>

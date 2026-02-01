@@ -76,6 +76,10 @@ export function ProfileForm({
   );
   const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
   const [googleAvatarUrl, setGoogleAvatarUrl] = React.useState('');
+  const [step, setStep] = React.useState(1);
+  const showStep1 = step === 1;
+  const showStep2 = step === 2;
+  const showStep3 = step === 3;
 
   React.useEffect(() => {
     const loadUser = async () => {
@@ -262,290 +266,383 @@ export function ProfileForm({
 
     toast({
       title: 'Profil mis à jour',
-      description: 'Tes infos sportives sont enregistrées.',
+      description: 'Tes infos sont enregistrées.',
     });
     setLoading(false);
   };
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
-      <p>Informations personnelles</p>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-4 md:col-span-2 md:grid-cols-[auto_1fr]">
-          <div className="space-y-2">
-            <Label htmlFor="avatar">Photo de profil</Label>
-            <div className="flex flex-wrap items-center gap-4 rounded-(--radius) border border-border bg-white p-4">
-              <div className="h-16 w-16 overflow-hidden rounded-full border border-border bg-slate-100">
-                {avatarUrl ? (
-                  <Image
-                    src={avatarUrl}
-                    alt="Avatar"
-                    width={56}
-                    height={56}
-                    className="h-full w-full  rounded-full object-cover"
+      <div className="flex items-center gap-4 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm text-slate-600">
+        <button
+          type="button"
+          onClick={() => setStep(1)}
+          className="flex items-center gap-2"
+        >
+          <span
+            className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+              step === 1
+                ? 'bg-slate-900 text-white'
+                : 'bg-slate-100 text-slate-500'
+            }`}
+          >
+            1
+          </span>
+          <span className={step === 1 ? 'text-slate-900' : ''}>
+            Infos perso
+          </span>
+        </button>
+        <div className="h-px flex-1 bg-slate-200" />
+        <button
+          type="button"
+          onClick={() => setStep(2)}
+          className="flex items-center gap-2"
+        >
+          <span
+            className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+              step === 2
+                ? 'bg-slate-900 text-white'
+                : 'bg-slate-100 text-slate-500'
+            }`}
+          >
+            2
+          </span>
+          <span className={step === 2 ? 'text-slate-900' : ''}>
+            Infos sportives
+          </span>
+        </button>
+        <div className="h-px flex-1 bg-slate-200" />
+        <button
+          type="button"
+          onClick={() => setStep(3)}
+          className="flex items-center gap-2"
+        >
+          <span
+            className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+              step === 3
+                ? 'bg-slate-900 text-white'
+                : 'bg-slate-100 text-slate-500'
+            }`}
+          >
+            3
+          </span>
+          <span className={step === 3 ? 'text-slate-900' : ''}>
+            Infos physiques
+          </span>
+        </button>
+      </div>
+      <div className={showStep1 ? 'space-y-6' : 'hidden'}>
+        <p>Informations personnelles</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:col-span-2 md:grid-cols-[auto_1fr]">
+            <div className="space-y-2">
+              <Label htmlFor="avatar">Photo de profil</Label>
+              <div className="flex flex-wrap items-center gap-4 rounded-(--radius) border border-border bg-white p-4">
+                <div className="h-16 w-16 overflow-hidden rounded-full border border-border bg-slate-100">
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt="Avatar"
+                      width={56}
+                      height={56}
+                      className="h-full w-full  rounded-full object-cover"
+                    />
+                  ) : null}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Input
+                    id="avatar"
+                    name="avatar"
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null;
+                      if (file && file.size > 2 * 1024 * 1024) {
+                        toast({
+                          title: 'Image trop lourde',
+                          description: 'Taille max: 2 MB.',
+                          variant: 'destructive',
+                        });
+                        event.target.value = '';
+                        setAvatarFile(null);
+                        return;
+                      }
+                      setAvatarFile(file);
+                      if (file) {
+                        setAvatarUrl(URL.createObjectURL(file));
+                      }
+                    }}
                   />
-                ) : null}
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <Input
-                  id="avatar"
-                  name="avatar"
-                  type="file"
-                  accept="image/*"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0] ?? null;
-                    if (file && file.size > 2 * 1024 * 1024) {
-                      toast({
-                        title: 'Image trop lourde',
-                        description: 'Taille max: 2 MB.',
-                        variant: 'destructive',
-                      });
-                      event.target.value = '';
-                      setAvatarFile(null);
-                      return;
-                    }
-                    setAvatarFile(file);
-                    if (file) {
-                      setAvatarUrl(URL.createObjectURL(file));
-                    }
-                  }}
-                />
-              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="display_name">Nom public</Label>
+              <Input
+                id="display_name"
+                name="display_name"
+                placeholder="Ex: Samira K."
+                defaultValue={defaultValues.display_name ?? ''}
+              />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="display_name">Nom public</Label>
+            <Label htmlFor="firstname">Prénom</Label>
             <Input
-              id="display_name"
-              name="display_name"
-              placeholder="Ex: Samira K."
-              defaultValue={defaultValues.display_name ?? ''}
+              id="firstname"
+              name="firstname"
+              defaultValue={defaultValues.firstname ?? ''}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lastname">Nom</Label>
+            <Input
+              id="lastname"
+              name="lastname"
+              defaultValue={defaultValues.lastname ?? ''}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="nickname">Pseudo</Label>
+            <Input
+              id="nickname"
+              name="nickname"
+              defaultValue={defaultValues.nickname ?? ''}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="gender">Genre</Label>
+            <Select
+              id="gender"
+              name="gender"
+              defaultValue={defaultValues.gender ?? ''}
+            >
+              <SelectItem value="" disabled>
+                Choisir
+              </SelectItem>
+              <SelectItem value="female">Femme</SelectItem>
+              <SelectItem value="male">Homme</SelectItem>
+              <SelectItem value="other">Autre</SelectItem>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="birthdate">Date de naissance</Label>
+            <Input
+              id="birthdate"
+              name="birthdate"
+              type="date"
+              defaultValue={defaultValues.birthdate ?? ''}
+            />
+          </div>
+          <div className="space-y-2">
+            <PlaceAutocomplete
+              label="Ville"
+              placeholder="Rechercher une ville"
+              defaultValue={defaultValues.city ?? ''}
+              value={cityLabel}
+              types="place"
+              onQueryChange={(value) => setCityLabel(value)}
+              onSelect={(place: PlaceSuggestion) => {
+                const label =
+                  place.structured_formatting?.main_text ?? place.description;
+                setCityLabel(label);
+              }}
+            />
+            <input type="hidden" name="city" value={cityLabel} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="languages">Langues</Label>
+            <Input
+              id="languages"
+              name="languages"
+              placeholder="fr, en"
+              defaultValue={defaultValues.languages?.join(', ') ?? ''}
             />
           </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="firstname">Prénom</Label>
-          <Input
-            id="firstname"
-            name="firstname"
-            defaultValue={defaultValues.firstname ?? ''}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="lastname">Nom</Label>
-          <Input
-            id="lastname"
-            name="lastname"
-            defaultValue={defaultValues.lastname ?? ''}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="nickname">Pseudo</Label>
-          <Input
-            id="nickname"
-            name="nickname"
-            defaultValue={defaultValues.nickname ?? ''}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="gender">Genre</Label>
-          <Select
-            id="gender"
-            name="gender"
-            defaultValue={defaultValues.gender ?? ''}
-          >
-            <SelectItem value="" disabled>
-              Choisir
-            </SelectItem>
-            <SelectItem value="female">Femme</SelectItem>
-            <SelectItem value="male">Homme</SelectItem>
-            <SelectItem value="other">Autre</SelectItem>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="birthdate">Date de naissance</Label>
-          <Input
-            id="birthdate"
-            name="birthdate"
-            type="date"
-            defaultValue={defaultValues.birthdate ?? ''}
-          />
-        </div>
-        <div className="space-y-2">
-          <PlaceAutocomplete
-            label="Ville"
-            placeholder="Rechercher une ville"
-            defaultValue={defaultValues.city ?? ''}
-            value={cityLabel}
-            types="place"
-            onQueryChange={(value) => setCityLabel(value)}
-            onSelect={(place: PlaceSuggestion) => {
-              const label =
-                place.structured_formatting?.main_text ?? place.description;
-              setCityLabel(label);
-            }}
-          />
-          <input type="hidden" name="city" value={cityLabel} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="languages">Langues</Label>
-          <Input
-            id="languages"
-            name="languages"
-            placeholder="fr, en"
-            defaultValue={defaultValues.languages?.join(', ') ?? ''}
-          />
+      </div>
+      <div className={showStep2 ? 'space-y-6' : 'hidden'}>
+        <p>Informations sportives</p>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="club">Club</Label>
+            <Input
+              id="club"
+              name="club"
+              placeholder="Nom du club (optionnel)"
+              defaultValue={defaultValues.club ?? ''}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-medium text-foreground">
+                Disciplines & niveaux
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Ajoute toutes tes disciplines, chacune avec un niveau
+                spécifique.
+              </div>
+            </div>
+            <Button type="button" variant="secondary" onClick={addEntry}>
+              Ajouter
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {entries.map((entry, index) => (
+              <div
+                key={`${entry.disciplineId}-${index}`}
+                className="grid gap-3 md:grid-cols-[1fr_1fr_auto]"
+              >
+                <Select
+                  value={entry.disciplineId}
+                  onChange={(event) =>
+                    updateEntry(index, { disciplineId: event.target.value })
+                  }
+                  required
+                >
+                  <SelectItem value="" disabled>
+                    Discipline
+                  </SelectItem>
+                  {disciplines.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </Select>
+                <Select
+                  value={entry.skillLevelId}
+                  onChange={(event) =>
+                    updateEntry(index, { skillLevelId: event.target.value })
+                  }
+                  required
+                >
+                  <SelectItem value="" disabled>
+                    Niveau
+                  </SelectItem>
+                  {skillLevels.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => removeEntry(index)}
+                  disabled={entries.length === 1}
+                >
+                  Retirer
+                </Button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-      <p>Informations sportives</p>
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="club">Club</Label>
-          <Input
-            id="club"
-            name="club"
-            placeholder="Nom du club (optionnel)"
-            defaultValue={defaultValues.club ?? ''}
-          />
-        </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-sm font-medium text-foreground">
-              Disciplines & niveaux
-            </div>
+      <div className={showStep3 ? 'space-y-6' : 'hidden'}>
+        <p>Informations physiques</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="height_cm">Taille (cm)</Label>
+            <Slider
+              id="height_cm"
+              min={140}
+              max={210}
+              step={1}
+              value={[heightValue]}
+              onValueChange={(value) => {
+                setHeightValue(value[0] ?? 175);
+                setHeightTouched(true);
+              }}
+            />
             <div className="text-xs text-muted-foreground">
-              Ajoute toutes tes disciplines, chacune avec un niveau spécifique.
+              {heightTouched ? `${heightValue} cm` : '—'}
             </div>
+            <input
+              type="hidden"
+              name="height_cm"
+              value={heightTouched ? String(heightValue) : ''}
+            />
           </div>
-          <Button type="button" variant="secondary" onClick={addEntry}>
-            Ajouter
-          </Button>
-        </div>
-        <div className="space-y-3">
-          {entries.map((entry, index) => (
-            <div
-              key={`${entry.disciplineId}-${index}`}
-              className="grid gap-3 md:grid-cols-[1fr_1fr_auto]"
+          <div className="space-y-2">
+            <Label htmlFor="weight_kg">Poids (kg)</Label>
+            <Slider
+              id="weight_kg"
+              min={30}
+              max={150}
+              step={1}
+              value={[weightValue]}
+              onValueChange={(value) => {
+                setWeightValue(value[0] ?? 70);
+                setWeightTouched(true);
+              }}
+            />
+            <div className="text-xs text-muted-foreground">
+              {weightTouched ? `${weightValue} kg` : '—'}
+            </div>
+            <input
+              type="hidden"
+              name="weight_kg"
+              value={weightTouched ? String(weightValue) : ''}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dominant_hand">Main forte</Label>
+            <Select
+              id="dominant_hand"
+              name="dominant_hand"
+              defaultValue={defaultValues.dominant_hand ?? ''}
             >
-              <Select
-                value={entry.disciplineId}
-                onChange={(event) =>
-                  updateEntry(index, { disciplineId: event.target.value })
-                }
-                required
-              >
-                <SelectItem value="" disabled>
-                  Discipline
-                </SelectItem>
-                {disciplines.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {item.name}
-                  </SelectItem>
-                ))}
-              </Select>
-              <Select
-                value={entry.skillLevelId}
-                onChange={(event) =>
-                  updateEntry(index, { skillLevelId: event.target.value })
-                }
-                required
-              >
-                <SelectItem value="" disabled>
-                  Niveau
-                </SelectItem>
-                {skillLevels.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {item.name}
-                  </SelectItem>
-                ))}
-              </Select>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => removeEntry(index)}
-                disabled={entries.length === 1}
-              >
-                Retirer
-              </Button>
-            </div>
-          ))}
-        </div>
-      </div>
-      <p>Informations physiques</p>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="height_cm">Taille (cm)</Label>
-          <Slider
-            id="height_cm"
-            min={140}
-            max={210}
-            step={1}
-            value={[heightValue]}
-            onValueChange={(value) => {
-              setHeightValue(value[0] ?? 175);
-              setHeightTouched(true);
-            }}
-          />
-          <div className="text-xs text-muted-foreground">
-            {heightTouched ? `${heightValue} cm` : '—'}
+              <SelectItem value="" disabled>
+                Choisir
+              </SelectItem>
+              <SelectItem value="right">Droitier</SelectItem>
+              <SelectItem value="left">Gaucher</SelectItem>
+              <SelectItem value="both">Les deux</SelectItem>
+            </Select>
           </div>
-          <input
-            type="hidden"
-            name="height_cm"
-            value={heightTouched ? String(heightValue) : ''}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="weight_kg">Poids (kg)</Label>
-          <Slider
-            id="weight_kg"
-            min={30}
-            max={150}
-            step={1}
-            value={[weightValue]}
-            onValueChange={(value) => {
-              setWeightValue(value[0] ?? 70);
-              setWeightTouched(true);
-            }}
-          />
-          <div className="text-xs text-muted-foreground">
-            {weightTouched ? `${weightValue} kg` : '—'}
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="bio">Plus d&apos;informations</Label>
+            <textarea
+              id="bio"
+              name="bio"
+              className="min-h-30 w-full rounded-(--radius) border border-border bg-white px-3 py-2 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              defaultValue={defaultValues.bio ?? ''}
+            />
           </div>
-          <input
-            type="hidden"
-            name="weight_kg"
-            value={weightTouched ? String(weightValue) : ''}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="dominant_hand">Main forte</Label>
-          <Select
-            id="dominant_hand"
-            name="dominant_hand"
-            defaultValue={defaultValues.dominant_hand ?? ''}
-          >
-            <SelectItem value="" disabled>
-              Choisir
-            </SelectItem>
-            <SelectItem value="right">Droitier</SelectItem>
-            <SelectItem value="left">Gaucher</SelectItem>
-            <SelectItem value="both">Les deux</SelectItem>
-          </Select>
-        </div>
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="bio">Bio</Label>
-          <textarea
-            id="bio"
-            name="bio"
-            className="min-h-30 w-full rounded-(--radius) border border-border bg-white px-3 py-2 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            defaultValue={defaultValues.bio ?? ''}
-          />
         </div>
       </div>
 
-      <Button type="submit" disabled={loading}>
-        Enregistrer
-      </Button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setStep((current) => Math.max(1, current - 1))}
+          disabled={step === 1}
+        >
+          Retour
+        </Button>
+        {step < 3 ? (
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              formNoValidate
+              onClick={(event) => {
+                event.preventDefault();
+                setStep((current) => current + 1);
+              }}
+            >
+              Etape suivante
+            </Button>
+            <Button type="submit" disabled={loading}>
+              Enregistrer
+            </Button>
+          </div>
+        ) : (
+          <Button type="submit" disabled={loading}>
+            Enregistrer
+          </Button>
+        )}
+      </div>
     </form>
   );
 }

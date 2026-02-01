@@ -59,7 +59,8 @@ export default async function FighterProfilePage({
     .select('id, starts_at, place_name, city, disciplines')
     .eq('host_id', id)
     .gt('starts_at', new Date().toISOString())
-    .order('starts_at', { ascending: true });
+    .order('starts_at', { ascending: true })
+    .limit(4);
   const displayName = profile?.display_name ?? 'Non renseigné';
   const joinedLabel = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('fr-FR')
@@ -84,7 +85,7 @@ export default async function FighterProfilePage({
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 pb-20 pt-6">
-      <section className="grid gap-6 rounded-4xl border border-slate-200/70 bg-white/90 p-8 shadow-sm md:grid-cols-[1.2fr_0.8fr]">
+      <section className="grid gap-6 rounded-(--radius) bg-white/90 p-8 md:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-4">
           <h1 className="text-3xl font-semibold text-slate-900">
             {displayName}
@@ -98,7 +99,7 @@ export default async function FighterProfilePage({
           </p>
           <p className="text-slate-600">{profile?.bio ? profile.bio : ''}</p>
         </div>
-        <div className="grid gap-3 rounded-3xl border border-slate-200/70 bg-slate-50/70 p-6">
+        <div className="grid gap-3 rounded-(--radius) bg-slate-200/70 p-6">
           <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
             Infos
           </div>
@@ -130,7 +131,7 @@ export default async function FighterProfilePage({
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <Card className="border-slate-200/70 bg-white/90">
+        <Card className="bg-white/90">
           <CardHeader>
             <CardTitle>Disciplines & niveaux</CardTitle>
           </CardHeader>
@@ -151,7 +152,7 @@ export default async function FighterProfilePage({
             )}
           </CardContent>
         </Card>
-        <Card className="border-slate-200/70 bg-white/90">
+        <Card className="bg-white/90">
           <CardHeader>
             <CardTitle>Sessions actives</CardTitle>
           </CardHeader>
