@@ -166,13 +166,13 @@ export function PlaceAutocomplete({
           <Input
             placeholder={placeholder}
             value={value ?? query}
-          onFocus={() => {
-            if (suggestions.length > 0) setOpen(true);
-            setHasInteracted(true);
-            if (!sessionTokenRef.current) {
-              sessionTokenRef.current = crypto.randomUUID();
-            }
-          }}
+            onFocus={() => {
+              if (suggestions.length > 0) setOpen(true);
+              setHasInteracted(true);
+              if (!sessionTokenRef.current) {
+                sessionTokenRef.current = crypto.randomUUID();
+              }
+            }}
             onChange={(event) => {
               const value = event.target.value;
               setQuery(value);
@@ -181,8 +181,13 @@ export function PlaceAutocomplete({
               setHasInteracted(true);
             }}
             required={required}
-            className={inputClassName}
+            className={`${inputClassName ?? ''} ${trailingElement ? 'pr-10' : ''}`.trim()}
           />
+          {trailingElement ? (
+            <div className="absolute right-1 top-1/2 -translate-y-1/2">
+              {trailingElement}
+            </div>
+          ) : null}
           {open && suggestions.length > 0 ? (
             <div
               className={`absolute z-20 mt-2 w-full rounded-2xl border border-slate-200 bg-white p-2 text-sm shadow-lg ${dropdownClassName ?? ''}`.trim()}
@@ -224,14 +229,11 @@ export function PlaceAutocomplete({
             </div>
           ) : null}
           {loading ? (
-            <div className="absolute right-3 top-3 text-xs text-slate-400">
+            <div className="absolute right-10 top-3 text-xs text-slate-400">
               Chargement...
             </div>
           ) : null}
         </div>
-        {trailingElement ? (
-          <div className="pt-0.5">{trailingElement}</div>
-        ) : null}
       </div>
     </div>
   );

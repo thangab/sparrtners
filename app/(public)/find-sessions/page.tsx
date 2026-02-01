@@ -6,6 +6,7 @@ import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
 import { SessionFiltersPanel } from '@/components/app/session-filters-panel';
 import { PlaceSearchInput } from '@/components/app/place-search-input';
 import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 
 type SessionWithDistance = {
   id: string;
@@ -161,27 +162,28 @@ export default async function SessionsPage({
     : sortedByDistance;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 pb-20 pt-6">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-2 md:px-6 pb-20 pt-6">
       <form method="get" className="space-y-8">
         <section className="flex flex-col gap-6 rounded-3xl border border-slate-200/70 bg-white/85 p-6 shadow-sm md:p-8">
           <div className="space-y-4">
             <h1 className="text-3xl font-semibold text-slate-900">
               Trouve une session près de toi
             </h1>
-            <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="flex flex-row items-stretch gap-0">
               <PlaceSearchInput
                 variant="compact"
                 placeholder="Où ?"
                 containerClassName="flex-1"
-                inputClassName="h-11 rounded-full bg-white"
+                inputClassName="h-11 rounded-full bg-white rounded-r-none"
                 defaultLabel={defaultLabel}
                 defaultCoords={defaultCoords}
               />
               <Button
                 type="submit"
-                className="h-11 rounded-full bg-slate-900 px-6 text-white"
+                className="h-11 rounded-full bg-slate-900 px-6 text-white rounded-l-none"
               >
-                Rechercher
+                <Search className="h-4 w-4 md:hidden" />
+                <span className="hidden md:flex">Rechercher</span>
               </Button>
             </div>
           </div>

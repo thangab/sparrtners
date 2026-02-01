@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { PlaceSearchInput } from '@/components/app/place-search-input';
 import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 
 type HomeSearchFormProps = {
   action?: string;
@@ -32,19 +33,20 @@ export function HomeSearchForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
+    <form onSubmit={handleSubmit} className="flex flex-row items-stretch gap-0">
       <PlaceSearchInput
         variant="compact"
         placeholder="Où ?"
         containerClassName="flex-1"
-        inputClassName="h-11 rounded-full bg-white"
+        inputClassName="h-11 rounded-full bg-white rounded-r-none"
         defaultLabel={defaultLabel}
       />
       <Button
         type="submit"
-        className="h-11 rounded-full bg-slate-900 px-6 text-white"
+        className="h-11 rounded-full bg-slate-900 px-6 text-white hover:bg-slate-800 rounded-l-none"
       >
-        Rechercher
+        <Search className="h-4 w-4 md:hidden" />
+        <span className="hidden md:flex">Rechercher</span>
       </Button>
     </form>
   );

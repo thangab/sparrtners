@@ -6,6 +6,7 @@ import {
   PlaceSuggestion,
 } from '@/components/app/place-autocomplete';
 import { Button } from '@/components/ui/button';
+import { Locate, LocateFixed } from 'lucide-react';
 
 type PlaceSearchInputProps = {
   label?: string;
@@ -87,13 +88,17 @@ export function PlaceSearchInput({
         value={labelValue}
         trailingElement={
           <Button
-            type="button"
-            variant="outline"
-            size="md"
+            variant="ghost"
             onClick={handleLocate}
+            aria-label="Me localiser"
             disabled={locating}
+            className=" hover:bg-white cursor-pointer"
           >
-            {locating ? 'Localisation...' : 'Me localiser'}
+            {locating ? (
+              <LocateFixed className="h-5 w-5" />
+            ) : (
+              <Locate className="h-5 w-5" />
+            )}
           </Button>
         }
         onQueryChange={(value) => {

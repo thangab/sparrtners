@@ -22,6 +22,7 @@ export default async function AppLayout({
     <div className="min-h-screen bg-background pt-16 text-foreground">
       <TopHeader
         user={{
+          id: user?.id ?? null,
           email: user?.email ?? null,
           displayName: profile?.display_name ?? null,
           avatarUrl: profile?.avatar_url ?? null,
@@ -29,10 +30,8 @@ export default async function AppLayout({
       />
       <div className="flex min-h-screen w-full">
         <div className="flex flex-1 flex-col">
-          <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
-            <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-              {children}
-            </div>
+          <main className="mx-auto w-full max-w-6xl flex-1 px-2 md:px-6 py-8">
+            {children}
           </main>
         </div>
       </div>

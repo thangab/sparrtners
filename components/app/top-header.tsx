@@ -9,10 +9,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LogoutButton } from '@/components/app/logout-button';
-import { ChevronDown, CirclePlus, CircleUserRound } from 'lucide-react';
+import { ChevronDown, CirclePlus, CircleUserRound, Search } from 'lucide-react';
 
 type TopHeaderProps = {
   user?: {
+    id?: string | null;
     email?: string | null;
     displayName?: string | null;
     avatarUrl?: string | null;
@@ -32,7 +33,9 @@ export function TopHeader({ user }: TopHeaderProps) {
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold uppercase tracking-wide text-white">
               Sp
             </div>
-            <div className="text-base font-semibold">Sparrtners</div>
+            <div className="hidden text-base font-semibold md:flex">
+              Sparrtners
+            </div>
           </div>
         </Link>
         <nav className="hidden items-center gap-5 text-sm font-medium text-slate-600 md:flex">
@@ -50,7 +53,10 @@ export function TopHeader({ user }: TopHeaderProps) {
             size="sm"
             className="hidden text-slate-600 md:inline-flex"
           >
-            <Link href="/find-sessions">Rechercher</Link>
+            <Link href="/find-sessions">
+              <Search className="flex h-4 w-4 md:hidden" />
+              <span className="hidden md:flex">Rechercher</span>
+            </Link>
           </Button>
           <Button
             asChild
@@ -58,8 +64,8 @@ export function TopHeader({ user }: TopHeaderProps) {
             className="bg-slate-900 text-white hover:bg-slate-800"
           >
             <Link href="/app/sessions/new">
-              <CirclePlus className="h-4 w-4 mr-2" />
-              Publier une session
+              <CirclePlus className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:flex">Publier une session</span>
             </Link>
           </Button>
           <DropdownMenu>
@@ -100,7 +106,7 @@ export function TopHeader({ user }: TopHeaderProps) {
                     <Link href="/app/sessions/requests">Mes sessions</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/app/me">Profil</Link>
+                    <Link href={`/profile/${user?.id}`}>Mon profil</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/app">Dashboard</Link>

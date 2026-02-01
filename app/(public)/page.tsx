@@ -13,7 +13,7 @@ export default async function HomePage({
       ? resolvedSearchParams.place_label
       : '';
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 pb-20 pt-10">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-2 md:px-6 pb-20 pt-10">
       <section className="grid gap-10 lg:items-center">
         <div className="space-y-6">
           <h1 className="text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">

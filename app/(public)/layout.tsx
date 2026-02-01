@@ -28,6 +28,7 @@ export default async function PublicLayout({
         </div>
         <TopHeader
           user={{
+            id: user?.id ?? null,
             email: user?.email ?? null,
             displayName: profile?.display_name ?? null,
             avatarUrl: profile?.avatar_url ?? null,
@@ -36,7 +37,7 @@ export default async function PublicLayout({
         <main className="relative z-10">{children}</main>
       </div>
       <footer className="mt-auto border-t border-slate-200/70 bg-white/70">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-8 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-2 md:px-6 py-8 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
           <div>
             © {new Date().getFullYear()} Sparrtners. Tous droits réservés.
           </div>
