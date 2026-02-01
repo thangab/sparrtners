@@ -31,7 +31,7 @@ export function SessionFiltersPanel(props: SessionFiltersPanelProps) {
       </div>
 
       <div
-        className={`fixed inset-0 z-40 transition lg:static lg:block lg:p-0 ${
+        className={`fixed inset-0 z-60 transition lg:static lg:block lg:p-0 ${
           open
             ? 'pointer-events-auto opacity-100'
             : 'pointer-events-none opacity-0 lg:pointer-events-auto lg:opacity-100'

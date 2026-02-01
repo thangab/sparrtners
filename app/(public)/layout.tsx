@@ -34,7 +34,7 @@ export default async function PublicLayout({
             avatarUrl: profile?.avatar_url ?? null,
           }}
         />
-        <main className="relative z-10">{children}</main>
+        <main className="relative">{children}</main>
       </div>
       <footer className="mt-auto border-t border-slate-200/70 bg-white/70">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-2 md:px-6 py-8 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
