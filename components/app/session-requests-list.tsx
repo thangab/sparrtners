@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -138,7 +139,14 @@ export function SessionRequestsList({ requests }: SessionRequestsListProps) {
             className="flex flex-col gap-2 rounded-2xl border border-border bg-slate-50 p-3 text-sm"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="font-medium text-foreground">{requesterName}</div>
+              <div className="font-medium text-foreground">
+                <Link
+                  href={`/profile/${request.user_id}`}
+                  className="hover:underline"
+                >
+                  {requesterName}
+                </Link>
+              </div>
               <Badge variant="outline">{request.status}</Badge>
             </div>
             <div className="text-xs text-muted-foreground">

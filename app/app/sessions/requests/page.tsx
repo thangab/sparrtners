@@ -39,6 +39,7 @@ type MyRequestRow = {
   created_at: string;
   participant_count: number;
   session: RequestedSessionRow | RequestedSessionRow[] | null;
+  host_display_name?: string | null;
 };
 
 type RequesterProfile = {
@@ -141,6 +142,22 @@ export default async function RequestsPage() {
   const requesterMap = new Map(
     (requesterProfiles ?? []).map((profile) => [profile.id, profile]),
   );
+  const hostIds = Array.from(
+    new Set(
+      (myRequests ?? [])
+        .map((item) => normalizeOne(item.session)?.host_id)
+        .filter(Boolean),
+    ),
+  ) as string[];
+  const { data: hostProfiles } = hostIds.length
+    ? await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', hostIds)
+    : { data: [] as Array<{ id: string; display_name: string | null }> };
+  const hostMap = new Map(
+    (hostProfiles ?? []).map((profile) => [profile.id, profile]),
+  );
 
   const createdItems = (createdSessions ?? []).map((session) => ({
     type: 'host' as const,
@@ -183,6 +200,8 @@ export default async function RequestsPage() {
             .sort()
             .join(':')}`,
         ),
+        host_display_name:
+          hostMap.get(item.session!.host_id)?.display_name ?? null,
       },
     }));
 
@@ -293,6 +312,17 @@ export default async function RequestsPage() {
                           {item.myRequest.participant_count ?? 1} participant(s)
                         </span>
                       </div>
+                      {requestSession?.host_id ? (
+                        <div className="text-sm text-muted-foreground">
+                          Hôte:{' '}
+                          <Link
+                            href={`/profile/${requestSession.host_id}`}
+                            className="text-foreground hover:underline"
+                          >
+                            {item.myRequest.host_display_name ?? 'Voir le profil'}
+                          </Link>
+                        </div>
+                      ) : null}
 
                       {item.myRequest.status === 'accepted' &&
                       requestSession?.host_id ? (
