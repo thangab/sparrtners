@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { createSupabaseServerClientReadOnly } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SessionForm } from "@/app/app/sessions/SessionForm";
+import Link from 'next/link';
+import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SessionForm } from '@/app/app/sessions/SessionForm';
 
 export default async function EditSessionPage({
   params,
@@ -28,9 +28,11 @@ export default async function EditSessionPage({
   } = await supabase.auth.getUser();
 
   const { data: session } = await supabase
-    .from("sessions")
-    .select("id, title, description, training_type_id, place_id, starts_at, capacity, host_id, weight_min, weight_max, height_min, height_max, dominant_hand, glove_size")
-    .eq("id", sessionId)
+    .from('sessions')
+    .select(
+      'id, title, description, training_type_id, place_id, starts_at, capacity, host_id, weight_min, weight_max, height_min, height_max, dominant_hand, glove_size',
+    )
+    .eq('id', sessionId)
     .maybeSingle();
 
   if (!session || session.host_id !== user?.id) {
@@ -45,31 +47,30 @@ export default async function EditSessionPage({
   }
 
   const { data: sessionDisciplines } = await supabase
-    .from("session_disciplines")
-    .select("discipline_id, skill_level_id")
-    .eq("session_id", session.id)
-    .order("discipline_id", { ascending: true });
+    .from('session_disciplines')
+    .select('discipline_id, skill_level_id')
+    .eq('session_id', session.id)
+    .order('discipline_id', { ascending: true });
 
   const { data: disciplines } = await supabase
-    .from("disciplines")
-    .select("id, name")
-    .order("name");
+    .from('disciplines')
+    .select('id, name')
+    .order('name');
   const { data: skillLevels } = await supabase
-    .from("skill_levels")
-    .select("id, name")
-    .order("id");
+    .from('skill_levels')
+    .select('id, name')
+    .order('id');
   const { data: trainingTypes } = await supabase
-    .from("training_types")
-    .select("id, name")
-    .order("name");
-  const { data: place } =
-    session.place_id
-      ? await supabase
-          .from("places")
-          .select("id, name, address, city")
-          .eq("id", session.place_id)
-          .maybeSingle()
-      : { data: null };
+    .from('training_types')
+    .select('id, name')
+    .order('id');
+  const { data: place } = session.place_id
+    ? await supabase
+        .from('places')
+        .select('id, name, address, city')
+        .eq('id', session.place_id)
+        .maybeSingle()
+    : { data: null };
 
   return (
     <div className="space-y-4">

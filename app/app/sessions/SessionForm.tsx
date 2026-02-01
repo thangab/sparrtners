@@ -73,6 +73,11 @@ export function SessionForm({
   const { toast } = useToast();
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
   const [loading, setLoading] = React.useState(false);
+  const isCreate = mode === 'create';
+  const [step, setStep] = React.useState(isCreate ? 1 : 1);
+  const formRef = React.useRef<HTMLFormElement | null>(null);
+  const showStep1 = !isCreate || step === 1;
+  const showStep2 = !isCreate || step === 2;
   const [entries, setEntries] = React.useState<DisciplineEntry[]>(
     defaultValues?.disciplines && defaultValues.disciplines.length > 0
       ? defaultValues.disciplines.map((entry) => ({
@@ -186,11 +191,69 @@ export function SessionForm({
     );
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const validateBasics = (formData: FormData) => {
+    const startsAtValue = String(formData.get('starts_at') ?? '').trim();
+    const trainingTypeValue = String(formData.get('training_type_id') ?? '');
+    const capacityValue = String(formData.get('capacity') ?? '');
+    const selectedEntries = entries.filter(
+      (entry) => entry.disciplineId && entry.skillLevelId,
+    );
+
+    if (selectedEntries.length === 0) {
+      toast({
+        title: 'Discipline requise',
+        description: 'Ajoute au moins une discipline avec un niveau.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    if (!selectedPlace?.id) {
+      toast({
+        title: 'Lieu requis',
+        description: 'Choisis un lieu via la recherche.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    if (!startsAtValue) {
+      toast({
+        title: 'Date requise',
+        description: 'Choisis la date et l’heure de la session.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    if (!trainingTypeValue) {
+      toast({
+        title: "Type d'entraînement requis",
+        description: "Choisis un type d'entraînement.",
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    if (!capacityValue) {
+      toast({
+        title: 'Capacité requise',
+        description: 'Indique la capacité de la session.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const submitSession = async (
+    form: HTMLFormElement,
+    options?: { skipOptional?: boolean },
+  ) => {
     setLoading(true);
 
-    const formData = new FormData(event.currentTarget);
+    const formData = new FormData(form);
     const startsAtValue = String(formData.get('starts_at'));
     const descriptionValue = String(formData.get('description') ?? '').trim();
     const toOptionalInt = (value: FormDataEntryValue | null) => {
@@ -200,13 +263,24 @@ export function SessionForm({
       const parsed = Number.parseInt(trimmed, 10);
       return Number.isNaN(parsed) ? null : parsed;
     };
-    const weightMin = toOptionalInt(formData.get('weight_min'));
-    const weightMax = toOptionalInt(formData.get('weight_max'));
-    const heightMin = toOptionalInt(formData.get('height_min'));
-    const heightMax = toOptionalInt(formData.get('height_max'));
-    const dominantHand =
-      String(formData.get('dominant_hand') ?? '').trim() || null;
-    const gloveSize = String(formData.get('glove_size') ?? '').trim() || null;
+    const weightMin = options?.skipOptional
+      ? null
+      : toOptionalInt(formData.get('weight_min'));
+    const weightMax = options?.skipOptional
+      ? null
+      : toOptionalInt(formData.get('weight_max'));
+    const heightMin = options?.skipOptional
+      ? null
+      : toOptionalInt(formData.get('height_min'));
+    const heightMax = options?.skipOptional
+      ? null
+      : toOptionalInt(formData.get('height_max'));
+    const dominantHand = options?.skipOptional
+      ? null
+      : String(formData.get('dominant_hand') ?? '').trim() || null;
+    const gloveSize = options?.skipOptional
+      ? null
+      : String(formData.get('glove_size') ?? '').trim() || null;
 
     const selectedEntries = entries.filter(
       (entry) => entry.disciplineId && entry.skillLevelId,
@@ -425,46 +499,100 @@ export function SessionForm({
     router.push('/app/sessions/requests');
   };
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await submitSession(event.currentTarget);
+  };
+
+  const handleNextStep = () => {
+    const form = formRef.current;
+    if (!form) return;
+    const formData = new FormData(form);
+    if (!validateBasics(formData)) return;
+    setStep(2);
+  };
+
+  const handleSkipOptional = async () => {
+    const form = formRef.current;
+    if (!form) return;
+    const formData = new FormData(form);
+    if (!validateBasics(formData)) return;
+    await submitSession(form, { skipOptional: true });
+  };
+
   return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2 md:col-span-2">
-          <PlaceAutocomplete
-            label="Lieu"
-            placeholder="Recherche un lieu (ex: Gymnase, club, adresse)"
-            required
-            defaultValue={
-              defaultPlace
-                ? `${defaultPlace.name}${
-                    defaultPlace.city ? ` · ${defaultPlace.city}` : ''
-                  }`
-                : ''
-            }
-            onSelect={handlePlaceSelect}
-            onQueryChange={() => {
-              if (selectedPlace) {
-                setSelectedPlace(null);
-              }
-            }}
-          />
-          <input
-            type="hidden"
-            name="place_id"
-            value={selectedPlace?.id ?? ''}
-          />
-          {selectedPlace ? (
-            <div className="text-xs text-muted-foreground">
-              {selectedPlace.address ??
-                selectedPlace.city ??
-                'Lieu sélectionné'}
-            </div>
-          ) : placeLoading ? (
-            <div className="text-xs text-muted-foreground">
-              Vérification du lieu...
-            </div>
-          ) : null}
+    <form className="space-y-6" onSubmit={handleSubmit} ref={formRef}>
+      {isCreate ? (
+        <div className="flex items-center gap-4 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm text-slate-600">
+          <div className="flex items-center gap-2">
+            <span
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+                step === 1
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-slate-100 text-slate-500'
+              }`}
+            >
+              1
+            </span>
+            <span className={step === 1 ? 'text-slate-900' : ''}>
+              Infos session
+            </span>
+          </div>
+          <div className="h-px flex-1 bg-slate-200" />
+          <div className="flex items-center gap-2">
+            <span
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+                step === 2
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-slate-100 text-slate-500'
+              }`}
+            >
+              2
+            </span>
+            <span className={step === 2 ? 'text-slate-900' : ''}>
+              Profil recherché
+            </span>
+          </div>
         </div>
-        <div className="grid gap-4 md:col-span-2 md:grid-cols-3">
+      ) : null}
+      <div className={showStep1 ? 'space-y-6' : 'hidden'}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <PlaceAutocomplete
+              label="Lieu"
+              placeholder="Recherche un lieu (ex: Gymnase, club, adresse)"
+              required
+              defaultValue={
+                defaultPlace
+                  ? `${defaultPlace.name}${
+                      defaultPlace.city ? ` · ${defaultPlace.city}` : ''
+                    }`
+                  : ''
+              }
+              onSelect={handlePlaceSelect}
+              onQueryChange={() => {
+                if (selectedPlace) {
+                  setSelectedPlace(null);
+                }
+              }}
+            />
+            <input
+              type="hidden"
+              name="place_id"
+              value={selectedPlace?.id ?? ''}
+            />
+            {selectedPlace ? (
+              <div className="text-xs text-muted-foreground">
+                {selectedPlace.address ??
+                  selectedPlace.city ??
+                  'Lieu sélectionné'}
+              </div>
+            ) : placeLoading ? (
+              <div className="text-xs text-muted-foreground">
+                Vérification du lieu...
+              </div>
+            ) : null}
+          </div>
           <div className="space-y-2">
             <Label htmlFor="starts_at">Date et heure</Label>
             <Input
@@ -475,13 +603,16 @@ export function SessionForm({
               required
             />
           </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="training_type_id">Type dentraînement</Label>
             <Select
               id="training_type_id"
               name="training_type_id"
               required
-              defaultValue={defaultValues?.training_type_id ?? ''}
+              defaultValue={defaultValues?.training_type_id ?? 1}
             >
               <SelectItem value="" disabled>
                 Choisir
@@ -500,79 +631,79 @@ export function SessionForm({
               name="capacity"
               type="number"
               min={1}
-              defaultValue={defaultValues?.capacity ?? 2}
+              defaultValue={defaultValues?.capacity ?? 1}
               required
             />
           </div>
         </div>
-      </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-sm font-medium text-foreground">
-              Disciplines & niveaux
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-medium text-foreground">
+                Disciplines & niveaux
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Tu peux proposer plusieurs disciplines dans une même session.
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground">
-              Tu peux proposer plusieurs disciplines dans une même session.
-            </div>
+            <Button type="button" variant="secondary" onClick={addEntry}>
+              Ajouter
+            </Button>
           </div>
-          <Button type="button" variant="secondary" onClick={addEntry}>
-            Ajouter
-          </Button>
-        </div>
-        <div className="space-y-3">
-          {entries.map((entry, index) => (
-            <div
-              key={`${entry.disciplineId}-${index}`}
-              className="grid gap-3 md:grid-cols-[1fr_1fr_auto]"
-            >
-              <Select
-                value={entry.disciplineId}
-                onChange={(event) =>
-                  updateEntry(index, { disciplineId: event.target.value })
-                }
-                required
+          <div className="space-y-3">
+            {entries.map((entry, index) => (
+              <div
+                key={`${entry.disciplineId}-${index}`}
+                className="grid gap-3 md:grid-cols-[1fr_1fr_auto]"
               >
-                <SelectItem value="" disabled>
-                  Discipline
-                </SelectItem>
-                {disciplines.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {item.name}
+                <Select
+                  value={entry.disciplineId}
+                  onChange={(event) =>
+                    updateEntry(index, { disciplineId: event.target.value })
+                  }
+                  required
+                >
+                  <SelectItem value="" disabled>
+                    Discipline
                   </SelectItem>
-                ))}
-              </Select>
-              <Select
-                value={entry.skillLevelId}
-                onChange={(event) =>
-                  updateEntry(index, { skillLevelId: event.target.value })
-                }
-                required
-              >
-                <SelectItem value="" disabled>
-                  Niveau
-                </SelectItem>
-                {skillLevels.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {item.name}
+                  {disciplines.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </Select>
+                <Select
+                  value={entry.skillLevelId}
+                  onChange={(event) =>
+                    updateEntry(index, { skillLevelId: event.target.value })
+                  }
+                  required
+                >
+                  <SelectItem value="" disabled>
+                    Niveau
                   </SelectItem>
-                ))}
-              </Select>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => removeEntry(index)}
-                disabled={entries.length === 1}
-              >
-                Retirer
-              </Button>
-            </div>
-          ))}
+                  {skillLevels.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => removeEntry(index)}
+                  disabled={entries.length === 1}
+                >
+                  Retirer
+                </Button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className={showStep2 ? 'space-y-3' : 'hidden'}>
         <div>
           <div className="text-sm font-medium text-foreground">
             Profil recherché (optionnel)
@@ -693,19 +824,53 @@ export function SessionForm({
             </Select>
           </div>
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="description">Plus dinfos</Label>
+          <Textarea
+            id="description"
+            name="description"
+            defaultValue={defaultValues?.description ?? ''}
+          />
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Plus dinfos</Label>
-        <Textarea
-          id="description"
-          name="description"
-          defaultValue={defaultValues?.description ?? ''}
-        />
-      </div>
-      <Button type="submit" disabled={loading}>
-        {mode === 'create' ? 'Publier la session' : 'Mettre à jour'}
-      </Button>
+      {isCreate ? (
+        step === 1 ? (
+          <div className="flex justify-end">
+            <Button type="button" onClick={handleNextStep} disabled={loading}>
+              Continuer
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap justify-between gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep(1)}
+              disabled={loading}
+            >
+              Retour
+            </Button>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                type="submit"
+                variant="ghost"
+                onClick={handleSkipOptional}
+                disabled={loading}
+              >
+                Ignorer cette étape et publier
+              </Button>
+              <Button type="submit" disabled={loading}>
+                Publier la session
+              </Button>
+            </div>
+          </div>
+        )
+      ) : (
+        <Button type="submit" disabled={loading}>
+          Mettre à jour
+        </Button>
+      )}
     </form>
   );
 }
