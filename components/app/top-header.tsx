@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LogoutButton } from '@/components/app/logout-button';
-import { CirclePlus } from 'lucide-react';
+import { ChevronDown, CirclePlus, CircleUserRound } from 'lucide-react';
 
 type TopHeaderProps = {
   user?: {
@@ -36,12 +36,6 @@ export function TopHeader({ user }: TopHeaderProps) {
           </div>
         </Link>
         <nav className="hidden items-center gap-5 text-sm font-medium text-slate-600 md:flex">
-          <Link
-            className="transition hover:text-slate-900"
-            href="/find-sessions"
-          >
-            Sessions
-          </Link>
           <Link className="transition hover:text-slate-900" href="/">
             A propos
           </Link>
@@ -68,55 +62,65 @@ export function TopHeader({ user }: TopHeaderProps) {
               Publier une session
             </Link>
           </Button>
-          {hasUser ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-sm"
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label={label}
+                className="group flex cursor-pointer items-center gap-2"
+              >
+                <span
+                  className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ${
+                    hasUser ? 'bg-orange-500' : 'bg-slate-100'
+                  }`}
                 >
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100">
-                    {user.avatarUrl ? (
-                      <Image
-                        src={user.avatarUrl}
-                        alt={label}
-                        width={32}
-                        height={32}
-                        className="h-full w-full rounded-full object-cover"
-                      />
-                    ) : null}
-                  </span>
-                  <span className="hidden text-sm font-medium text-slate-700 md:inline">
-                    {label}
-                  </span>
-                  <span className="text-slate-400">▾</span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
+                  {hasUser && user?.avatarUrl ? (
+                    <Image
+                      src={user.avatarUrl}
+                      alt={label}
+                      width={40}
+                      height={40}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <CircleUserRound
+                      className={`h-8 w-8 ${
+                        hasUser ? 'text-white' : 'text-slate-400'
+                      }`}
+                    />
+                  )}
+                </span>
+                <ChevronDown className="h-4 w-4 text-slate-400 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              {hasUser ? (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/sessions/requests">Mes sessions</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/me">Profil</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/app">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/me">Paramètres</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="p-0">
+                    <LogoutButton />
+                  </DropdownMenuItem>
+                </>
+              ) : (
                 <DropdownMenuItem asChild>
-                  <Link href="/app/sessions/requests">Mes sessions</Link>
+                  <Link href="/login">Se connecter</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/app/me">Profil</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/app">Dashboard</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/app/me">Paramètres</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="p-0">
-                  <LogoutButton />
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button asChild variant="outline" size="sm">
-              <Link href="/login">Mon compte</Link>
-            </Button>
-          )}
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
