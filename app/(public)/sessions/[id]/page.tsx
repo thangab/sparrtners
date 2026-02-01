@@ -52,7 +52,7 @@ export default async function SessionDetailPage({
     );
   }
   const { data: hostProfile } = await supabase
-    .from('profiles')
+    .from('public_profiles')
     .select('display_name, city, dominant_hand, height_cm, weight_kg')
     .eq('id', listing.host_id)
     .maybeSingle();

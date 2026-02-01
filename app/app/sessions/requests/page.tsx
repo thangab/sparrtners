@@ -31,6 +31,7 @@ type RequestedSessionRow = {
   host_id: string;
   training_type: TrainingTypeRow | TrainingTypeRow[] | null;
   place: PlaceRow | PlaceRow[] | null;
+  host_profile?: { display_name: string | null } | { display_name: string | null }[] | null;
 };
 
 type MyRequestRow = {
@@ -89,6 +90,7 @@ export default async function RequestsPage() {
             id,
             starts_at,
             host_id,
+            host_profile:profiles(display_name),
             training_type:training_types(name),
             place:places(name, city)
           )
@@ -142,22 +144,6 @@ export default async function RequestsPage() {
   const requesterMap = new Map(
     (requesterProfiles ?? []).map((profile) => [profile.id, profile]),
   );
-  const hostIds = Array.from(
-    new Set(
-      (myRequests ?? [])
-        .map((item) => normalizeOne(item.session)?.host_id)
-        .filter(Boolean),
-    ),
-  ) as string[];
-  const { data: hostProfiles } = hostIds.length
-    ? await supabase
-        .from('profiles')
-        .select('id, display_name')
-        .in('id', hostIds)
-    : { data: [] as Array<{ id: string; display_name: string | null }> };
-  const hostMap = new Map(
-    (hostProfiles ?? []).map((profile) => [profile.id, profile]),
-  );
 
   const createdItems = (createdSessions ?? []).map((session) => ({
     type: 'host' as const,
@@ -201,7 +187,7 @@ export default async function RequestsPage() {
             .join(':')}`,
         ),
         host_display_name:
-          hostMap.get(item.session!.host_id)?.display_name ?? null,
+          normalizeOne(item.session!.host_profile)?.display_name ?? null,
       },
     }));
 
