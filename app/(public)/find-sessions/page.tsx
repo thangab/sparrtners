@@ -12,6 +12,7 @@ type SessionWithDistance = {
   id: string;
   title: string | null;
   starts_at: string;
+  duration_minutes?: number | null;
   training_type_name?: string | null;
   place_name: string | null;
   city: string | null;
@@ -116,7 +117,7 @@ export default async function SessionsPage({
     : await supabase
         .from('session_listings')
         .select(
-          'id, title, starts_at, training_type_name, place_name, city, place_lat, place_lng, is_boosted, disciplines, host_id, host_display_name, host_email, host_avatar_url',
+          'id, title, starts_at, duration_minutes, training_type_name, place_name, city, place_lat, place_lng, is_boosted, disciplines, host_id, host_display_name, host_email, host_avatar_url',
         )
         .order('is_boosted', { ascending: false })
         .order('starts_at', { ascending: true })
@@ -293,6 +294,9 @@ export default async function SessionsPage({
                         <div className="text-sm text-slate-600">
                           Prévu le{' '}
                           {new Date(session.starts_at).toLocaleString('fr-FR')}
+                          {session.duration_minutes
+                            ? ` · ${session.duration_minutes} min`
+                            : ''}
                         </div>
                         <div className="text-sm text-slate-600">
                           Lieu : {session.place_name}{' '}

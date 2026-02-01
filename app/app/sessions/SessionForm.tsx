@@ -26,6 +26,7 @@ type SessionDefaults = {
   training_type_id?: number | null;
   place_id?: number | null;
   starts_at?: string;
+  duration_minutes?: number | null;
   capacity?: number;
   weight_min?: number | null;
   weight_max?: number | null;
@@ -200,6 +201,7 @@ export function SessionForm({
     const startsAtValue = String(formData.get('starts_at') ?? '').trim();
     const trainingTypeValue = String(formData.get('training_type_id') ?? '');
     const capacityValue = String(formData.get('capacity') ?? '');
+    const durationValue = String(formData.get('duration_minutes') ?? '');
     const selectedEntries = entries.filter(
       (entry) => entry.disciplineId && entry.skillLevelId,
     );
@@ -244,6 +246,15 @@ export function SessionForm({
       toast({
         title: 'Capacité requise',
         description: 'Indique la capacité de la session.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    if (!durationValue) {
+      toast({
+        title: 'Durée requise',
+        description: 'Indique la durée de la session.',
         variant: 'destructive',
       });
       return false;
@@ -340,6 +351,7 @@ export function SessionForm({
         training_type_id: Number(formData.get('training_type_id')),
         place_id: selectedPlace.id,
         starts_at: new Date(startsAtValue).toISOString(),
+        duration_minutes: Number(formData.get('duration_minutes')),
         capacity: Number(formData.get('capacity')),
         weight_min: weightMin,
         weight_max: weightMax,
@@ -435,6 +447,7 @@ export function SessionForm({
       training_type_id: Number(formData.get('training_type_id')),
       place_id: selectedPlace.id,
       starts_at: new Date(startsAtValue).toISOString(),
+      duration_minutes: Number(formData.get('duration_minutes')),
       capacity: Number(formData.get('capacity')),
       weight_min: weightMin,
       weight_max: weightMax,
@@ -649,6 +662,18 @@ export function SessionForm({
               type="number"
               min={1}
               defaultValue={defaultValues?.capacity ?? 1}
+              required={requireStep1}
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="duration_minutes">Durée (minutes)</Label>
+            <Input
+              id="duration_minutes"
+              name="duration_minutes"
+              type="number"
+              min={15}
+              step={5}
+              defaultValue={defaultValues?.duration_minutes ?? 60}
               required={requireStep1}
             />
           </div>

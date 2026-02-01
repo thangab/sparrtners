@@ -34,7 +34,7 @@ export default async function SessionDetailPage({
   const { data: listing } = await supabase
     .from('session_listings')
     .select(
-      'id, title, description, starts_at, host_id, host_display_name, host_email, host_avatar_url, training_type_name, place_name, city, is_boosted, disciplines',
+      'id, title, description, starts_at, duration_minutes, host_id, host_display_name, host_email, host_avatar_url, training_type_name, place_name, city, is_boosted, disciplines',
     )
     .eq('id', id)
     .maybeSingle();
@@ -186,7 +186,12 @@ export default async function SessionDetailPage({
             </div>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-slate-600">
-            <div>{new Date(listing.starts_at).toLocaleString('fr-FR')}</div>
+            <div>
+              {new Date(listing.starts_at).toLocaleString('fr-FR')}
+              {listing.duration_minutes
+                ? ` · ${listing.duration_minutes} min`
+                : ''}
+            </div>
             <div>
               {listing.place_name ?? 'Lieu'}{' '}
               {listing.city ? `· ${listing.city}` : ''}

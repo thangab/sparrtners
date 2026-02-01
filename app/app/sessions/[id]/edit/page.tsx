@@ -30,7 +30,7 @@ export default async function EditSessionPage({
   const { data: session } = await supabase
     .from('sessions')
     .select(
-      'id, title, description, training_type_id, place_id, starts_at, capacity, host_id, weight_min, weight_max, height_min, height_max, dominant_hand, glove_size',
+      'id, title, description, training_type_id, place_id, starts_at, duration_minutes, capacity, host_id, weight_min, weight_max, height_min, height_max, dominant_hand, glove_size',
     )
     .eq('id', sessionId)
     .maybeSingle();
@@ -96,6 +96,7 @@ export default async function EditSessionPage({
           training_type_id: session.training_type_id,
           place_id: session.place_id,
           starts_at: session.starts_at,
+          duration_minutes: session.duration_minutes,
           capacity: session.capacity,
           weight_min: session.weight_min,
           weight_max: session.weight_max,
