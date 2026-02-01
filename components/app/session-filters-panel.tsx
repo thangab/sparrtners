@@ -59,7 +59,7 @@ export function SessionFiltersPanel(props: SessionFiltersPanelProps) {
                 Fermer
               </Button>
             </div>
-            <div className="flex-1 overflow-y-auto px-5 pb-6 pt-4 lg:p-0 lg:overflow-visible">
+            <div className="flex-1 overflow-y-auto px-5 pb-6 pt-4 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:p-0">
               <SessionFiltersSidebar {...props} />
             </div>
           </div>

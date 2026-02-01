@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
+import { TopHeader } from '@/components/app/top-header';
 
 export default function LoginPage() {
   const { toast } = useToast();
@@ -60,8 +61,9 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-linear-to-b from-white via-slate-50 to-slate-100">
-      <div className="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-16">
+    <main className="min-h-screen bg-linear-to-b from-white via-slate-50 to-slate-100 pt-16">
+      <TopHeader />
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-16">
         <div>
           <h1 className="text-3xl font-semibold">Connexion Sparrtners</h1>
           <p className="text-muted-foreground">

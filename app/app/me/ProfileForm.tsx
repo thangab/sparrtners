@@ -269,6 +269,7 @@ export function ProfileForm({
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
+      <p>Informations personnelles</p>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-4 md:col-span-2 md:grid-cols-[auto_1fr]">
           <div className="space-y-2">
@@ -348,7 +349,11 @@ export function ProfileForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="gender">Genre</Label>
-          <Select id="gender" name="gender" defaultValue={defaultValues.gender ?? ''}>
+          <Select
+            id="gender"
+            name="gender"
+            defaultValue={defaultValues.gender ?? ''}
+          >
             <SelectItem value="" disabled>
               Choisir
             </SelectItem>
@@ -391,61 +396,9 @@ export function ProfileForm({
             defaultValue={defaultValues.languages?.join(', ') ?? ''}
           />
         </div>
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="bio">Bio</Label>
-          <textarea
-            id="bio"
-            name="bio"
-            className="min-h-30 w-full rounded-(--radius) border border-border bg-white px-3 py-2 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            defaultValue={defaultValues.bio ?? ''}
-          />
-        </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="height_cm">Taille (cm)</Label>
-          <Slider
-            id="height_cm"
-            min={140}
-            max={210}
-            step={1}
-            value={[heightValue]}
-            onValueChange={(value) => {
-              setHeightValue(value[0] ?? 175);
-              setHeightTouched(true);
-            }}
-          />
-          <div className="text-xs text-muted-foreground">
-            {heightTouched ? `${heightValue} cm` : '—'}
-          </div>
-          <input
-            type="hidden"
-            name="height_cm"
-            value={heightTouched ? String(heightValue) : ''}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="weight_kg">Poids (kg)</Label>
-          <Slider
-            id="weight_kg"
-            min={30}
-            max={150}
-            step={1}
-            value={[weightValue]}
-            onValueChange={(value) => {
-              setWeightValue(value[0] ?? 70);
-              setWeightTouched(true);
-            }}
-          />
-          <div className="text-xs text-muted-foreground">
-            {weightTouched ? `${weightValue} kg` : '—'}
-          </div>
-          <input
-            type="hidden"
-            name="weight_kg"
-            value={weightTouched ? String(weightValue) : ''}
-          />
-        </div>
+      <p>Informations sportives</p>
+      <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="club">Club</Label>
           <Input
@@ -455,23 +408,6 @@ export function ProfileForm({
             defaultValue={defaultValues.club ?? ''}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="dominant_hand">Main forte</Label>
-          <Select
-            id="dominant_hand"
-            name="dominant_hand"
-            defaultValue={defaultValues.dominant_hand ?? ''}
-          >
-            <SelectItem value="" disabled>
-              Choisir
-            </SelectItem>
-            <SelectItem value="right">Droitier</SelectItem>
-            <SelectItem value="left">Gaucher</SelectItem>
-            <SelectItem value="both">Les deux</SelectItem>
-          </Select>
-        </div>
-      </div>
-      <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-sm font-medium text-foreground">
@@ -535,6 +471,78 @@ export function ProfileForm({
           ))}
         </div>
       </div>
+      <p>Informations physiques</p>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="height_cm">Taille (cm)</Label>
+          <Slider
+            id="height_cm"
+            min={140}
+            max={210}
+            step={1}
+            value={[heightValue]}
+            onValueChange={(value) => {
+              setHeightValue(value[0] ?? 175);
+              setHeightTouched(true);
+            }}
+          />
+          <div className="text-xs text-muted-foreground">
+            {heightTouched ? `${heightValue} cm` : '—'}
+          </div>
+          <input
+            type="hidden"
+            name="height_cm"
+            value={heightTouched ? String(heightValue) : ''}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="weight_kg">Poids (kg)</Label>
+          <Slider
+            id="weight_kg"
+            min={30}
+            max={150}
+            step={1}
+            value={[weightValue]}
+            onValueChange={(value) => {
+              setWeightValue(value[0] ?? 70);
+              setWeightTouched(true);
+            }}
+          />
+          <div className="text-xs text-muted-foreground">
+            {weightTouched ? `${weightValue} kg` : '—'}
+          </div>
+          <input
+            type="hidden"
+            name="weight_kg"
+            value={weightTouched ? String(weightValue) : ''}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="dominant_hand">Main forte</Label>
+          <Select
+            id="dominant_hand"
+            name="dominant_hand"
+            defaultValue={defaultValues.dominant_hand ?? ''}
+          >
+            <SelectItem value="" disabled>
+              Choisir
+            </SelectItem>
+            <SelectItem value="right">Droitier</SelectItem>
+            <SelectItem value="left">Gaucher</SelectItem>
+            <SelectItem value="both">Les deux</SelectItem>
+          </Select>
+        </div>
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="bio">Bio</Label>
+          <textarea
+            id="bio"
+            name="bio"
+            className="min-h-30 w-full rounded-(--radius) border border-border bg-white px-3 py-2 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            defaultValue={defaultValues.bio ?? ''}
+          />
+        </div>
+      </div>
+
       <Button type="submit" disabled={loading}>
         Enregistrer
       </Button>

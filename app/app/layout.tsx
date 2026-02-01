@@ -1,6 +1,5 @@
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
-import { Sidebar } from '@/components/app/sidebar';
-import { LogoutButton } from '@/components/app/logout-button';
+import { TopHeader } from '@/components/app/top-header';
 
 export default async function AppLayout({
   children,
@@ -11,24 +10,26 @@ export default async function AppLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const { data: profile } = user
+    ? await supabase
+        .from('profiles')
+        .select('display_name, avatar_url')
+        .eq('id', user.id)
+        .maybeSingle()
+    : { data: null };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background pt-16 text-foreground">
+      <TopHeader
+        user={{
+          email: user?.email ?? null,
+          displayName: profile?.display_name ?? null,
+          avatarUrl: profile?.avatar_url ?? null,
+        }}
+      />
       <div className="flex min-h-screen w-full">
-        <Sidebar userId={user?.id} />
         <div className="flex flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-border bg-background px-6 py-4">
-            <div>
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Mon espace
-              </div>
-              <div className="text-lg font-semibold">
-                {user?.email ?? 'Sportif'}
-              </div>
-            </div>
-            <LogoutButton />
-          </header>
-          <main className="flex-1 px-6 py-8">
+          <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
             <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
               {children}
             </div>

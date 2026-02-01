@@ -1,0 +1,124 @@
+import Link from 'next/link';
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { LogoutButton } from '@/components/app/logout-button';
+import { CirclePlus } from 'lucide-react';
+
+type TopHeaderProps = {
+  user?: {
+    email?: string | null;
+    displayName?: string | null;
+    avatarUrl?: string | null;
+  } | null;
+};
+
+export function TopHeader({ user }: TopHeaderProps) {
+  const hasUser = !!user?.email || !!user?.displayName || !!user?.avatarUrl;
+  const label =
+    user?.displayName?.trim() || user?.email?.split('@')[0] || 'Compte';
+
+  return (
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/70 bg-white/85 backdrop-blur">
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
+        <Link className="transition hover:text-slate-900" href="/">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold uppercase tracking-wide text-white">
+              Sp
+            </div>
+            <div className="text-base font-semibold">Sparrtners</div>
+          </div>
+        </Link>
+        <nav className="hidden items-center gap-5 text-sm font-medium text-slate-600 md:flex">
+          <Link
+            className="transition hover:text-slate-900"
+            href="/find-sessions"
+          >
+            Sessions
+          </Link>
+          <Link className="transition hover:text-slate-900" href="/">
+            A propos
+          </Link>
+          <Link className="transition hover:text-slate-900" href="/">
+            Blog
+          </Link>
+        </nav>
+        <div className="flex items-center gap-3">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="hidden text-slate-600 md:inline-flex"
+          >
+            <Link href="/find-sessions">Rechercher</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            className="bg-slate-900 text-white hover:bg-slate-800"
+          >
+            <Link href="/app/sessions/new">
+              <CirclePlus className="h-4 w-4 mr-2" />
+              Publier une session
+            </Link>
+          </Button>
+          {hasUser ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-sm"
+                >
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100">
+                    {user.avatarUrl ? (
+                      <Image
+                        src={user.avatarUrl}
+                        alt={label}
+                        width={32}
+                        height={32}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    ) : null}
+                  </span>
+                  <span className="hidden text-sm font-medium text-slate-700 md:inline">
+                    {label}
+                  </span>
+                  <span className="text-slate-400">▾</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuItem asChild>
+                  <Link href="/app/sessions/requests">Mes sessions</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/app/me">Profil</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/app">Dashboard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/app/me">Paramètres</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="p-0">
+                  <LogoutButton />
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button asChild variant="outline" size="sm">
+              <Link href="/login">Mon compte</Link>
+            </Button>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
