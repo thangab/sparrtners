@@ -731,6 +731,17 @@ export function SessionForm({
 
       <div className={showStep2 ? 'space-y-3' : 'hidden'}>
         <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr] md:items-start">
+          <div className="flex justify-center md:hidden">
+            <div className="w-full max-w-[110px]">
+              <Image
+                src="/illustration-fighter.webp"
+                alt="Sparring"
+                width={110}
+                height={140}
+                className="h-auto w-full object-cover"
+              />
+            </div>
+          </div>
           <div className="space-y-3">
             <div>
               <div className="text-sm font-medium text-foreground">
@@ -863,7 +874,7 @@ export function SessionForm({
             </div>
           </div>
           <div className="flex justify-center md:justify-end">
-            <div className="w-full max-w-xs">
+            <div className="w-full max-w-xs hidden md:block">
               <Image
                 src="/illustration-fighter.webp"
                 alt="Sparring"
