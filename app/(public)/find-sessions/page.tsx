@@ -73,7 +73,10 @@ export default async function SessionsPage({
   const trainingTypeDefaultParam = resolvedSearchParams?.training_type_id;
   const defaultTrainingTypeIds = Array.isArray(trainingTypeDefaultParam)
     ? trainingTypeDefaultParam.filter(
-        (value): value is string => typeof value === 'string' && value.trim(),
+        (value): value is string => {
+          if (typeof value !== 'string') return false;
+          return value.trim().length > 0;
+        },
       )
     : trainingTypeDefaultParam
       ? [String(trainingTypeDefaultParam)]
