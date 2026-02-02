@@ -18,12 +18,15 @@ type TopHeaderProps = {
     displayName?: string | null;
     avatarUrl?: string | null;
   } | null;
+  notificationsCount?: number;
 };
 
-export function TopHeader({ user }: TopHeaderProps) {
+export function TopHeader({ user, notificationsCount = 0 }: TopHeaderProps) {
   const hasUser = !!user?.email || !!user?.displayName || !!user?.avatarUrl;
   const label =
     user?.displayName?.trim() || user?.email?.split('@')[0] || 'Compte';
+  const profileHref = user?.id ? `/profile/${user.id}` : '/app/me';
+  const hasNotifications = notificationsCount > 0;
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/70 bg-white/85 backdrop-blur">
@@ -73,7 +76,7 @@ export function TopHeader({ user }: TopHeaderProps) {
               <button
                 type="button"
                 aria-label={label}
-                className="group flex cursor-pointer items-center gap-2"
+                className="group relative flex cursor-pointer items-center gap-2"
               >
                 <span
                   className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ${
@@ -96,6 +99,11 @@ export function TopHeader({ user }: TopHeaderProps) {
                     />
                   )}
                 </span>
+                {hasUser && hasNotifications ? (
+                  <span className="absolute right-5 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-semibold text-white">
+                    !
+                  </span>
+                ) : null}
                 <ChevronDown className="h-4 w-4 text-slate-400 transition-transform duration-200 group-data-[state=open]:rotate-180" />
               </button>
             </DropdownMenuTrigger>
@@ -103,13 +111,27 @@ export function TopHeader({ user }: TopHeaderProps) {
               {hasUser ? (
                 <>
                   <DropdownMenuItem asChild>
+                    <Link
+                      href="/app/notifications"
+                      className="flex w-full items-center justify-between"
+                    >
+                      <span>Mes notifications</span>
+                      {hasNotifications ? (
+                        <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
+                          {notificationsCount}
+                        </span>
+                      ) : null}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
                     <Link href="/app">Dashboard</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/app/sessions/requests">Mes sessions</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href={`/profile/${user?.id}`}>Mon profil</Link>
+                    <Link href={profileHref}>Mon profil</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>

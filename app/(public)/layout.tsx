@@ -17,6 +17,13 @@ export default async function PublicLayout({
         .eq('id', user.id)
         .maybeSingle()
     : { data: null };
+  const { count: notificationsCount } = user
+    ? await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('recipient_id', user.id)
+        .is('read_at', null)
+    : { count: 0 };
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f7f4ef] pt-16 text-slate-900">
@@ -33,6 +40,7 @@ export default async function PublicLayout({
             displayName: profile?.display_name ?? null,
             avatarUrl: profile?.avatar_url ?? null,
           }}
+          notificationsCount={notificationsCount ?? 0}
         />
         <main className="relative">{children}</main>
       </div>
