@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 
@@ -23,6 +24,7 @@ export function SessionFiltersSidebar({
   defaultDateStart,
   defaultDateEnd,
 }: SessionFiltersSidebarProps) {
+  const router = useRouter();
   const [radiusValue, setRadiusValue] = React.useState(radiusKm);
   const [heightValue, setHeightValue] =
     React.useState<[number, number]>(heightRange);
@@ -34,9 +36,20 @@ export function SessionFiltersSidebar({
       <div className="space-y-2 flex items-center justify-between">
         <div className="text-sm font-semibold text-slate-900">Trier par</div>
         <Button
-          type="reset"
+          type="button"
           variant="ghost"
           className="text-xs text-slate-600 cursor-pointer"
+          onClick={() => {
+            setRadiusValue(25);
+            setHeightValue([0, 250]);
+            setWeightValue([0, 200]);
+            const form = document.getElementById(
+              'find-sessions-form',
+            ) as HTMLFormElement | null;
+            form?.reset();
+            router.replace('/find-sessions');
+            router.refresh();
+          }}
         >
           Tout effacer
         </Button>
@@ -89,11 +102,21 @@ export function SessionFiltersSidebar({
           onValueChange={(value) => setHeightValue(value as [number, number])}
         />
         <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>0 cm</span>
-          <span>250 cm</span>
+          <span>{heightValue[0]} cm</span>
+          <span>{heightValue[1]} cm</span>
         </div>
-        <input type="hidden" name="height_min" value={heightValue[0]} />
-        <input type="hidden" name="height_max" value={heightValue[1]} />
+        <input
+          type="hidden"
+          name="height_min"
+          value={heightValue[0]}
+          form="find-sessions-form"
+        />
+        <input
+          type="hidden"
+          name="height_max"
+          value={heightValue[1]}
+          form="find-sessions-form"
+        />
       </div>
 
       <div className="space-y-3">
@@ -106,8 +129,8 @@ export function SessionFiltersSidebar({
           onValueChange={(value) => setWeightValue(value as [number, number])}
         />
         <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>0 kg</span>
-          <span>200 kg</span>
+          <span>{weightValue[0]} kg</span>
+          <span>{weightValue[1]} kg</span>
         </div>
         <input type="hidden" name="weight_min" value={weightValue[0]} />
         <input type="hidden" name="weight_max" value={weightValue[1]} />
@@ -159,7 +182,9 @@ export function SessionFiltersSidebar({
         </div>
       </div>
 
-      <div className="pt-2" />
+      <Button type="submit" className="w-full rounded-full">
+        Appliquer les filtres
+      </Button>
     </aside>
   );
 }
