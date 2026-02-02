@@ -12,7 +12,6 @@ import {
   PlaceAutocomplete,
   PlaceSuggestion,
 } from '@/components/app/place-autocomplete';
-import { Slider } from '@/components/ui/slider';
 
 type Option = { id: number; name: string };
 type DisciplineEntry = { disciplineId: string; skillLevelId: string };
@@ -58,16 +57,6 @@ export function ProfileForm({
         }))
       : [{ disciplineId: '', skillLevelId: '' }],
   );
-  const hasHeightDefault = typeof defaultValues.height_cm === 'number';
-  const hasWeightDefault = typeof defaultValues.weight_kg === 'number';
-  const [heightTouched, setHeightTouched] = React.useState(hasHeightDefault);
-  const [weightTouched, setWeightTouched] = React.useState(hasWeightDefault);
-  const [heightValue, setHeightValue] = React.useState(() =>
-    typeof defaultValues.height_cm === 'number' ? defaultValues.height_cm : 175,
-  );
-  const [weightValue, setWeightValue] = React.useState(() =>
-    typeof defaultValues.weight_kg === 'number' ? defaultValues.weight_kg : 70,
-  );
   const [avatarUrl, setAvatarUrl] = React.useState(
     defaultValues.avatar_url ?? '',
   );
@@ -80,6 +69,9 @@ export function ProfileForm({
   const showStep1 = step === 1;
   const showStep2 = step === 2;
   const showStep3 = step === 3;
+  const [dominantHandValue, setDominantHandValue] = React.useState(
+    defaultValues.dominant_hand ?? '',
+  );
 
   React.useEffect(() => {
     const loadUser = async () => {
@@ -133,9 +125,9 @@ export function ProfileForm({
 
     const heightRaw = String(formData.get('height_cm') || '');
     const weightRaw = String(formData.get('weight_kg') || '');
-    const languagesRaw = String(formData.get('languages') || '')
-      .split(',')
-      .map((lang) => lang.trim())
+    const languagesRaw = formData
+      .getAll('languages')
+      .map((value) => String(value).trim())
       .filter(Boolean);
 
     const selectedEntries = entries.filter(
@@ -273,7 +265,7 @@ export function ProfileForm({
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
-      <div className="flex items-center gap-4 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm text-slate-600">
+      <div className="flex w-full flex-wrap items-center gap-4 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm text-slate-600">
         <button
           type="button"
           onClick={() => setStep(1)}
@@ -288,7 +280,7 @@ export function ProfileForm({
           >
             1
           </span>
-          <span className={step === 1 ? 'text-slate-900' : ''}>
+          <span className={`hidden text-slate-900 sm:inline ${step === 1 ? '' : 'text-slate-600'}`}>
             Infos perso
           </span>
         </button>
@@ -307,7 +299,7 @@ export function ProfileForm({
           >
             2
           </span>
-          <span className={step === 2 ? 'text-slate-900' : ''}>
+          <span className={`hidden text-slate-900 sm:inline ${step === 2 ? '' : 'text-slate-600'}`}>
             Infos sportives
           </span>
         </button>
@@ -326,7 +318,7 @@ export function ProfileForm({
           >
             3
           </span>
-          <span className={step === 3 ? 'text-slate-900' : ''}>
+          <span className={`hidden text-slate-900 sm:inline ${step === 3 ? '' : 'text-slate-600'}`}>
             Infos physiques
           </span>
         </button>
@@ -451,13 +443,36 @@ export function ProfileForm({
             <input type="hidden" name="city" value={cityLabel} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="languages">Langues</Label>
-            <Input
-              id="languages"
-              name="languages"
-              placeholder="fr, en"
-              defaultValue={defaultValues.languages?.join(', ') ?? ''}
-            />
+            <Label>Langues</Label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'fr', label: 'Français' },
+                { value: 'en', label: 'Anglais' },
+              ].map((option) => {
+                const selected = (defaultValues.languages ?? []).includes(
+                  option.value,
+                );
+                return (
+                  <label
+                    key={option.value}
+                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition ${
+                      selected
+                        ? 'border-slate-900 bg-slate-50 text-slate-900'
+                        : 'border-slate-200 bg-white text-slate-600'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      name="languages"
+                      value={option.value}
+                      defaultChecked={selected}
+                      className="h-4 w-4 accent-slate-900"
+                    />
+                    {option.label}
+                  </label>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -543,62 +558,69 @@ export function ProfileForm({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="height_cm">Taille (cm)</Label>
-            <Slider
+            <Input
               id="height_cm"
-              min={140}
-              max={210}
-              step={1}
-              value={[heightValue]}
-              onValueChange={(value) => {
-                setHeightValue(value[0] ?? 175);
-                setHeightTouched(true);
-              }}
-            />
-            <div className="text-xs text-muted-foreground">
-              {heightTouched ? `${heightValue} cm` : '—'}
-            </div>
-            <input
-              type="hidden"
               name="height_cm"
-              value={heightTouched ? String(heightValue) : ''}
+              type="number"
+              min={120}
+              max={230}
+              defaultValue={defaultValues.height_cm ?? ''}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="weight_kg">Poids (kg)</Label>
-            <Slider
+            <Input
               id="weight_kg"
+              name="weight_kg"
+              type="number"
               min={30}
-              max={150}
-              step={1}
-              value={[weightValue]}
-              onValueChange={(value) => {
-                setWeightValue(value[0] ?? 70);
-                setWeightTouched(true);
-              }}
+              max={200}
+              defaultValue={defaultValues.weight_kg ?? ''}
             />
-            <div className="text-xs text-muted-foreground">
-              {weightTouched ? `${weightValue} kg` : '—'}
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>Main forte</Label>
+            <div className="grid gap-3 grid-cols-3">
+              {[
+                { value: 'right', label: 'Droitier', src: '/droitier.webp' },
+                { value: 'left', label: 'Gaucher', src: '/gaucher.webp' },
+                {
+                  value: 'both',
+                  label: 'Ambidextre',
+                  src: '/ambidextre.webp',
+                },
+              ].map((option) => {
+                const isActive = dominantHandValue === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setDominantHandValue(option.value)}
+                    className={`flex flex-col items-center gap-2 rounded-2xl border px-3 py-2 text-center text-sm transition ${
+                      isActive
+                        ? 'border-slate-900 bg-slate-200 text-slate-900'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="h-12 w-12 overflow-hidden rounded-full bg-slate-100">
+                      <Image
+                        src={option.src}
+                        alt={option.label}
+                        width={48}
+                        height={48}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="font-medium">{option.label}</div>
+                  </button>
+                );
+              })}
             </div>
             <input
               type="hidden"
-              name="weight_kg"
-              value={weightTouched ? String(weightValue) : ''}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="dominant_hand">Main forte</Label>
-            <Select
-              id="dominant_hand"
               name="dominant_hand"
-              defaultValue={defaultValues.dominant_hand ?? ''}
-            >
-              <SelectItem value="" disabled>
-                Choisir
-              </SelectItem>
-              <SelectItem value="right">Droitier</SelectItem>
-              <SelectItem value="left">Gaucher</SelectItem>
-              <SelectItem value="both">Les deux</SelectItem>
-            </Select>
+              value={dominantHandValue}
+            />
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="bio">Plus d&apos;informations</Label>

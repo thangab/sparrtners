@@ -19,7 +19,7 @@ export default async function AppLayout({
     : { data: null };
 
   return (
-    <div className="min-h-screen bg-background pt-16 text-foreground">
+    <div className="min-h-screen bg-[#f7f4ef] pt-16 text-foreground">
       <TopHeader
         user={{
           id: user?.id ?? null,

@@ -98,6 +98,9 @@ export function SessionForm({
   const [descriptionText, setDescriptionText] = React.useState(
     defaultValues?.description ?? '',
   );
+  const [dominantHandValue, setDominantHandValue] = React.useState(
+    defaultValues?.dominant_hand ?? '',
+  );
   const hasWeightDefaults =
     typeof defaultValues?.weight_min === 'number' ||
     typeof defaultValues?.weight_max === 'number';
@@ -545,7 +548,7 @@ export function SessionForm({
   return (
     <form className="space-y-6" onSubmit={handleSubmit} ref={formRef}>
       {isCreate ? (
-        <div className="flex items-center gap-4 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm text-slate-600">
+        <div className="flex w-full items-center gap-4 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm text-slate-600">
           <button
             type="button"
             onClick={() => setStep(1)}
@@ -560,7 +563,7 @@ export function SessionForm({
             >
               1
             </span>
-            <span className={step === 1 ? 'text-slate-900' : ''}>
+            <span className={`hidden text-slate-900 sm:inline ${step === 1 ? '' : 'text-slate-600'}`}>
               Infos session
             </span>
           </button>
@@ -579,7 +582,7 @@ export function SessionForm({
             >
               2
             </span>
-            <span className={step === 2 ? 'text-slate-900' : ''}>
+            <span className={`hidden text-slate-900 sm:inline ${step === 2 ? '' : 'text-slate-600'}`}>
               Profil recherché
             </span>
           </button>
@@ -856,19 +859,52 @@ export function SessionForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dominant_hand">Main forte</Label>
-                <Select
-                  id="dominant_hand"
+                <Label>Main forte</Label>
+                <div className="grid gap-3 grid-cols-3">
+                  {[
+                    {
+                      value: 'right',
+                      label: 'Droitier',
+                      src: '/droitier.webp',
+                    },
+                    { value: 'left', label: 'Gaucher', src: '/gaucher.webp' },
+                    {
+                      value: 'both',
+                      label: 'Ambidextre',
+                      src: '/ambidextre.webp',
+                    },
+                  ].map((option) => {
+                    const isActive = dominantHandValue === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setDominantHandValue(option.value)}
+                        className={`flex flex-col items-center gap-2 rounded-2xl border px-3 py-2 text-center text-sm transition ${
+                          isActive
+                            ? 'border-slate-900 bg-slate-200 text-slate-900'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="h-12 w-12 overflow-hidden rounded-full bg-slate-100">
+                          <Image
+                            src={option.src}
+                            alt={option.label}
+                            width={48}
+                            height={48}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div className="font-medium">{option.label}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <input
+                  type="hidden"
                   name="dominant_hand"
-                  defaultValue={defaultValues?.dominant_hand ?? ''}
-                >
-                  <SelectItem value="" disabled>
-                    Choisir
-                  </SelectItem>
-                  <SelectItem value="right">Droitier</SelectItem>
-                  <SelectItem value="left">Gaucher</SelectItem>
-                  <SelectItem value="both">Les deux</SelectItem>
-                </Select>
+                  value={dominantHandValue}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="glove_size">Taille des gants</Label>
