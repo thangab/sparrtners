@@ -103,17 +103,17 @@ export function TopHeader({ user }: TopHeaderProps) {
               {hasUser ? (
                 <>
                   <DropdownMenuItem asChild>
+                    <Link href="/app">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/app/sessions/requests">Mes sessions</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href={`/profile/${user?.id}`}>Mon profil</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/app">Dashboard</Link>
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/app/me">Paramètres</Link>
+                    <Link href="/app/me">Modifier mon profil</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="p-0">
