@@ -93,7 +93,9 @@ export function SessionFiltersSidebar({
                 type="checkbox"
                 name="training_type_id"
                 value={type.id}
-                defaultChecked={defaultTrainingTypeIds.includes(String(type.id))}
+                defaultChecked={defaultTrainingTypeIds.includes(
+                  String(type.id),
+                )}
                 className="h-4 w-4 rounded border-slate-400"
               />
               {type.name}
@@ -103,7 +105,9 @@ export function SessionFiltersSidebar({
       </div>
 
       <div className="space-y-3">
-        <div className="text-sm font-medium text-slate-700">Durée max</div>
+        <div className="text-sm font-medium text-slate-700">
+          Durée de la session
+        </div>
         <Slider
           min={30}
           max={240}
