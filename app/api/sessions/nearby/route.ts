@@ -23,6 +23,12 @@ export async function GET(request: Request) {
   const dateEnd = params.get('date_end') || null;
   const disciplines = params.getAll('disciplines').filter(Boolean);
   const dominantHands = params.getAll('dominant_hand').filter(Boolean);
+  const trainingTypeIds = params
+    .getAll('training_type_id')
+    .map((value) => getNumberParam(value))
+    .filter((value): value is number => typeof value === 'number');
+  const durationMin = getNumberParam(params.get('duration_min'));
+  const durationMax = getNumberParam(params.get('duration_max'));
   const heightMin = getNumberParam(params.get('height_min'));
   const heightMax = getNumberParam(params.get('height_max'));
   const weightMin = getNumberParam(params.get('weight_min'));
@@ -43,6 +49,9 @@ export async function GET(request: Request) {
     p_height_max: heightMax ?? null,
     p_weight_min: weightMin ?? null,
     p_weight_max: weightMax ?? null,
+    p_training_type_ids: trainingTypeIds.length > 0 ? trainingTypeIds : null,
+    p_duration_min: durationMin ?? null,
+    p_duration_max: durationMax ?? null,
   });
 
   if (error) {

@@ -44,6 +44,9 @@ type SessionsResultsProps = {
     dateEnd?: string | null;
     disciplines?: string[];
     dominantHands?: string[];
+    trainingTypeIds?: number[];
+    durationMin?: number | null;
+    durationMax?: number | null;
     heightMin?: number | null;
     heightMax?: number | null;
     weightMin?: number | null;
@@ -75,6 +78,12 @@ function buildQueryParams(
   params.set('offset', String(offset));
   if (filters.dateStart) params.set('date_start', filters.dateStart);
   if (filters.dateEnd) params.set('date_end', filters.dateEnd);
+  if (filters.durationMin != null) {
+    params.set('duration_min', String(filters.durationMin));
+  }
+  if (filters.durationMax != null) {
+    params.set('duration_max', String(filters.durationMax));
+  }
   if (filters.heightMin != null) {
     params.set('height_min', String(filters.heightMin));
   }
@@ -92,6 +101,9 @@ function buildQueryParams(
   });
   (filters.dominantHands ?? []).forEach((item) => {
     params.append('dominant_hand', item);
+  });
+  (filters.trainingTypeIds ?? []).forEach((item) => {
+    params.append('training_type_id', String(item));
   });
   return params;
 }

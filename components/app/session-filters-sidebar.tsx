@@ -13,6 +13,9 @@ type SessionFiltersSidebarProps = {
   defaultDisciplines?: string[];
   defaultDateStart?: string;
   defaultDateEnd?: string;
+  trainingTypes?: { id: number; name: string }[];
+  defaultTrainingTypeIds?: string[];
+  defaultDurationValue?: number;
 };
 
 export function SessionFiltersSidebar({
@@ -23,6 +26,9 @@ export function SessionFiltersSidebar({
   defaultDisciplines = [],
   defaultDateStart,
   defaultDateEnd,
+  trainingTypes = [],
+  defaultTrainingTypeIds = [],
+  defaultDurationValue = 60,
 }: SessionFiltersSidebarProps) {
   const router = useRouter();
   const [radiusValue, setRadiusValue] = React.useState(radiusKm);
@@ -30,6 +36,8 @@ export function SessionFiltersSidebar({
     React.useState<[number, number]>(heightRange);
   const [weightValue, setWeightValue] =
     React.useState<[number, number]>(weightRange);
+  const [durationValue, setDurationValue] =
+    React.useState<number>(defaultDurationValue);
 
   return (
     <aside className="space-y-6 rounded-3xl border border-slate-200/70 bg-white/85 p-6 shadow-sm">
@@ -43,6 +51,7 @@ export function SessionFiltersSidebar({
             setRadiusValue(25);
             setHeightValue([0, 250]);
             setWeightValue([0, 200]);
+            setDurationValue(60);
             const form = document.getElementById(
               'find-sessions-form',
             ) as HTMLFormElement | null;
@@ -71,6 +80,43 @@ export function SessionFiltersSidebar({
             className="h-10 w-full rounded-(--radius) border border-border bg-white px-3 text-sm shadow-sm"
           />
         </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="text-sm font-medium text-slate-700">
+          Type d&apos;entraînement
+        </div>
+        <div className="flex flex-col gap-2 text-sm text-slate-700">
+          {trainingTypes.map((type) => (
+            <label key={type.id} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="training_type_id"
+                value={type.id}
+                defaultChecked={defaultTrainingTypeIds.includes(String(type.id))}
+                className="h-4 w-4 rounded border-slate-400"
+              />
+              {type.name}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="text-sm font-medium text-slate-700">Durée max</div>
+        <Slider
+          min={30}
+          max={240}
+          step={15}
+          value={[durationValue]}
+          onValueChange={(value) => setDurationValue(value[0] ?? 60)}
+        />
+        <div className="flex items-center justify-between text-xs text-slate-500">
+          <span>30 min</span>
+          <span>{durationValue} min</span>
+          <span>240 min</span>
+        </div>
+        <input type="hidden" name="duration_max" value={durationValue} />
       </div>
 
       <div className="space-y-3">

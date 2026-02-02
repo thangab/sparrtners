@@ -65,8 +65,23 @@ export default async function SessionsPage({
   const weightMaxParam = getNumberParam(resolvedSearchParams?.weight_max);
   const dominantParam = resolvedSearchParams?.dominant_hand;
   const disciplinesParam = resolvedSearchParams?.disciplines;
+  const trainingTypeParam = resolvedSearchParams?.training_type_id;
   const dateStartParam = getStringParam(resolvedSearchParams?.date_start);
   const dateEndParam = getStringParam(resolvedSearchParams?.date_end);
+  const durationMinParam = getNumberParam(resolvedSearchParams?.duration_min);
+  const durationMaxParam = getNumberParam(resolvedSearchParams?.duration_max);
+  const trainingTypeDefaultParam = resolvedSearchParams?.training_type_id;
+  const defaultTrainingTypeIds = Array.isArray(trainingTypeDefaultParam)
+    ? trainingTypeDefaultParam.filter(
+        (value): value is string => typeof value === 'string' && value.trim(),
+      )
+    : trainingTypeDefaultParam
+      ? [String(trainingTypeDefaultParam)]
+      : [];
+  const defaultDurationValue =
+    typeof durationMaxParam === 'number' && !Number.isNaN(durationMaxParam)
+      ? durationMaxParam
+      : 60;
   const searchCoords =
     typeof latParam === 'number' &&
     !Number.isNaN(latParam) &&
@@ -106,6 +121,16 @@ export default async function SessionsPage({
     : disciplinesParam
       ? [disciplinesParam]
       : [];
+  const trainingTypeIds = Array.isArray(trainingTypeParam)
+    ? trainingTypeParam
+        .map((item) => getNumberParam(item))
+        .filter((item): item is number => typeof item === 'number')
+    : trainingTypeParam
+      ? (() => {
+          const parsed = getNumberParam(trainingTypeParam);
+          return typeof parsed === 'number' ? [parsed] : [];
+        })()
+      : [];
   const disciplineMap: Record<string, string> = {
     boxing: 'boxe anglaise',
     'pieds-poings': 'pieds-poings',
@@ -119,25 +144,31 @@ export default async function SessionsPage({
   const dateEndKey = dateEndParam || null;
 
   const supabase = await createSupabaseServerClientReadOnly();
-  const { data: sessions, error } = await supabase.rpc('sessions_nearby', {
-    p_lat: searchCoords?.lat ?? null,
-    p_lng: searchCoords?.lng ?? null,
-    p_radius_km: radiusKm,
-    p_limit: requestLimit,
-    p_offset: 0,
-    p_date_start: dateStartKey,
-    p_date_end: dateEndKey,
-    p_disciplines: activeDisciplines.length > 0 ? activeDisciplines : null,
-    p_dominant_hands: dominantHands.length > 0 ? dominantHands : null,
-    p_height_min:
-      typeof heightMinParam === 'number' ? heightMinParam : null,
-    p_height_max:
-      typeof heightMaxParam === 'number' ? heightMaxParam : null,
-    p_weight_min:
-      typeof weightMinParam === 'number' ? weightMinParam : null,
-    p_weight_max:
-      typeof weightMaxParam === 'number' ? weightMaxParam : null,
-  });
+  const [sessionsResult, trainingTypesResult] = await Promise.all([
+    supabase.rpc('sessions_nearby', {
+      p_lat: searchCoords?.lat ?? null,
+      p_lng: searchCoords?.lng ?? null,
+      p_radius_km: radiusKm,
+      p_limit: requestLimit,
+      p_offset: 0,
+      p_date_start: dateStartKey,
+      p_date_end: dateEndKey,
+      p_disciplines: activeDisciplines.length > 0 ? activeDisciplines : null,
+      p_dominant_hands: dominantHands.length > 0 ? dominantHands : null,
+      p_height_min: typeof heightMinParam === 'number' ? heightMinParam : null,
+      p_height_max: typeof heightMaxParam === 'number' ? heightMaxParam : null,
+      p_weight_min: typeof weightMinParam === 'number' ? weightMinParam : null,
+      p_weight_max: typeof weightMaxParam === 'number' ? weightMaxParam : null,
+      p_training_type_ids: trainingTypeIds.length > 0 ? trainingTypeIds : null,
+      p_duration_min:
+        typeof durationMinParam === 'number' ? durationMinParam : null,
+      p_duration_max:
+        typeof durationMaxParam === 'number' ? durationMaxParam : null,
+    }),
+    supabase.from('training_types').select('id, name').order('id'),
+  ]);
+  const { data: sessions, error } = sessionsResult;
+  const trainingTypes = trainingTypesResult.data ?? [];
   const safeSessions = (sessions ?? []).filter(
     (session: SessionWithDistance) => !!session?.id,
   );
@@ -188,6 +219,9 @@ export default async function SessionsPage({
             defaultDisciplines={disciplines}
             defaultDateStart={dateStartParam}
             defaultDateEnd={dateEndParam}
+            trainingTypes={trainingTypes}
+            defaultTrainingTypeIds={defaultTrainingTypeIds}
+            defaultDurationValue={defaultDurationValue}
           />
           <section className="grid gap-4">
             {error ? (
@@ -222,6 +256,15 @@ export default async function SessionsPage({
                   dateEnd: dateEndKey,
                   disciplines: activeDisciplines,
                   dominantHands,
+                  trainingTypeIds,
+                  durationMin:
+                    typeof durationMinParam === 'number'
+                      ? durationMinParam
+                      : null,
+                  durationMax:
+                    typeof durationMaxParam === 'number'
+                      ? durationMaxParam
+                      : null,
                   heightMin:
                     typeof heightMinParam === 'number' ? heightMinParam : null,
                   heightMax:

@@ -12,6 +12,9 @@ type SessionFiltersPanelProps = {
   defaultDisciplines?: string[];
   defaultDateStart?: string;
   defaultDateEnd?: string;
+  trainingTypes?: { id: number; name: string }[];
+  defaultTrainingTypeIds?: string[];
+  defaultDurationValue?: number;
 };
 
 export function SessionFiltersPanel(props: SessionFiltersPanelProps) {
