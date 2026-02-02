@@ -190,7 +190,7 @@ export default async function SessionsPage({
           </div>
         </section>
 
-        <div className="grid gap-8 lg:grid-cols-[300px_1fr] lg:items-start">
+        <div className="grid gap-0 md:gap-8 lg:grid-cols-[300px_1fr] lg:items-start">
           <SessionFiltersPanel
             radiusKm={radiusKm}
             heightRange={heightRange}

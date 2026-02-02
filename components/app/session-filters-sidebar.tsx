@@ -31,12 +31,12 @@ export function SessionFiltersSidebar({
 
   return (
     <aside className="space-y-6 rounded-3xl border border-slate-200/70 bg-white/85 p-6 shadow-sm">
-      <div className="space-y-2">
+      <div className="space-y-2 flex items-center justify-between">
         <div className="text-sm font-semibold text-slate-900">Trier par</div>
         <Button
           type="reset"
-          variant="outline"
-          className="h-9 rounded-full border-slate-200 bg-white px-4 text-xs text-slate-600"
+          variant="ghost"
+          className="text-xs text-slate-600 cursor-pointer"
         >
           Tout effacer
         </Button>

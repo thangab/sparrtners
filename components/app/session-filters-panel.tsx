@@ -18,12 +18,12 @@ export function SessionFiltersPanel(props: SessionFiltersPanelProps) {
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="h-fit self-start lg:sticky lg:top-24">
+    <div className="h-fit self-start">
       <div className="flex justify-end lg:hidden">
         <Button
           type="button"
-          variant="outline"
-          className="h-10 rounded-full border-slate-200 bg-white px-5 text-sm text-slate-700"
+          variant="ghost"
+          className="underline"
           onClick={() => setOpen(true)}
         >
           Filtrer
@@ -59,7 +59,7 @@ export function SessionFiltersPanel(props: SessionFiltersPanelProps) {
                 Fermer
               </Button>
             </div>
-            <div className="flex-1 overflow-y-auto px-5 pb-6 pt-4 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:p-0">
+            <div className="flex-1 overflow-y-auto px-5 pb-6 pt-4 lg:p-0">
               <SessionFiltersSidebar {...props} />
             </div>
           </div>
