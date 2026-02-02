@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectItem } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import { useRouter } from 'next/navigation';
 import {
   PlaceAutocomplete,
   PlaceSuggestion,
@@ -45,6 +46,7 @@ export function ProfileForm({
 }) {
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
   const { toast } = useToast();
+  const router = useRouter();
   const [loading, setLoading] = React.useState(false);
   const [cityLabel, setCityLabel] = React.useState(defaultValues.city ?? '');
   const [entries, setEntries] = React.useState<DisciplineEntry[]>(
@@ -64,7 +66,7 @@ export function ProfileForm({
     defaultValues.avatar_url ?? '',
   );
   const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
-  const [googleAvatarUrl, setGoogleAvatarUrl] = React.useState('');
+  const [, setGoogleAvatarUrl] = React.useState('');
   const [step, setStep] = React.useState(1);
   const showStep1 = step === 1;
   const showStep2 = step === 2;
@@ -133,7 +135,7 @@ export function ProfileForm({
     const selectedEntries = entries.filter(
       (entry) => entry.disciplineId && entry.skillLevelId,
     );
-    if (selectedEntries.length === 0) {
+    if (showStep2 && selectedEntries.length === 0) {
       toast({
         title: 'Discipline requise',
         description: 'Ajoute au moins une discipline avec un niveau.',
@@ -215,20 +217,42 @@ export function ProfileForm({
       setStoredAvatarUrl(finalAvatarUrl);
     }
 
-    const selectedDisciplineIds = selectedEntries.map((entry) =>
-      Number(entry.disciplineId),
-    );
+    if (showStep2) {
+      const selectedDisciplineIds = selectedEntries.map((entry) =>
+        Number(entry.disciplineId),
+      );
 
-    if (selectedDisciplineIds.length > 0) {
-      const { error: deleteError } = await supabase
+      if (selectedDisciplineIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('user_sport_profiles')
+          .delete()
+          .eq('user_id', userData.user.id)
+          .not('discipline_id', 'in', `(${selectedDisciplineIds.join(',')})`);
+        if (deleteError) {
+          toast({
+            title: 'Mise à jour échouée',
+            description: deleteError.message,
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
+      const sportPayloads = selectedEntries.map((entry) => ({
+        user_id: userData.user.id,
+        discipline_id: Number(entry.disciplineId),
+        skill_level_id: Number(entry.skillLevelId),
+      }));
+
+      const { error: sportError } = await supabase
         .from('user_sport_profiles')
-        .delete()
-        .eq('user_id', userData.user.id)
-        .not('discipline_id', 'in', `(${selectedDisciplineIds.join(',')})`);
-      if (deleteError) {
+        .upsert(sportPayloads, { onConflict: 'user_id,discipline_id' });
+
+      if (sportError) {
         toast({
           title: 'Mise à jour échouée',
-          description: deleteError.message,
+          description: sportError.message,
           variant: 'destructive',
         });
         setLoading(false);
@@ -236,31 +260,12 @@ export function ProfileForm({
       }
     }
 
-    const sportPayloads = selectedEntries.map((entry) => ({
-      user_id: userData.user.id,
-      discipline_id: Number(entry.disciplineId),
-      skill_level_id: Number(entry.skillLevelId),
-    }));
-
-    const { error: sportError } = await supabase
-      .from('user_sport_profiles')
-      .upsert(sportPayloads, { onConflict: 'user_id,discipline_id' });
-
-    if (sportError) {
-      toast({
-        title: 'Mise à jour échouée',
-        description: sportError.message,
-        variant: 'destructive',
-      });
-      setLoading(false);
-      return;
-    }
-
     toast({
       title: 'Profil mis à jour',
       description: 'Tes infos sont enregistrées.',
     });
     setLoading(false);
+    router.refresh();
   };
 
   return (
@@ -280,7 +285,9 @@ export function ProfileForm({
           >
             1
           </span>
-          <span className={`hidden text-slate-900 sm:inline ${step === 1 ? '' : 'text-slate-600'}`}>
+          <span
+            className={`hidden text-slate-900 sm:inline ${step === 1 ? '' : 'text-slate-600'}`}
+          >
             Infos perso
           </span>
         </button>
@@ -299,7 +306,9 @@ export function ProfileForm({
           >
             2
           </span>
-          <span className={`hidden text-slate-900 sm:inline ${step === 2 ? '' : 'text-slate-600'}`}>
+          <span
+            className={`hidden text-slate-900 sm:inline ${step === 2 ? '' : 'text-slate-600'}`}
+          >
             Infos sportives
           </span>
         </button>
@@ -318,7 +327,9 @@ export function ProfileForm({
           >
             3
           </span>
-          <span className={`hidden text-slate-900 sm:inline ${step === 3 ? '' : 'text-slate-600'}`}>
+          <span
+            className={`hidden text-slate-900 sm:inline ${step === 3 ? '' : 'text-slate-600'}`}
+          >
             Infos physiques
           </span>
         </button>
@@ -326,63 +337,64 @@ export function ProfileForm({
       <div className={showStep1 ? 'space-y-6' : 'hidden'}>
         <p>Informations personnelles</p>
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="grid gap-4 md:col-span-2 md:grid-cols-[auto_1fr]">
-            <div className="space-y-2">
-              <Label htmlFor="avatar">Photo de profil</Label>
-              <div className="flex flex-wrap items-center gap-4 rounded-(--radius) border border-border bg-white p-4">
-                <div className="h-16 w-16 overflow-hidden rounded-full border border-border bg-slate-100">
-                  {avatarUrl ? (
-                    <Image
-                      src={avatarUrl}
-                      alt="Avatar"
-                      width={56}
-                      height={56}
-                      className="h-full w-full  rounded-full object-cover"
-                    />
-                  ) : null}
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Input
-                    id="avatar"
-                    name="avatar"
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0] ?? null;
-                      if (file && file.size > 2 * 1024 * 1024) {
-                        toast({
-                          title: 'Image trop lourde',
-                          description: 'Taille max: 2 MB.',
-                          variant: 'destructive',
-                        });
-                        event.target.value = '';
-                        setAvatarFile(null);
-                        return;
-                      }
-                      setAvatarFile(file);
-                      if (file) {
-                        setAvatarUrl(URL.createObjectURL(file));
-                      }
-                    }}
+          <div className="space-y-2">
+            <Label htmlFor="avatar">Photo de profil</Label>
+            <div className="flex flex-wrap items-center gap-4 rounded-(--radius) border border-border bg-white p-4">
+              <div className="h-16 w-16 overflow-hidden rounded-full border border-border bg-slate-100">
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt="Avatar"
+                    width={56}
+                    height={56}
+                    className="h-full w-full  rounded-full object-cover"
                   />
-                </div>
+                ) : null}
+              </div>
+              <div className="flex flex-col gap-2">
+                <Input
+                  id="avatar"
+                  name="avatar"
+                  type="file"
+                  accept="image/*"
+                  required={showStep1 && !avatarUrl}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    if (file && file.size > 2 * 1024 * 1024) {
+                      toast({
+                        title: 'Image trop lourde',
+                        description: 'Taille max: 2 MB.',
+                        variant: 'destructive',
+                      });
+                      event.target.value = '';
+                      setAvatarFile(null);
+                      return;
+                    }
+                    setAvatarFile(file);
+                    if (file) {
+                      setAvatarUrl(URL.createObjectURL(file));
+                    }
+                  }}
+                />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="display_name">Nom public</Label>
-              <Input
-                id="display_name"
-                name="display_name"
-                placeholder="Ex: Samira K."
-                defaultValue={defaultValues.display_name ?? ''}
-              />
-            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="display_name">Nom public</Label>
+            <Input
+              id="display_name"
+              name="display_name"
+              placeholder="Ex: John S."
+              required={showStep1}
+              defaultValue={defaultValues.display_name ?? ''}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="firstname">Prénom</Label>
             <Input
               id="firstname"
               name="firstname"
+              required={showStep1}
               defaultValue={defaultValues.firstname ?? ''}
             />
           </div>
@@ -391,6 +403,7 @@ export function ProfileForm({
             <Input
               id="lastname"
               name="lastname"
+              required={showStep1}
               defaultValue={defaultValues.lastname ?? ''}
             />
           </div>
@@ -399,6 +412,7 @@ export function ProfileForm({
             <Input
               id="nickname"
               name="nickname"
+              required={showStep1}
               defaultValue={defaultValues.nickname ?? ''}
             />
           </div>
@@ -407,6 +421,7 @@ export function ProfileForm({
             <Select
               id="gender"
               name="gender"
+              required={showStep1}
               defaultValue={defaultValues.gender ?? ''}
             >
               <SelectItem value="" disabled>
@@ -423,6 +438,7 @@ export function ProfileForm({
               id="birthdate"
               name="birthdate"
               type="date"
+              required={showStep1}
               defaultValue={defaultValues.birthdate ?? ''}
             />
           </div>
@@ -513,7 +529,8 @@ export function ProfileForm({
                   onChange={(event) =>
                     updateEntry(index, { disciplineId: event.target.value })
                   }
-                  required
+                  required={showStep2}
+                  disabled={!showStep2}
                 >
                   <SelectItem value="" disabled>
                     Discipline
@@ -529,7 +546,8 @@ export function ProfileForm({
                   onChange={(event) =>
                     updateEntry(index, { skillLevelId: event.target.value })
                   }
-                  required
+                  required={showStep2}
+                  disabled={!showStep2}
                 >
                   <SelectItem value="" disabled>
                     Niveau
@@ -564,6 +582,7 @@ export function ProfileForm({
               type="number"
               min={120}
               max={230}
+              required={showStep3}
               defaultValue={defaultValues.height_cm ?? ''}
             />
           </div>
@@ -575,6 +594,7 @@ export function ProfileForm({
               type="number"
               min={30}
               max={200}
+              required={showStep3}
               defaultValue={defaultValues.weight_kg ?? ''}
             />
           </div>

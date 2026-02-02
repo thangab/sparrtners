@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 
 export async function proxy(req: NextRequest) {
   const res = NextResponse.next();
+  res.headers.set('x-pathname', req.nextUrl.pathname);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,6 +30,19 @@ export async function proxy(req: NextRequest) {
 
   if (pathname.startsWith('/app') && !user) {
     return NextResponse.redirect(new URL('/login', req.url));
+  }
+
+  if (pathname.startsWith('/app') && user && pathname !== '/app/me') {
+    const { data: completion } = await supabase
+      .from('profile_completion_scores')
+      .select('percent')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    const percent = completion?.percent ?? 0;
+
+    if (percent < 100) {
+      return NextResponse.redirect(new URL('/app/me?required=1', req.url));
+    }
   }
 
   if (pathname.startsWith('/login') && user) {

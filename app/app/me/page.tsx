@@ -1,7 +1,12 @@
 import { ProfileForm } from '@/app/app/me/ProfileForm';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
 
-export default async function ProfilePage() {
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
+  const resolvedSearchParams = await Promise.resolve(searchParams);
   const supabase = await createSupabaseServerClientReadOnly();
   const {
     data: { user },
@@ -28,6 +33,12 @@ export default async function ProfilePage() {
     )
     .eq('id', user?.id ?? '')
     .maybeSingle();
+  const { data: completion } = await supabase
+    .from('profile_completion_scores')
+    .select('percent')
+    .eq('user_id', user?.id ?? '')
+    .maybeSingle();
+  const completionPercent = completion?.percent ?? 0;
 
   return (
     <div className="space-y-4">
@@ -36,6 +47,22 @@ export default async function ProfilePage() {
         <p className="text-muted-foreground">
           Gère tes infos personnelles et tes préférences sportives.
         </p>
+        {resolvedSearchParams?.required === '1' ? (
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">
+            Profil requis pour accéder à l&apos;application
+          </div>
+        ) : null}
+        <div className="mt-3 space-y-2">
+          <div className="text-sm text-slate-600">
+            Profil complété à {completionPercent}%
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+            <div
+              className="h-full rounded-full bg-slate-900 transition-all"
+              style={{ width: `${completionPercent}%` }}
+            />
+          </div>
+        </div>
       </div>
       <ProfileForm
         disciplines={disciplines ?? []}
