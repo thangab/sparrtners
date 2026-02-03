@@ -1,11 +1,6 @@
-import Link from 'next/link';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { SessionRequestsList } from '@/components/app/session-requests-list';
-import { OpenChatButton } from '@/components/app/open-chat-button';
-import { SessionHostActions } from '@/components/app/session-host-actions';
+import { SessionRequestsTable } from '@/components/app/session-requests-table';
 
 type SessionRequestRow = {
   id: string;
@@ -35,7 +30,6 @@ type RequestedSessionRow = {
   is_published: boolean;
   training_type: TrainingTypeRow | TrainingTypeRow[] | null;
   place: PlaceRow | PlaceRow[] | null;
-  host_profile?: { display_name: string | null } | { display_name: string | null }[] | null;
 };
 
 type MyRequestRow = {
@@ -44,13 +38,6 @@ type MyRequestRow = {
   created_at: string;
   participant_count: number;
   session: RequestedSessionRow | RequestedSessionRow[] | null;
-  host_display_name?: string | null;
-};
-
-type RequesterProfile = {
-  id: string;
-  display_name: string | null;
-  avatar_url: string | null;
 };
 
 export default async function RequestsPage() {
@@ -97,7 +84,6 @@ export default async function RequestsPage() {
             starts_at,
             host_id,
             is_published,
-            host_profile:profiles(display_name),
             training_type:training_types(name),
             place:places(name, city)
           )
@@ -147,21 +133,21 @@ export default async function RequestsPage() {
         .from('profiles')
         .select('id, display_name, avatar_url')
         .in('id', requesterIds)
-    : { data: [] as RequesterProfile[] };
+    : { data: [] as { id: string; display_name: string | null; avatar_url: string | null }[] };
   const requesterMap = new Map(
     (requesterProfiles ?? []).map((profile) => [profile.id, profile]),
   );
 
-  const createdItems = (createdSessions ?? []).map((session) => ({
-    type: 'host' as const,
-    id: session.id,
-    starts_at: session.starts_at,
-    is_published: session.is_published,
-    is_full: session.is_full,
-    training_type: normalizeOne(session.training_type),
-    place: normalizeOne(session.place),
-    requests: (session.session_requests ?? [])
-      .map((request: SessionRequestRow) => {
+  const formatSessionDate = (value: string) =>
+    new Intl.DateTimeFormat('fr-FR', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'Europe/Paris',
+    }).format(new Date(value));
+
+  const createdItems = (createdSessions ?? []).map((session) => {
+    const requests = (session.session_requests ?? []).map(
+      (request: SessionRequestRow) => {
         const key = `${session.id}:${[userId, request.user_id].sort().join(':')}`;
         return {
           ...request,
@@ -169,12 +155,28 @@ export default async function RequestsPage() {
           requester: requesterMap.get(request.user_id) ?? null,
           conversation_id: conversationMap.get(key) ?? null,
         };
-      })
-      .sort(
-        (a: { created_at: string }, b: { created_at: string }) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-      ),
-  }));
+      },
+    );
+    const pendingCount = requests.filter(
+      (request: SessionRequestRow) => request.status === 'pending',
+    ).length;
+    return {
+      kind: 'host' as const,
+      id: session.id,
+      title: `Session de ${normalizeOne(session.training_type)?.name ?? 'Entraînement'}`,
+      starts_at: formatSessionDate(session.starts_at),
+      place: `${normalizeOne(session.place)?.name ?? 'Lieu'}${
+        normalizeOne(session.place)?.city
+          ? ` · ${normalizeOne(session.place)?.city}`
+          : ''
+      }`,
+      is_published: session.is_published,
+      is_full: session.is_full,
+      requests_count: requests.length,
+      pending_count: pendingCount,
+      requests,
+    };
+  });
 
   const requestedItems = (myRequests ?? [])
     .map((item) => ({
@@ -183,36 +185,27 @@ export default async function RequestsPage() {
     }))
     .filter((item) => item.session)
     .map((item) => ({
-      type: 'requester' as const,
+      kind: 'requester' as const,
       id: item.session!.id,
-      starts_at: item.session!.starts_at,
+      title: `Session de ${
+        normalizeOne(item.session!.training_type)?.name ?? 'Entraînement'
+      }`,
+      starts_at: formatSessionDate(item.session!.starts_at),
+      place: `${normalizeOne(item.session!.place)?.name ?? 'Lieu'}${
+        normalizeOne(item.session!.place)?.city
+          ? ` · ${normalizeOne(item.session!.place)?.city}`
+          : ''
+      }`,
       is_published: item.session!.is_published,
-      training_type: normalizeOne(item.session!.training_type),
-      place: normalizeOne(item.session!.place),
-      myRequest: {
-        ...item.request,
-        conversation_id: conversationMap.get(
-          `${item.session!.id}:${[userId, item.session!.host_id]
-            .sort()
-            .join(':')}`,
-        ),
-        host_display_name:
-          normalizeOne(item.session!.host_profile)?.display_name ?? null,
-      },
+      status: item.request.status,
+      participant_count: item.request.participant_count ?? 1,
+      host_id: item.session!.host_id,
+      conversation_id: conversationMap.get(
+        `${item.session!.id}:${[userId, item.session!.host_id].sort().join(':')}`,
+      ),
     }));
 
-  const allItems = [...createdItems, ...requestedItems].sort((a, b) => {
-    const aDate = new Date(a.starts_at).getTime();
-    const bDate = new Date(b.starts_at).getTime();
-    return aDate - bDate;
-  });
-
-  const formatSessionDate = (value: string) =>
-    new Intl.DateTimeFormat('fr-FR', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-      timeZone: 'Europe/Paris',
-    }).format(new Date(value));
+  const totalItems = createdItems.length + requestedItems.length;
 
   return (
     <div className="space-y-6">
@@ -232,7 +225,7 @@ export default async function RequestsPage() {
               {createdSessionsError?.message || myRequestsError?.message}
             </CardContent>
           </Card>
-        ) : allItems.length === 0 ? (
+        ) : totalItems === 0 ? (
           <Card>
             <CardHeader>
               <CardTitle>Aucune session</CardTitle>
@@ -242,131 +235,7 @@ export default async function RequestsPage() {
             </CardContent>
           </Card>
         ) : (
-          allItems.map((item) => {
-            const trainingLabel = item.training_type?.name ?? 'Entraînement';
-            const placeLabel = item.place?.name ?? 'Lieu';
-            const cityLabel = item.place?.city ? ` · ${item.place.city}` : '';
-            const sessionTitle = `Session de ${trainingLabel}`;
-            const isPublished =
-              item.type === 'host'
-                ? item.is_published
-                : (item.is_published ?? true);
-
-            const requestSession =
-              item.type === 'requester'
-                ? normalizeOne(item.myRequest.session)
-                : null;
-            return (
-              <Card key={`${item.type}-${item.id}`}>
-                <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <CardTitle>{sessionTitle}</CardTitle>
-                      <Badge variant="outline">
-                        {item.type === 'host'
-                          ? 'Session créée'
-                          : 'Session demandée'}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {formatSessionDate(item.starts_at)} · {placeLabel}
-                      {cityLabel}
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {item.type === 'host' ? (
-                      isPublished ? (
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/app/sessions/${item.id}/edit`}>
-                            Modifier
-                          </Link>
-                        </Button>
-                      ) : (
-                        <Button variant="outline" size="sm" disabled>
-                          Session désactivée
-                        </Button>
-                      )
-                    ) : null}
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      asChild={isPublished}
-                      disabled={!isPublished}
-                    >
-                      {isPublished ? (
-                        <Link href={`/sessions/${item.id}`}>
-                          Voir la session
-                        </Link>
-                      ) : (
-                        <span>Voir la session</span>
-                      )}
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {item.type === 'host' ? (
-                    <div className="space-y-2">
-                      <SessionHostActions
-                        sessionId={item.id}
-                        initialIsPublished={isPublished}
-                        initialIsFull={item.is_full}
-                      />
-                      <div className="text-sm font-medium text-foreground">
-                        Demandes reçues
-                      </div>
-                      <SessionRequestsList
-                        requests={item.requests}
-                        sessionDisabled={!isPublished}
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="text-sm font-medium text-foreground">
-                        Ma demande
-                      </div>
-                      {!isPublished ? (
-                        <Badge variant="secondary">Session désactivée</Badge>
-                      ) : null}
-                      <div className="flex flex-wrap items-center gap-3 text-sm">
-                        <Badge variant="outline">{item.myRequest.status}</Badge>
-                        <span className="text-muted-foreground">
-                          {new Intl.DateTimeFormat('fr-FR', {
-                            dateStyle: 'medium',
-                            timeStyle: 'short',
-                            timeZone: 'Europe/Paris',
-                          }).format(new Date(item.myRequest.created_at))}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {item.myRequest.participant_count ?? 1} participant(s)
-                        </span>
-                      </div>
-                      {requestSession?.host_id ? (
-                        <div className="text-sm text-muted-foreground">
-                          Hôte:{' '}
-                          <Link
-                            href={`/profile/${requestSession.host_id}`}
-                            className="text-foreground hover:underline"
-                          >
-                            {item.myRequest.host_display_name ?? 'Voir le profil'}
-                          </Link>
-                        </div>
-                      ) : null}
-
-                      {isPublished &&
-                      item.myRequest.status === 'accepted' &&
-                      requestSession?.host_id ? (
-                        <OpenChatButton
-                          sessionId={item.id}
-                          otherUserId={requestSession.host_id}
-                          conversationId={item.myRequest.conversation_id}
-                        />
-                      ) : null}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })
+          <SessionRequestsTable created={createdItems} requested={requestedItems} />
         )}
       </div>
     </div>
