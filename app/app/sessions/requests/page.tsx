@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SessionRequestsList } from '@/components/app/session-requests-list';
 import { OpenChatButton } from '@/components/app/open-chat-button';
+import { SessionHostActions } from '@/components/app/session-host-actions';
 
 type SessionRequestRow = {
   id: string;
@@ -20,6 +21,8 @@ type PlaceRow = { name: string | null; city: string | null };
 type CreatedSessionRow = {
   id: string;
   starts_at: string;
+  is_published: boolean;
+  is_full: boolean;
   training_type: TrainingTypeRow | TrainingTypeRow[] | null;
   place: PlaceRow | PlaceRow[] | null;
   session_requests: SessionRequestRow[] | null;
@@ -29,6 +32,7 @@ type RequestedSessionRow = {
   id: string;
   starts_at: string;
   host_id: string;
+  is_published: boolean;
   training_type: TrainingTypeRow | TrainingTypeRow[] | null;
   place: PlaceRow | PlaceRow[] | null;
   host_profile?: { display_name: string | null } | { display_name: string | null }[] | null;
@@ -63,6 +67,8 @@ export default async function RequestsPage() {
           `
           id,
           starts_at,
+          is_published,
+          is_full,
           training_type:training_types(name),
           place:places(name, city),
           session_requests (
@@ -90,6 +96,7 @@ export default async function RequestsPage() {
             id,
             starts_at,
             host_id,
+            is_published,
             host_profile:profiles(display_name),
             training_type:training_types(name),
             place:places(name, city)
@@ -149,6 +156,8 @@ export default async function RequestsPage() {
     type: 'host' as const,
     id: session.id,
     starts_at: session.starts_at,
+    is_published: session.is_published,
+    is_full: session.is_full,
     training_type: normalizeOne(session.training_type),
     place: normalizeOne(session.place),
     requests: (session.session_requests ?? [])
@@ -177,6 +186,7 @@ export default async function RequestsPage() {
       type: 'requester' as const,
       id: item.session!.id,
       starts_at: item.session!.starts_at,
+      is_published: item.session!.is_published,
       training_type: normalizeOne(item.session!.training_type),
       place: normalizeOne(item.session!.place),
       myRequest: {
@@ -237,6 +247,10 @@ export default async function RequestsPage() {
             const placeLabel = item.place?.name ?? 'Lieu';
             const cityLabel = item.place?.city ? ` · ${item.place.city}` : '';
             const sessionTitle = `Session de ${trainingLabel}`;
+            const isPublished =
+              item.type === 'host'
+                ? item.is_published
+                : (item.is_published ?? true);
 
             const requestSession =
               item.type === 'requester'
@@ -261,30 +275,58 @@ export default async function RequestsPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {item.type === 'host' ? (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/app/sessions/${item.id}/edit`}>
-                          Modifier
-                        </Link>
-                      </Button>
+                      isPublished ? (
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/app/sessions/${item.id}/edit`}>
+                            Modifier
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" disabled>
+                          Session désactivée
+                        </Button>
+                      )
                     ) : null}
-                    <Button variant="secondary" size="sm" asChild>
-                      <Link href={`/sessions/${item.id}`}>Voir la session</Link>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      asChild={isPublished}
+                      disabled={!isPublished}
+                    >
+                      {isPublished ? (
+                        <Link href={`/sessions/${item.id}`}>
+                          Voir la session
+                        </Link>
+                      ) : (
+                        <span>Voir la session</span>
+                      )}
                     </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {item.type === 'host' ? (
                     <div className="space-y-2">
+                      <SessionHostActions
+                        sessionId={item.id}
+                        initialIsPublished={isPublished}
+                        initialIsFull={item.is_full}
+                      />
                       <div className="text-sm font-medium text-foreground">
                         Demandes reçues
                       </div>
-                      <SessionRequestsList requests={item.requests} />
+                      <SessionRequestsList
+                        requests={item.requests}
+                        sessionDisabled={!isPublished}
+                      />
                     </div>
                   ) : (
                     <div className="space-y-2">
                       <div className="text-sm font-medium text-foreground">
                         Ma demande
                       </div>
+                      {!isPublished ? (
+                        <Badge variant="secondary">Session désactivée</Badge>
+                      ) : null}
                       <div className="flex flex-wrap items-center gap-3 text-sm">
                         <Badge variant="outline">{item.myRequest.status}</Badge>
                         <span className="text-muted-foreground">
@@ -310,7 +352,8 @@ export default async function RequestsPage() {
                         </div>
                       ) : null}
 
-                      {item.myRequest.status === 'accepted' &&
+                      {isPublished &&
+                      item.myRequest.status === 'accepted' &&
                       requestSession?.host_id ? (
                         <OpenChatButton
                           sessionId={item.id}

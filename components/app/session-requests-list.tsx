@@ -24,9 +24,13 @@ type SessionRequestItem = {
 
 type SessionRequestsListProps = {
   requests: SessionRequestItem[];
+  sessionDisabled?: boolean;
 };
 
-export function SessionRequestsList({ requests }: SessionRequestsListProps) {
+export function SessionRequestsList({
+  requests,
+  sessionDisabled = false,
+}: SessionRequestsListProps) {
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
   const { toast } = useToast();
   const router = useRouter();
@@ -156,7 +160,11 @@ export function SessionRequestsList({ requests }: SessionRequestsListProps) {
               <Button
                 size="sm"
                 onClick={() => handleDecision(request, 'accepted')}
-                disabled={loadingId === request.id || request.status !== 'pending'}
+                disabled={
+                  sessionDisabled ||
+                  loadingId === request.id ||
+                  request.status !== 'pending'
+                }
               >
                 Accepter
               </Button>
@@ -164,7 +172,11 @@ export function SessionRequestsList({ requests }: SessionRequestsListProps) {
                 size="sm"
                 variant="secondary"
                 onClick={() => handleDecision(request, 'declined')}
-                disabled={loadingId === request.id || request.status !== 'pending'}
+                disabled={
+                  sessionDisabled ||
+                  loadingId === request.id ||
+                  request.status !== 'pending'
+                }
               >
                 Refuser
               </Button>
@@ -173,7 +185,7 @@ export function SessionRequestsList({ requests }: SessionRequestsListProps) {
                   size="sm"
                   variant="outline"
                   onClick={() => handleOpenChat(request)}
-                  disabled={loadingId === request.id}
+                  disabled={sessionDisabled || loadingId === request.id}
                 >
                   Ouvrir le chat
                 </Button>

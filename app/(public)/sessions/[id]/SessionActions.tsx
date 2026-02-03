@@ -12,7 +12,13 @@ import {
 } from '@/components/ui/popover';
 import { useToast } from '@/components/ui/use-toast';
 
-export function RequestJoinButton({ sessionId }: { sessionId: string }) {
+export function RequestJoinButton({
+  sessionId,
+  isFull = false,
+}: {
+  sessionId: string;
+  isFull?: boolean;
+}) {
   const { toast } = useToast();
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
   const router = useRouter();
@@ -92,10 +98,14 @@ export function RequestJoinButton({ sessionId }: { sessionId: string }) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          disabled={loading || alreadyRequested}
-          className="bg-emerald-600 text-white hover:bg-emerald-500"
+          disabled={loading || alreadyRequested || isFull}
+          className="bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60"
         >
-          {alreadyRequested ? 'Demande envoyée' : 'Demander à rejoindre'}
+          {isFull
+            ? 'Session complète'
+            : alreadyRequested
+              ? 'Demande envoyée'
+              : 'Demander à rejoindre'}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="space-y-3">

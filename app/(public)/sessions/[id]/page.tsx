@@ -34,7 +34,7 @@ export default async function SessionDetailPage({
   const { data: listing } = await supabase
     .from('session_listings')
     .select(
-      'id, title, description, starts_at, duration_minutes, host_id, host_display_name, host_email, host_avatar_url, training_type_name, place_name, city, is_boosted, disciplines',
+      'id, title, description, starts_at, duration_minutes, host_id, host_display_name, host_email, host_avatar_url, training_type_name, place_name, city, is_boosted, is_full, disciplines',
     )
     .eq('id', id)
     .maybeSingle();
@@ -207,7 +207,7 @@ export default async function SessionDetailPage({
         {isHost ? (
           <BoostSessionButton sessionId={listing.id} />
         ) : (
-          <RequestJoinButton sessionId={listing.id} />
+          <RequestJoinButton sessionId={listing.id} isFull={listing.is_full} />
         )}
         {canChat ? (
           <Button
