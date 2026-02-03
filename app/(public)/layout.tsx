@@ -49,6 +49,11 @@ export default async function PublicLayout({
           <div>
             © {new Date().getFullYear()} Sparrtners. Tous droits réservés.
           </div>
+          <div className="flex items-center gap-4">
+            <a className="hover:text-slate-900" href="/pricing">
+              Tarifs
+            </a>
+          </div>
         </div>
       </footer>
     </div>

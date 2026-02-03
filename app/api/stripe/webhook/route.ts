@@ -77,6 +77,23 @@ async function incrementBoostCredits(userId: string, amount: number) {
   }
 }
 
+async function grantBonusBoostsOnce(userId: string, amount: number) {
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: entitlement } = await supabaseAdmin
+    .from('entitlements')
+    .select('bonus_boosts_granted')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (entitlement?.bonus_boosts_granted) return;
+
+  await incrementBoostCredits(userId, amount);
+  await supabaseAdmin
+    .from('entitlements')
+    .update({ bonus_boosts_granted: true })
+    .eq('user_id', userId);
+}
+
 function getUserIdFromSession(session: Stripe.Checkout.Session) {
   return (session.metadata?.user_id ?? session.client_reference_id) as
     | string
@@ -135,6 +152,7 @@ export async function POST(request: Request) {
               : 'stripe_subscription_unknown',
           });
           await updatePremiumUntil(userId, premiumUntil);
+          await grantBonusBoostsOnce(userId, 4);
         } catch (error) {
           console.error(
             'Subscription retrieve error:',
@@ -149,6 +167,7 @@ export async function POST(request: Request) {
           is_lifetime: true,
           source: 'stripe_lifetime',
         });
+        await grantBonusBoostsOnce(userId, 4);
       }
 
       if (userId && sku === 'boost_pack_5') {
