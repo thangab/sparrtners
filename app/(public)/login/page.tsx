@@ -71,7 +71,6 @@ export default function LoginPage() {
           ? 'Ton compte est prêt. Tu peux te connecter.'
           : 'Tu es maintenant connecté.',
     });
-    setLoading(false);
     if (mode === 'signin' || data?.session) {
       router.push('/app');
     }
@@ -146,36 +145,38 @@ export default function LoginPage() {
                       handleEmailPassword('signin');
                     }}
                   >
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(event) => setEmail(event.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Mot de passe</Label>
-                      <Input
-                        id="password"
-                        name="password"
-                        type="password"
-                        autoComplete="current-password"
-                        required
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                      />
-                    </div>
-                    <Button
-                      className="w-full"
-                      type="submit"
-                      disabled={loading || !email || !password}
-                    >
-                      Se connecter
-                    </Button>
+                    <fieldset className="space-y-4" disabled={loading}>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          name="email"
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(event) => setEmail(event.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="password">Mot de passe</Label>
+                        <Input
+                          id="password"
+                          name="password"
+                          type="password"
+                          autoComplete="current-password"
+                          required
+                          value={password}
+                          onChange={(event) => setPassword(event.target.value)}
+                        />
+                      </div>
+                      <Button
+                        className="w-full"
+                        type="submit"
+                        disabled={!email || !password}
+                      >
+                        Se connecter
+                      </Button>
+                    </fieldset>
                   </form>
 
                   <div className="space-y-2 text-center text-sm">
@@ -219,24 +220,26 @@ export default function LoginPage() {
                     </div>
                   ) : (
                     <>
-                      <div className="space-y-2">
-                        <Label htmlFor="recovery-email">Email</Label>
-                        <Input
-                          id="recovery-email"
-                          name="recovery-email"
-                          type="email"
-                          required
-                          value={email}
-                          onChange={(event) => setEmail(event.target.value)}
-                        />
-                      </div>
-                      <Button
-                        className="w-full"
-                        onClick={handlePasswordReset}
-                        disabled={loading || !email}
-                      >
-                        Envoyer le lien de récupération
-                      </Button>
+                      <fieldset className="space-y-4" disabled={loading}>
+                        <div className="space-y-2">
+                          <Label htmlFor="recovery-email">Email</Label>
+                          <Input
+                            id="recovery-email"
+                            name="recovery-email"
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(event) => setEmail(event.target.value)}
+                          />
+                        </div>
+                        <Button
+                          className="w-full"
+                          onClick={handlePasswordReset}
+                          disabled={!email}
+                        >
+                          Envoyer le lien de récupération
+                        </Button>
+                      </fieldset>
                     </>
                   )}
                   <div className="text-center text-sm">

@@ -59,7 +59,6 @@ export default function SignupPage() {
       return;
     }
     setSignupEmail(email.trim());
-    setLoading(false);
     if (data.session) {
       router.push('/app');
     }
@@ -116,36 +115,38 @@ export default function SignupPage() {
                     handleSignup();
                   }}
                 >
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      name="email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Mot de passe</Label>
-                    <Input
-                      id="signup-password"
-                      name="password"
-                      type="password"
-                      autoComplete="new-password"
-                      required
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                    />
-                  </div>
-                  <Button
-                    className="w-full"
-                    type="submit"
-                    disabled={loading || !email || !password}
-                  >
-                    Créer un compte
-                  </Button>
+                  <fieldset className="space-y-4" disabled={loading}>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email</Label>
+                      <Input
+                        id="signup-email"
+                        name="email"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Mot de passe</Label>
+                      <Input
+                        id="signup-password"
+                        name="password"
+                        type="password"
+                        autoComplete="new-password"
+                        required
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                      />
+                    </div>
+                    <Button
+                      className="w-full"
+                      type="submit"
+                      disabled={!email || !password}
+                    >
+                      Créer un compte
+                    </Button>
+                  </fieldset>
                 </form>
               )}
 
