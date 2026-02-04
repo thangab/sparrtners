@@ -17,10 +17,9 @@ export default async function PricingPage() {
     premium_monthly: process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID,
     premium_yearly: process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID,
     premium_lifetime: process.env.STRIPE_PREMIUM_LIFETIME_PRICE_ID,
-    boost_pack_5: process.env.STRIPE_BOOST_PACK_5_PRICE_ID,
   };
 
-  const [monthly, yearly, lifetime, boost5] = await Promise.all([
+  const [monthly, yearly, lifetime] = await Promise.all([
     priceIds.premium_monthly
       ? stripe.prices.retrieve(priceIds.premium_monthly)
       : null,
@@ -29,9 +28,6 @@ export default async function PricingPage() {
       : null,
     priceIds.premium_lifetime
       ? stripe.prices.retrieve(priceIds.premium_lifetime)
-      : null,
-    priceIds.boost_pack_5
-      ? stripe.prices.retrieve(priceIds.boost_pack_5)
       : null,
   ]);
 
@@ -60,14 +56,6 @@ export default async function PricingPage() {
           suffix: 'Paiement unique',
         }
       : null,
-    // boost5
-    //   ? {
-    //       sku: 'boost_pack_5',
-    //       label: 'Boost x5',
-    //       price: formatPrice(boost5.unit_amount, boost5.currency),
-    //       suffix: 'Pack de 5 boosts pour mettre en avant tes sessions',
-    //     }
-    //   : null,
   ].filter(Boolean) as PricingPlan[];
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 pb-16 pt-8 md:px-6">

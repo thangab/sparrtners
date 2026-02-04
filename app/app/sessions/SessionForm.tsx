@@ -760,7 +760,7 @@ export function SessionForm({
       <div className={showStep2 ? 'space-y-3' : 'hidden'}>
         <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr] md:items-start">
           <div className="flex justify-center md:hidden">
-            <div className="w-full max-w-[110px]">
+            <div className="w-full max-w-27.5">
               <Image
                 src="/illustration-fighter.webp"
                 alt="Sparring"
