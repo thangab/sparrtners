@@ -48,10 +48,13 @@ export async function proxy(req: NextRequest) {
   if (pathname.startsWith('/login') && user) {
     return NextResponse.redirect(new URL('/app', req.url));
   }
+  if (pathname.startsWith('/signup') && user) {
+    return NextResponse.redirect(new URL('/app', req.url));
+  }
 
   return res;
 }
 
 export const config = {
-  matcher: ['/app/:path*', '/login'],
+  matcher: ['/app/:path*', '/login', '/signup'],
 };
