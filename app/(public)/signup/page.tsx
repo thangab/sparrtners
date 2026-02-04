@@ -39,9 +39,14 @@ export default function SignupPage() {
 
   const handleSignup = async () => {
     setLoading(true);
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
+      options: {
+        emailRedirectTo: `${siteUrl}/api/auth/callback`,
+      },
     });
     if (error) {
       toast({
