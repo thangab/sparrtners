@@ -343,11 +343,8 @@ export function SessionForm({
         return;
       }
 
-      const titleValue = String(formData.get('title') ?? '').trim();
-      const titleLabel = titleValue || 'Session';
       const payload = {
         host_id: userData.user.id,
-        title: titleValue || null,
         description: descriptionValue || null,
         discipline_id: Number(primaryEntry.disciplineId),
         skill_level_id: Number(primaryEntry.skillLevelId),
@@ -416,8 +413,7 @@ export function SessionForm({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               to: userData.user.email,
-              sessionTitle: titleLabel,
-              startsAt: payload.starts_at,
+              sessionId: sessionRow.id,
             }),
           });
         } catch (error) {
@@ -563,7 +559,9 @@ export function SessionForm({
             >
               1
             </span>
-            <span className={`hidden text-slate-900 sm:inline ${step === 1 ? '' : 'text-slate-600'}`}>
+            <span
+              className={`hidden text-slate-900 sm:inline ${step === 1 ? '' : 'text-slate-600'}`}
+            >
               Infos session
             </span>
           </button>
@@ -582,7 +580,9 @@ export function SessionForm({
             >
               2
             </span>
-            <span className={`hidden text-slate-900 sm:inline ${step === 2 ? '' : 'text-slate-600'}`}>
+            <span
+              className={`hidden text-slate-900 sm:inline ${step === 2 ? '' : 'text-slate-600'}`}
+            >
               Profil recherché
             </span>
           </button>

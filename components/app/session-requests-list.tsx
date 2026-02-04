@@ -66,6 +66,18 @@ export function SessionRequestsList({
       title: 'Mise à jour',
       description: `Demande ${decision === 'accepted' ? 'acceptée' : 'refusée'}.`,
     });
+    try {
+      await fetch('/api/notifications/session-request-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestId: request.id,
+          decision,
+        }),
+      });
+    } catch (error) {
+      console.warn('Session request status email failed', error);
+    }
     setLoadingId(null);
   };
 
