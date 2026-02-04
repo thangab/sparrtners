@@ -18,6 +18,7 @@ export default function SignupPage() {
   const [loading, setLoading] = React.useState(false);
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [signupEmail, setSignupEmail] = React.useState<string | null>(null);
 
   const handleGoogle = async () => {
     setLoading(true);
@@ -57,12 +58,7 @@ export default function SignupPage() {
       setLoading(false);
       return;
     }
-    toast({
-      title: 'Compte créé',
-      description: data.session
-        ? 'Tu es connecté.'
-        : 'Vérifie tes emails pour confirmer.',
-    });
+    setSignupEmail(email.trim());
     setLoading(false);
     if (data.session) {
       router.push('/app');
@@ -101,44 +97,57 @@ export default function SignupPage() {
                 <div className="h-px flex-1 bg-slate-200" />
               </div>
 
-              <form
-                className="space-y-4"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  handleSignup();
-                }}
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    name="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                  />
+              {signupEmail ? (
+                <div className="space-y-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-5 text-sm text-emerald-900">
+                  <div className="text-base font-semibold">
+                    Compte créé
+                  </div>
+                  <p>
+                    Ton compte a bien été créé avec l’email{' '}
+                    <span className="font-semibold">{signupEmail}</span>.
+                    Pense à confirmer ton email pour activer ton compte.
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Mot de passe</Label>
-                  <Input
-                    id="signup-password"
-                    name="password"
-                    type="password"
-                    autoComplete="new-password"
-                    required
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                  />
-                </div>
-                <Button
-                  className="w-full"
-                  type="submit"
-                  disabled={loading || !email || !password}
+              ) : (
+                <form
+                  className="space-y-4"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    handleSignup();
+                  }}
                 >
-                  Créer un compte
-                </Button>
-              </form>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Email</Label>
+                    <Input
+                      id="signup-email"
+                      name="email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Mot de passe</Label>
+                    <Input
+                      id="signup-password"
+                      name="password"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                    />
+                  </div>
+                  <Button
+                    className="w-full"
+                    type="submit"
+                    disabled={loading || !email || !password}
+                  >
+                    Créer un compte
+                  </Button>
+                </form>
+              )}
 
               <div className="space-y-2 text-center text-sm">
                 <div className="text-slate-500">

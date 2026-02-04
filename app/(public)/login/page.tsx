@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [showRecovery, setShowRecovery] = React.useState(false);
+  const [recoveryEmail, setRecoveryEmail] = React.useState<string | null>(null);
 
   const handleGoogle = async () => {
     setLoading(true);
@@ -100,11 +101,7 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-    toast({
-      title: 'Email envoyé',
-      description:
-        'Vérifie ta boîte mail pour définir un nouveau mot de passe.',
-    });
+    setRecoveryEmail(email.trim());
     setLoading(false);
   };
 
@@ -209,29 +206,47 @@ export default function LoginPage() {
                       pour réinitialiser ton mot de passe.
                     </p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="recovery-email">Email</Label>
-                    <Input
-                      id="recovery-email"
-                      name="recovery-email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                    />
-                  </div>
-                  <Button
-                    className="w-full"
-                    onClick={handlePasswordReset}
-                    disabled={loading || !email}
-                  >
-                    Envoyer le lien de récupération
-                  </Button>
+                  {recoveryEmail ? (
+                    <div className="space-y-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-5 text-sm text-emerald-900">
+                      <div className="text-base font-semibold">
+                        Email envoyé
+                      </div>
+                      <p>
+                        Si un compte existe pour{' '}
+                        <span className="font-semibold">{recoveryEmail}</span>,
+                        tu recevras un lien pour réinitialiser ton mot de passe.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="recovery-email">Email</Label>
+                        <Input
+                          id="recovery-email"
+                          name="recovery-email"
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(event) => setEmail(event.target.value)}
+                        />
+                      </div>
+                      <Button
+                        className="w-full"
+                        onClick={handlePasswordReset}
+                        disabled={loading || !email}
+                      >
+                        Envoyer le lien de récupération
+                      </Button>
+                    </>
+                  )}
                   <div className="text-center text-sm">
                     <button
                       type="button"
                       className="text-slate-500 hover:text-slate-900"
-                      onClick={() => setShowRecovery(false)}
+                      onClick={() => {
+                        setShowRecovery(false);
+                        setRecoveryEmail(null);
+                      }}
                       disabled={loading}
                     >
                       Retour à la connexion
