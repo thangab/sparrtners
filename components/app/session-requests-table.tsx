@@ -7,8 +7,19 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { SessionRequestsList } from '@/components/app/session-requests-list';
@@ -17,6 +28,8 @@ import {
   SessionTableRow,
 } from '@/components/app/session-requests-types';
 import { getSessionRequestsColumns } from '@/components/app/session-requests-columns';
+import { OpenChatButton } from '@/components/app/open-chat-button';
+import { Eye, MoreVertical } from 'lucide-react';
 
 export function SessionRequestsTable({
   created,
@@ -149,24 +162,147 @@ export function SessionRequestsTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <Button
-          size="sm"
-          variant={view === 'host' ? 'default' : 'outline'}
-          onClick={() => setView('host')}
-        >
-          Sessions créées
-        </Button>
-        <Button
-          size="sm"
-          variant={view === 'requester' ? 'default' : 'outline'}
-          onClick={() => setView('requester')}
-        >
-          Sessions demandées
-        </Button>
+      <Tabs value={view} onValueChange={(value) => setView(value as 'host' | 'requester')}>
+        <TabsList>
+          <TabsTrigger value="host">Mes sessions</TabsTrigger>
+          <TabsTrigger value="requester">Mes demandes</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <div className="space-y-3 md:hidden">
+        {data.length === 0 ? (
+          <Card className="px-4 py-8 text-center text-sm text-slate-500">
+            Aucune session pour le moment.
+          </Card>
+        ) : (
+          data.map((row) => {
+            const sessionLink = `/sessions/${row.id}`;
+            const editLink = `/app/sessions/${row.id}/edit`;
+            return (
+              <Card key={row.id} className="space-y-3 p-4">
+                <div className="space-y-1">
+                  <div className="text-base font-semibold text-slate-900">
+                    {row.title}
+                  </div>
+                  <div className="text-xs text-slate-500">{row.starts_at}</div>
+                  <div className="text-xs text-slate-500">{row.place}</div>
+                  {!row.is_published ? (
+                    <Badge variant="secondary">Session désactivée</Badge>
+                  ) : null}
+                </div>
+
+                {row.kind === 'requester' ? (
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <Badge variant="outline">{row.status ?? 'pending'}</Badge>
+                    <span className="text-slate-500">
+                      {row.participant_count ?? 1} participant(s)
+                    </span>
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-600">
+                    {row.pending_count ?? 0} en attente ·{' '}
+                    {row.requests_count ?? 0} total
+                  </div>
+                )}
+
+                {row.kind === 'host' ? (
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <Switch
+                      checked={row.is_full ?? false}
+                      onCheckedChange={(checked) =>
+                        handleFullChange(row.id, checked)
+                      }
+                      disabled={
+                        !row.is_published || !!switchLoading[row.id]
+                      }
+                    />
+                    <span>Session complète</span>
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap gap-2">
+                  {row.kind === 'host' ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setExpanded((current) => ({
+                          ...current,
+                          [row.id]: !current[row.id],
+                        }))
+                      }
+                      disabled={
+                        !row.requests ||
+                        row.requests.length === 0 ||
+                        !row.is_published
+                      }
+                    >
+                      <Eye className="mr-2 h-4 w-4" />
+                      {expanded[row.id] ? 'Masquer' : 'Demandes'}
+                    </Button>
+                  ) : null}
+                  {row.kind === 'requester' &&
+                  row.status === 'accepted' &&
+                  row.is_published &&
+                  row.host_id ? (
+                    <OpenChatButton
+                      sessionId={row.id}
+                      otherUserId={row.host_id}
+                      conversationId={row.conversation_id}
+                    />
+                  ) : null}
+                  {row.kind === 'host' ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={!row.is_published}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {row.is_published && (
+                          <DropdownMenuItem asChild>
+                            <Link href={editLink}>Modifier</Link>
+                          </DropdownMenuItem>
+                        )}
+                        {row.is_published && (
+                          <DropdownMenuItem asChild>
+                            <Link href={sessionLink}>Voir</Link>
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onSelect={(event) => {
+                            event.preventDefault();
+                            handleDisableSession(row.id);
+                          }}
+                          disabled={actionLoading[row.id] || !row.is_published}
+                        >
+                          Désactiver la session
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
+                </div>
+
+                {row.kind === 'host' && expanded[row.id] ? (
+                  <div className="pt-2">
+                    <SessionRequestsList
+                      requests={row.requests ?? []}
+                      sessionDisabled={!row.is_published}
+                    />
+                  </div>
+                ) : null}
+              </Card>
+            );
+          })
+        )}
       </div>
 
-      <Card className="overflow-hidden border-slate-200/70">
+      <Card className="hidden overflow-hidden border-slate-200/70 md:block">
         <div className="w-full overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
