@@ -4,6 +4,29 @@ import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 
 export const runtime = 'nodejs';
 
+type TrainingTypeRow = { name: string | null };
+type PlaceRow = { name: string | null; city: string | null };
+type DisciplineRow = {
+  discipline?: { name?: string | null };
+  skill_level?: { name?: string | null };
+};
+
+type SessionEmailRow = {
+  id: string;
+  starts_at: string | null;
+  duration_minutes: number | null;
+  capacity: number | null;
+  weight_min: number | null;
+  weight_max: number | null;
+  height_min: number | null;
+  height_max: number | null;
+  dominant_hand: string | null;
+  glove_size: string | null;
+  training_type: TrainingTypeRow | TrainingTypeRow[] | null;
+  place: PlaceRow | PlaceRow[] | null;
+  session_disciplines: DisciplineRow[] | null;
+};
+
 export async function POST(request: Request) {
   const { to, sessionId } = (await request.json()) as {
     to?: string;
@@ -22,7 +45,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = createSupabaseAdminClient();
-  const { data: session, error: sessionError } = await supabase
+  const { data: sessionRaw, error: sessionError } = await supabase
     .from('sessions')
     .select(
       `
@@ -47,13 +70,14 @@ export async function POST(request: Request) {
     .eq('id', sessionId)
     .maybeSingle();
 
-  if (sessionError || !session) {
+  if (sessionError || !sessionRaw) {
     return NextResponse.json(
       { error: sessionError?.message ?? 'Session not found' },
       { status: 404 },
     );
   }
 
+  const session = sessionRaw as SessionEmailRow;
   const trainingTypeName = Array.isArray(session.training_type)
     ? session.training_type[0]?.name
     : session.training_type?.name;
