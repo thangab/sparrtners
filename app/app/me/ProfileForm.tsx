@@ -412,7 +412,6 @@ export function ProfileForm({
             <Input
               id="nickname"
               name="nickname"
-              required={showStep1}
               defaultValue={defaultValues.nickname ?? ''}
             />
           </div>
