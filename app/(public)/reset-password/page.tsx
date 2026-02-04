@@ -48,10 +48,16 @@ export default function ResetPasswordPage() {
     }
     toast({
       title: 'Mot de passe mis à jour',
-      description: 'Tu peux maintenant te reconnecter.',
+      description: 'Tu es maintenant connecté.',
     });
     setLoading(false);
-    router.push('/app/me');
+    router.push('/app');
+    router.refresh();
+    setTimeout(() => {
+      if (window.location.pathname !== '/app') {
+        window.location.href = '/app';
+      }
+    }, 300);
   };
 
   return (

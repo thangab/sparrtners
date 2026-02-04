@@ -22,9 +22,11 @@ export default function LoginPage() {
 
   const handleGoogle = async () => {
     setLoading(true);
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/api/auth/callback` },
+      options: { redirectTo: `${siteUrl}/api/auth/callback` },
     });
     if (error) {
       toast({
@@ -84,8 +86,10 @@ export default function LoginPage() {
       return;
     }
     setLoading(true);
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${siteUrl}/reset-password`,
     });
     if (error) {
       toast({
