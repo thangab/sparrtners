@@ -92,6 +92,7 @@ export async function POST() {
   const now = Date.now();
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? '';
   const sentIds: string[] = [];
+  const sentEmails: string[] = [];
 
   for (const item of items) {
     const sessionId = item.data?.session_id;
@@ -135,6 +136,7 @@ export async function POST() {
 
     if (response.ok) {
       sentIds.push(item.id);
+      sentEmails.push(recipientEmail);
     }
   }
 
@@ -145,5 +147,5 @@ export async function POST() {
       .in('id', sentIds);
   }
 
-  return NextResponse.json({ ok: true, sent: sentIds.length });
+  return NextResponse.json({ ok: true, sent: sentIds.length, sentEmails });
 }
