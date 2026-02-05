@@ -7,6 +7,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { SessionReviewModal } from '@/components/app/session-review-modal';
 
 type SessionRequestItem = {
   id: string;
@@ -16,6 +17,8 @@ type SessionRequestItem = {
   created_at: string;
   participant_count: number;
   conversation_id?: string | null;
+  can_review?: boolean;
+  reviewed?: boolean;
   requester?: {
     display_name?: string | null;
     avatar_url?: string | null;
@@ -201,6 +204,27 @@ export function SessionRequestsList({
                 >
                   Ouvrir le chat
                 </Button>
+              ) : null}
+              {request.can_review && !request.reviewed ? (
+                <SessionReviewModal
+                  sessionId={request.session_id}
+                  reviewedUserId={request.user_id}
+                  reviewedUserName={requesterName}
+                  triggerLabel="Noter"
+                  disabled={loadingId === request.id}
+                  onReviewed={() =>
+                    setItems((current) =>
+                      current.map((item) =>
+                        item.id === request.id
+                          ? { ...item, reviewed: true }
+                          : item,
+                      ),
+                    )
+                  }
+                />
+              ) : null}
+              {request.reviewed ? (
+                <Badge variant="secondary">Avis envoyé</Badge>
               ) : null}
             </div>
           </div>

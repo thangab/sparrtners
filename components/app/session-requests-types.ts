@@ -3,6 +3,8 @@ export type SessionTableRow = {
   kind: 'host' | 'requester';
   title: string;
   starts_at: string;
+  starts_at_raw?: string;
+  duration_minutes?: number | null;
   place: string;
   status?: string | null;
   participant_count?: number | null;
@@ -12,6 +14,8 @@ export type SessionTableRow = {
   is_full?: boolean;
   host_id?: string | null;
   conversation_id?: string | null;
+  can_review?: boolean;
+  reviewed?: boolean;
   requests?: Array<{
     id: string;
     session_id: string;
@@ -20,6 +24,8 @@ export type SessionTableRow = {
     created_at: string;
     participant_count: number;
     conversation_id?: string | null;
+    can_review?: boolean;
+    reviewed?: boolean;
     requester?: {
       display_name?: string | null;
       avatar_url?: string | null;

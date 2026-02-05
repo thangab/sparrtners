@@ -29,6 +29,7 @@ import {
 } from '@/components/app/session-requests-types';
 import { getSessionRequestsColumns } from '@/components/app/session-requests-columns';
 import { OpenChatButton } from '@/components/app/open-chat-button';
+import { SessionReviewModal } from '@/components/app/session-review-modal';
 import { Eye, MoreVertical } from 'lucide-react';
 
 export function SessionRequestsTable({
@@ -66,6 +67,14 @@ export function SessionRequestsTable({
   const updateCreatedRow = React.useCallback(
     (id: string, patch: Partial<SessionTableRow>) => {
       setCreatedRows((current) =>
+        current.map((row) => (row.id === id ? { ...row, ...patch } : row)),
+      );
+    },
+    [],
+  );
+  const updateRequestedRow = React.useCallback(
+    (id: string, patch: Partial<SessionTableRow>) => {
+      setRequestedRows((current) =>
         current.map((row) => (row.id === id ? { ...row, ...patch } : row)),
       );
     },
@@ -134,6 +143,7 @@ export function SessionRequestsTable({
         setExpanded,
         handleDisableSession,
         handleFullChange,
+        onReviewComplete: updateRequestedRow,
         actionLoading,
         switchLoading,
       }),
@@ -142,6 +152,7 @@ export function SessionRequestsTable({
       expanded,
       handleDisableSession,
       handleFullChange,
+      updateRequestedRow,
       actionLoading,
       switchLoading,
     ],
@@ -250,6 +261,23 @@ export function SessionRequestsTable({
                       otherUserId={row.host_id}
                       conversationId={row.conversation_id}
                     />
+                  ) : null}
+                  {row.kind === 'requester' &&
+                  row.can_review &&
+                  !row.reviewed &&
+                  row.host_id ? (
+                    <SessionReviewModal
+                      sessionId={row.id}
+                      reviewedUserId={row.host_id}
+                      reviewedUserName="l’hôte"
+                      triggerLabel="Noter"
+                      onReviewed={() =>
+                        updateRequestedRow(row.id, { reviewed: true })
+                      }
+                    />
+                  ) : null}
+                  {row.kind === 'requester' && row.reviewed ? (
+                    <Badge variant="secondary">Avis envoyé</Badge>
                   ) : null}
                   {row.kind === 'host' ? (
                     <DropdownMenu>

@@ -10,6 +10,12 @@ type SportProfileRow = {
   discipline: RelatedName;
   skill_level: RelatedName;
 };
+type ReviewRow = {
+  reviewer_id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+};
 
 function extractName(value: RelatedName) {
   if (!value) return undefined;
@@ -61,6 +67,29 @@ export default async function FighterProfilePage({
     .gt('starts_at', new Date().toISOString())
     .order('starts_at', { ascending: true })
     .limit(4);
+  const { data: trustScore } = await supabase
+    .from('user_trust_scores')
+    .select('score, review_count')
+    .eq('user_id', id)
+    .maybeSingle();
+  const { data: reviews } = (await supabase
+    .from('reviews')
+    .select('reviewer_id, rating, comment, created_at')
+    .eq('reviewed_user_id', id)
+    .order('created_at', { ascending: false })
+    .limit(5)) as { data: ReviewRow[] | null };
+  const reviewerIds = Array.from(
+    new Set((reviews ?? []).map((review) => review.reviewer_id)),
+  );
+  const { data: reviewerProfiles } = reviewerIds.length
+    ? await supabase
+        .from('public_profiles')
+        .select('id, display_name')
+        .in('id', reviewerIds)
+    : { data: [] as { id: string; display_name: string | null }[] };
+  const reviewerMap = new Map(
+    (reviewerProfiles ?? []).map((profile) => [profile.id, profile]),
+  );
   const displayName = profile?.display_name ?? 'Non renseigné';
   const joinedLabel = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('fr-FR')
@@ -124,7 +153,15 @@ export default async function FighterProfilePage({
             </div>
             <div>
               <div className="text-xs text-slate-500">Score confiance</div>
-              <div className="font-medium">À venir</div>
+              <div className="font-medium">
+                {typeof trustScore?.score === 'number'
+                  ? `${Number(trustScore.score).toFixed(1)} / 5`
+                  : 'Aucun avis'}
+                {typeof trustScore?.review_count === 'number' &&
+                trustScore.review_count > 0
+                  ? ` (${trustScore.review_count})`
+                  : ''}
+              </div>
             </div>
           </div>
         </div>
@@ -201,6 +238,45 @@ export default async function FighterProfilePage({
               })
             ) : (
               <div>Aucune session active.</div>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="bg-white/90 md:col-span-2">
+          <CardHeader>
+            <CardTitle>Avis</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-slate-600">
+            {reviews && reviews.length > 0 ? (
+              reviews.map((review) => {
+                const reviewer =
+                  reviewerMap.get(review.reviewer_id)?.display_name ??
+                  'Sportif';
+                return (
+                  <div
+                    key={`${review.reviewer_id}-${review.created_at}`}
+                    className="rounded-(--radius) border border-slate-200/70 bg-white p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="font-medium text-slate-900">
+                        {reviewer}
+                      </div>
+                      <div className="text-sm text-slate-600">
+                        {review.rating} / 5
+                      </div>
+                    </div>
+                    {review.comment ? (
+                      <div className="mt-2 text-sm text-slate-600">
+                        {review.comment}
+                      </div>
+                    ) : null}
+                    <div className="mt-2 text-xs text-slate-400">
+                      {new Date(review.created_at).toLocaleDateString('fr-FR')}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div>Aucun avis pour le moment.</div>
             )}
           </CardContent>
         </Card>

@@ -1,4 +1,4 @@
-import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SessionRequestsTable } from '@/components/app/session-requests-table';
 
@@ -16,6 +16,7 @@ type PlaceRow = { name: string | null; city: string | null };
 type CreatedSessionRow = {
   id: string;
   starts_at: string;
+  duration_minutes: number | null;
   is_published: boolean;
   is_full: boolean;
   training_type: TrainingTypeRow | TrainingTypeRow[] | null;
@@ -26,6 +27,7 @@ type CreatedSessionRow = {
 type RequestedSessionRow = {
   id: string;
   starts_at: string;
+  duration_minutes: number | null;
   host_id: string;
   is_published: boolean;
   training_type: TrainingTypeRow | TrainingTypeRow[] | null;
@@ -41,7 +43,7 @@ type MyRequestRow = {
 };
 
 export default async function RequestsPage() {
-  const supabase = await createSupabaseServerClientReadOnly();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -54,6 +56,7 @@ export default async function RequestsPage() {
           `
           id,
           starts_at,
+          duration_minutes,
           is_published,
           is_full,
           training_type:training_types(name),
@@ -82,6 +85,7 @@ export default async function RequestsPage() {
           session:sessions (
             id,
             starts_at,
+            duration_minutes,
             host_id,
             is_published,
             training_type:training_types(name),
@@ -114,6 +118,19 @@ export default async function RequestsPage() {
   const allSessionIds = Array.from(
     new Set([...createdSessionIds, ...requestedSessionIds]),
   );
+  const { data: existingReviews } =
+    userId && allSessionIds.length > 0
+      ? await supabase
+          .from('reviews')
+          .select('session_id, reviewed_user_id')
+          .eq('reviewer_id', userId)
+          .in('session_id', allSessionIds)
+      : { data: [] as { session_id: string | null; reviewed_user_id: string }[] };
+  const reviewMap = new Set(
+    (existingReviews ?? [])
+      .filter((review) => !!review.session_id)
+      .map((review) => `${review.session_id}:${review.reviewed_user_id}`),
+  );
   const { data: conversations } =
     allSessionIds.length > 0
       ? await supabase
@@ -144,16 +161,29 @@ export default async function RequestsPage() {
       timeStyle: 'short',
       timeZone: 'Europe/Paris',
     }).format(new Date(value));
+  const nowTimestamp = Date.now();
+  const sessionIsFinished = (startsAt: string, durationMinutes: number | null) =>
+    new Date(startsAt).getTime() +
+      (durationMinutes ?? 60) * 60 * 1000 <=
+    nowTimestamp;
 
   const createdItems = (createdSessions ?? []).map((session) => {
+    const finished = sessionIsFinished(
+      session.starts_at,
+      session.duration_minutes,
+    );
     const requests = (session.session_requests ?? []).map(
       (request: SessionRequestRow) => {
         const key = `${session.id}:${[userId, request.user_id].sort().join(':')}`;
+        const reviewed = reviewMap.has(`${session.id}:${request.user_id}`);
         return {
           ...request,
           session_id: session.id,
           requester: requesterMap.get(request.user_id) ?? null,
           conversation_id: conversationMap.get(key) ?? null,
+          can_review:
+            request.status === 'accepted' && finished && session.is_published,
+          reviewed,
         };
       },
     );
@@ -165,6 +195,8 @@ export default async function RequestsPage() {
       id: session.id,
       title: `Session de ${normalizeOne(session.training_type)?.name ?? 'Entraînement'}`,
       starts_at: formatSessionDate(session.starts_at),
+      starts_at_raw: session.starts_at,
+      duration_minutes: session.duration_minutes,
       place: `${normalizeOne(session.place)?.name ?? 'Lieu'}${
         normalizeOne(session.place)?.city
           ? ` · ${normalizeOne(session.place)?.city}`
@@ -191,6 +223,8 @@ export default async function RequestsPage() {
         normalizeOne(item.session!.training_type)?.name ?? 'Entraînement'
       }`,
       starts_at: formatSessionDate(item.session!.starts_at),
+      starts_at_raw: item.session!.starts_at,
+      duration_minutes: item.session!.duration_minutes,
       place: `${normalizeOne(item.session!.place)?.name ?? 'Lieu'}${
         normalizeOne(item.session!.place)?.city
           ? ` · ${normalizeOne(item.session!.place)?.city}`
@@ -200,12 +234,76 @@ export default async function RequestsPage() {
       status: item.request.status,
       participant_count: item.request.participant_count ?? 1,
       host_id: item.session!.host_id,
+      can_review:
+        item.request.status === 'accepted' &&
+        sessionIsFinished(
+          item.session!.starts_at,
+          item.session!.duration_minutes,
+        ) &&
+        item.session!.is_published,
+      reviewed: reviewMap.has(`${item.session!.id}:${item.session!.host_id}`),
       conversation_id: conversationMap.get(
         `${item.session!.id}:${[userId, item.session!.host_id].sort().join(':')}`,
       ),
     }));
 
   const totalItems = createdItems.length + requestedItems.length;
+
+  if (userId) {
+    const reviewTargets = [
+      ...createdItems.flatMap((session) =>
+        (session.requests ?? [])
+          .filter((request) => request.can_review && !request.reviewed)
+          .map((request) => ({
+            sessionId: session.id,
+            reviewedUserId: request.user_id,
+            actorId: request.user_id,
+          })),
+      ),
+      ...requestedItems
+        .filter((session) => session.can_review && !session.reviewed)
+        .map((session) => ({
+          sessionId: session.id,
+          reviewedUserId: session.host_id ?? '',
+          actorId: session.host_id ?? '',
+        }))
+        .filter((target) => target.reviewedUserId),
+    ];
+
+    if (reviewTargets.length > 0) {
+      const { data: existingNotifications } = await supabase
+        .from('notifications')
+        .select('data')
+        .eq('recipient_id', userId)
+        .eq('type', 'session_review_needed');
+      const existingKeys = new Set(
+        (existingNotifications ?? []).map((item) => {
+          const data = item.data as { session_id?: string; reviewed_user_id?: string };
+          return `${data?.session_id ?? ''}:${data?.reviewed_user_id ?? ''}`;
+        }),
+      );
+      const newNotifications = reviewTargets
+        .filter(
+          (target) =>
+            !existingKeys.has(
+              `${target.sessionId}:${target.reviewedUserId}`,
+            ),
+        )
+        .map((target) => ({
+          recipient_id: userId,
+          actor_id: target.actorId,
+          type: 'session_review_needed',
+          data: {
+            session_id: target.sessionId,
+            reviewed_user_id: target.reviewedUserId,
+          },
+        }));
+
+      if (newNotifications.length > 0) {
+        await supabase.from('notifications').insert(newNotifications);
+      }
+    }
+  }
 
   return (
     <div className="space-y-6">

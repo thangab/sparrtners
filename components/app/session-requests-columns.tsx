@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import { OpenChatButton } from '@/components/app/open-chat-button';
+import { SessionReviewModal } from '@/components/app/session-review-modal';
 import { MoreVertical, Eye, EyeOff } from 'lucide-react';
 import { SessionTableRow } from '@/components/app/session-requests-types';
 
@@ -23,6 +24,7 @@ type ColumnsOptions = {
   setExpanded: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   handleDisableSession: (sessionId: string) => void;
   handleFullChange: (sessionId: string, checked: boolean) => void;
+  onReviewComplete: (sessionId: string, patch: Partial<SessionTableRow>) => void;
   actionLoading: Record<string, boolean>;
   switchLoading: Record<string, boolean>;
 };
@@ -33,6 +35,7 @@ export function getSessionRequestsColumns({
   setExpanded,
   handleDisableSession,
   handleFullChange,
+  onReviewComplete,
   actionLoading,
   switchLoading,
 }: ColumnsOptions): ColumnDef<SessionTableRow>[] {
@@ -128,6 +131,23 @@ export function getSessionRequestsColumns({
                 otherUserId={row.original.host_id}
                 conversationId={row.original.conversation_id}
               />
+            ) : null}
+            {row.original.kind === 'requester' &&
+            row.original.can_review &&
+            !row.original.reviewed &&
+            row.original.host_id ? (
+              <SessionReviewModal
+                sessionId={row.original.id}
+                reviewedUserId={row.original.host_id}
+                reviewedUserName="l’hôte"
+                triggerLabel="Noter"
+                onReviewed={() =>
+                  onReviewComplete(row.original.id, { reviewed: true })
+                }
+              />
+            ) : null}
+            {row.original.kind === 'requester' && row.original.reviewed ? (
+              <Badge variant="secondary">Avis envoyé</Badge>
             ) : null}
             {row.original.kind === 'host' ? (
               <DropdownMenu>

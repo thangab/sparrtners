@@ -49,6 +49,11 @@ export default async function NotificationsPage() {
           title: 'Nouveau contenu',
           body: 'Un nouvel article est disponible.',
         };
+      case 'session_review_needed':
+        return {
+          title: 'Laisser un avis',
+          body: 'Ta session est terminée. Laisse un avis depuis <a class="underline" href="/app/sessions/requests">Mes sessions</a>.',
+        };
       default:
         return {
           title: 'Notification',
