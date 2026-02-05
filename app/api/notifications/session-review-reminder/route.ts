@@ -95,6 +95,16 @@ export async function POST() {
   const sentEmails: string[] = [];
   let skippedReviewed = 0;
   let skippedNotEligible = 0;
+  const skippedDetails: Array<{
+    notification_id: string;
+    session_id?: string;
+    recipient_id: string;
+    reviewed_user_id: string;
+    reason: string;
+    starts_at?: string | null;
+    computed_end_at?: string | null;
+    now?: string;
+  }> = [];
 
   for (const item of items) {
     const sessionId = item.data?.session_id;
@@ -109,10 +119,26 @@ export async function POST() {
     const session = sessionMap.get(sessionId);
     if (!session || !session.is_published) {
       skippedNotEligible += 1;
+      skippedDetails.push({
+        notification_id: item.id,
+        session_id: sessionId,
+        recipient_id: item.recipient_id,
+        reviewed_user_id: reviewedUserId,
+        reason: session ? 'session_not_published' : 'session_missing',
+        starts_at: session?.starts_at ?? null,
+      });
       continue;
     }
     if (!session.starts_at) {
       skippedNotEligible += 1;
+      skippedDetails.push({
+        notification_id: item.id,
+        session_id: sessionId,
+        recipient_id: item.recipient_id,
+        reviewed_user_id: reviewedUserId,
+        reason: 'missing_starts_at',
+        starts_at: session.starts_at ?? null,
+      });
       continue;
     }
     const duration = session.duration_minutes ?? 60;
@@ -120,12 +146,30 @@ export async function POST() {
       new Date(session.starts_at).getTime() + duration * 60 * 1000;
     if (endAt > now) {
       skippedNotEligible += 1;
+      skippedDetails.push({
+        notification_id: item.id,
+        session_id: sessionId,
+        recipient_id: item.recipient_id,
+        reviewed_user_id: reviewedUserId,
+        reason: 'session_not_finished',
+        starts_at: session.starts_at,
+        computed_end_at: new Date(endAt).toISOString(),
+        now: new Date(now).toISOString(),
+      });
       continue;
     }
 
     const recipientEmail = profileMap.get(item.recipient_id);
     if (!recipientEmail) {
       skippedNotEligible += 1;
+      skippedDetails.push({
+        notification_id: item.id,
+        session_id: sessionId,
+        recipient_id: item.recipient_id,
+        reviewed_user_id: reviewedUserId,
+        reason: 'missing_recipient_email',
+        starts_at: session.starts_at,
+      });
       continue;
     }
 
@@ -167,5 +211,6 @@ export async function POST() {
     sentEmails,
     skippedReviewed,
     skippedNotEligible,
+    skippedDetails,
   });
 }
