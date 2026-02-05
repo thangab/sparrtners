@@ -94,6 +94,10 @@ export async function POST() {
 
   const now = Date.now();
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? '';
+  const delay = (ms: number) =>
+    new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
   const sentIds: string[] = [];
   const sentEmails: string[] = [];
   const results: Array<{
@@ -273,6 +277,8 @@ export async function POST() {
         response_body: await response.text(),
       });
     }
+
+    await delay(700);
   }
 
   if (sentIds.length > 0) {
