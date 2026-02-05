@@ -144,9 +144,21 @@ export function PlaceSearchInput({
           }
         }}
       />
-      <input type="hidden" name={nameLabel} value={labelValue} />
-      <input type="hidden" name="place_lat" value={coords?.lat ?? ''} />
-      <input type="hidden" name="place_lng" value={coords?.lng ?? ''} />
+      <input
+        type="hidden"
+        name={labelValue ? nameLabel : undefined}
+        value={labelValue}
+      />
+      <input
+        type="hidden"
+        name={coords ? 'place_lat' : undefined}
+        value={coords?.lat ?? ''}
+      />
+      <input
+        type="hidden"
+        name={coords ? 'place_lng' : undefined}
+        value={coords?.lng ?? ''}
+      />
       {geoError ? (
         <div className="text-xs text-rose-500">{geoError}</div>
       ) : null}

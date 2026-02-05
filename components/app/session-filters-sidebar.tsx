@@ -30,6 +30,10 @@ export function SessionFiltersSidebar({
   defaultTrainingTypeIds = [],
   defaultDurationValue = 60,
 }: SessionFiltersSidebarProps) {
+  const defaultRadius = 25;
+  const defaultHeightRange: [number, number] = [0, 250];
+  const defaultWeightRange: [number, number] = [0, 200];
+  const defaultDuration = 60;
   const router = useRouter();
   const [radiusValue, setRadiusValue] = React.useState(radiusKm);
   const [heightValue, setHeightValue] =
@@ -38,6 +42,12 @@ export function SessionFiltersSidebar({
     React.useState<[number, number]>(weightRange);
   const [durationValue, setDurationValue] =
     React.useState<number>(defaultDurationValue);
+  const [dateStartValue, setDateStartValue] = React.useState(
+    defaultDateStart ?? '',
+  );
+  const [dateEndValue, setDateEndValue] = React.useState(
+    defaultDateEnd ?? '',
+  );
 
   return (
     <aside className="space-y-6 rounded-3xl border border-slate-200/70 bg-white/85 p-6 shadow-sm">
@@ -48,10 +58,12 @@ export function SessionFiltersSidebar({
           variant="ghost"
           className="text-xs text-slate-600 cursor-pointer"
           onClick={() => {
-            setRadiusValue(25);
-            setHeightValue([0, 250]);
-            setWeightValue([0, 200]);
-            setDurationValue(60);
+            setRadiusValue(defaultRadius);
+            setHeightValue(defaultHeightRange);
+            setWeightValue(defaultWeightRange);
+            setDurationValue(defaultDuration);
+            setDateStartValue('');
+            setDateEndValue('');
             const form = document.getElementById(
               'find-sessions-form',
             ) as HTMLFormElement | null;
@@ -69,14 +81,16 @@ export function SessionFiltersSidebar({
         <div className="grid gap-2">
           <input
             type="date"
-            name="date_start"
-            defaultValue={defaultDateStart}
+            name={dateStartValue ? 'date_start' : undefined}
+            value={dateStartValue}
+            onChange={(event) => setDateStartValue(event.target.value)}
             className="h-10 w-full rounded-(--radius) border border-border bg-white px-3 text-sm shadow-sm"
           />
           <input
             type="date"
-            name="date_end"
-            defaultValue={defaultDateEnd}
+            name={dateEndValue ? 'date_end' : undefined}
+            value={dateEndValue}
+            onChange={(event) => setDateEndValue(event.target.value)}
             className="h-10 w-full rounded-(--radius) border border-border bg-white px-3 text-sm shadow-sm"
           />
         </div>
@@ -120,7 +134,11 @@ export function SessionFiltersSidebar({
           <span>{durationValue} min</span>
           <span>240 min</span>
         </div>
-        <input type="hidden" name="duration_max" value={durationValue} />
+        <input
+          type="hidden"
+          name={durationValue !== defaultDuration ? 'duration_max' : undefined}
+          value={durationValue}
+        />
       </div>
 
       <div className="space-y-3">
@@ -139,7 +157,11 @@ export function SessionFiltersSidebar({
           <span>{radiusValue} km</span>
           <span>100 km</span>
         </div>
-        <input type="hidden" name="radius_km" value={radiusValue} />
+        <input
+          type="hidden"
+          name={radiusValue !== defaultRadius ? 'radius_km' : undefined}
+          value={radiusValue}
+        />
       </div>
 
       <div className="space-y-3">
@@ -157,13 +179,21 @@ export function SessionFiltersSidebar({
         </div>
         <input
           type="hidden"
-          name="height_min"
+          name={
+            heightValue[0] !== defaultHeightRange[0]
+              ? 'height_min'
+              : undefined
+          }
           value={heightValue[0]}
           form="find-sessions-form"
         />
         <input
           type="hidden"
-          name="height_max"
+          name={
+            heightValue[1] !== defaultHeightRange[1]
+              ? 'height_max'
+              : undefined
+          }
           value={heightValue[1]}
           form="find-sessions-form"
         />
@@ -182,8 +212,24 @@ export function SessionFiltersSidebar({
           <span>{weightValue[0]} kg</span>
           <span>{weightValue[1]} kg</span>
         </div>
-        <input type="hidden" name="weight_min" value={weightValue[0]} />
-        <input type="hidden" name="weight_max" value={weightValue[1]} />
+        <input
+          type="hidden"
+          name={
+            weightValue[0] !== defaultWeightRange[0]
+              ? 'weight_min'
+              : undefined
+          }
+          value={weightValue[0]}
+        />
+        <input
+          type="hidden"
+          name={
+            weightValue[1] !== defaultWeightRange[1]
+              ? 'weight_max'
+              : undefined
+          }
+          value={weightValue[1]}
+        />
       </div>
 
       <div className="space-y-3">
