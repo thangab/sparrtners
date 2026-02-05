@@ -249,62 +249,6 @@ export default async function RequestsPage() {
 
   const totalItems = createdItems.length + requestedItems.length;
 
-  if (userId) {
-    const reviewTargets = [
-      ...createdItems.flatMap((session) =>
-        (session.requests ?? [])
-          .filter((request) => request.can_review && !request.reviewed)
-          .map((request) => ({
-            sessionId: session.id,
-            reviewedUserId: request.user_id,
-            actorId: request.user_id,
-          })),
-      ),
-      ...requestedItems
-        .filter((session) => session.can_review && !session.reviewed)
-        .map((session) => ({
-          sessionId: session.id,
-          reviewedUserId: session.host_id ?? '',
-          actorId: session.host_id ?? '',
-        }))
-        .filter((target) => target.reviewedUserId),
-    ];
-
-    if (reviewTargets.length > 0) {
-      const { data: existingNotifications } = await supabase
-        .from('notifications')
-        .select('data')
-        .eq('recipient_id', userId)
-        .eq('type', 'session_review_needed');
-      const existingKeys = new Set(
-        (existingNotifications ?? []).map((item) => {
-          const data = item.data as { session_id?: string; reviewed_user_id?: string };
-          return `${data?.session_id ?? ''}:${data?.reviewed_user_id ?? ''}`;
-        }),
-      );
-      const newNotifications = reviewTargets
-        .filter(
-          (target) =>
-            !existingKeys.has(
-              `${target.sessionId}:${target.reviewedUserId}`,
-            ),
-        )
-        .map((target) => ({
-          recipient_id: userId,
-          actor_id: target.actorId,
-          type: 'session_review_needed',
-          data: {
-            session_id: target.sessionId,
-            reviewed_user_id: target.reviewedUserId,
-          },
-        }));
-
-      if (newNotifications.length > 0) {
-        await supabase.from('notifications').insert(newNotifications);
-      }
-    }
-  }
-
   return (
     <div className="space-y-6">
       <div>

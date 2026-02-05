@@ -32,6 +32,122 @@ export async function POST() {
 
   const supabase = createSupabaseAdminClient();
 
+  const { data: reviewCandidates } = await supabase
+    .from('session_requests')
+    .select(
+      `
+      id,
+      session_id,
+      user_id,
+      status,
+      session:sessions (
+        id,
+        host_id,
+        starts_at,
+        duration_minutes,
+        is_published
+      )
+    `,
+    )
+    .eq('status', 'accepted');
+
+  const now = Date.now();
+  const candidatePairs: Array<{
+    sessionId: string;
+    reviewerId: string;
+    reviewedUserId: string;
+    actorId: string;
+  }> = [];
+
+  (reviewCandidates ?? []).forEach((row) => {
+    const session = Array.isArray(row.session)
+      ? row.session[0]
+      : row.session;
+    if (!session || !session.is_published || !session.starts_at) return;
+    const duration = session.duration_minutes ?? 60;
+    const endAt =
+      new Date(session.starts_at).getTime() + duration * 60 * 1000;
+    if (endAt > now) return;
+
+    const hostId = session.host_id;
+    const requesterId = row.user_id;
+    candidatePairs.push({
+      sessionId: session.id,
+      reviewerId: hostId,
+      reviewedUserId: requesterId,
+      actorId: requesterId,
+    });
+    candidatePairs.push({
+      sessionId: session.id,
+      reviewerId: requesterId,
+      reviewedUserId: hostId,
+      actorId: hostId,
+    });
+  });
+
+  if (candidatePairs.length > 0) {
+    const recipientIds = Array.from(
+      new Set(candidatePairs.map((item) => item.reviewerId)),
+    );
+    const { data: existingNotifications } = recipientIds.length
+      ? await supabase
+          .from('notifications')
+          .select('recipient_id, data')
+          .eq('type', 'session_review_needed')
+          .in('recipient_id', recipientIds)
+      : { data: [] as { recipient_id: string; data: unknown }[] };
+    const existingKeys = new Set(
+      (existingNotifications ?? []).map((item) => {
+        const data = item.data as {
+          session_id?: string;
+          reviewed_user_id?: string;
+        };
+        return `${item.recipient_id}:${data?.session_id ?? ''}:${data?.reviewed_user_id ?? ''}`;
+      }),
+    );
+
+    const { data: existingReviews } = await supabase
+      .from('reviews')
+      .select('session_id, reviewer_id, reviewed_user_id')
+      .in(
+        'session_id',
+        Array.from(new Set(candidatePairs.map((item) => item.sessionId))),
+      )
+      .in('reviewer_id', recipientIds);
+    const reviewedSet = new Set(
+      (existingReviews ?? [])
+        .filter((review) => review.session_id)
+        .map(
+          (review) =>
+            `${review.reviewer_id}:${review.session_id}:${review.reviewed_user_id}`,
+        ),
+    );
+
+    const newNotifications = candidatePairs
+      .filter(
+        (item) =>
+          !existingKeys.has(
+            `${item.reviewerId}:${item.sessionId}:${item.reviewedUserId}`,
+          ) &&
+          !reviewedSet.has(
+            `${item.reviewerId}:${item.sessionId}:${item.reviewedUserId}`,
+          ),
+      )
+      .map((item) => ({
+        recipient_id: item.reviewerId,
+        actor_id: item.actorId,
+        type: 'session_review_needed',
+        data: {
+          session_id: item.sessionId,
+          reviewed_user_id: item.reviewedUserId,
+        },
+      }));
+
+    if (newNotifications.length > 0) {
+      await supabase.from('notifications').insert(newNotifications);
+    }
+  }
+
   const { data: notifications } = await supabase
     .from('notifications')
     .select('id, recipient_id, data')
@@ -92,7 +208,7 @@ export async function POST() {
       ),
   );
 
-  const now = Date.now();
+  const nowEmail = Date.now();
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? '';
   const delay = (ms: number) =>
     new Promise((resolve) => {
@@ -186,7 +302,7 @@ export async function POST() {
     const duration = session.duration_minutes ?? 60;
     const endAt =
       new Date(session.starts_at).getTime() + duration * 60 * 1000;
-    if (endAt > now) {
+    if (endAt > nowEmail) {
       skippedNotEligible += 1;
       results.push({
         notification_id: item.id,
@@ -204,7 +320,7 @@ export async function POST() {
         reason: 'session_not_finished',
         starts_at: session.starts_at,
         computed_end_at: new Date(endAt).toISOString(),
-        now: new Date(now).toISOString(),
+        now: new Date(nowEmail).toISOString(),
       });
       continue;
     }
