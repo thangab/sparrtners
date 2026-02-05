@@ -58,7 +58,7 @@ export function SessionRequestsTable({
   >({});
   const searchParams = useSearchParams();
   const [deepLinkTarget, setDeepLinkTarget] = React.useState<{
-    kind: 'host' | 'requester';
+    kind: 'host' | 'requester' | 'completed';
     sessionId: string;
     reviewedUserId: string;
     reviewedUserName: string;
