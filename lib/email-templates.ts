@@ -4,6 +4,7 @@ import { SessionCreatedEmail } from '@/emails/session-created';
 import { SessionRequestReceivedEmail } from '@/emails/session-request-received';
 import { SessionHostCalendarInviteEmail } from '@/emails/session-host-calendar-invite';
 import { SessionReviewReminderEmail } from '@/emails/session-review-reminder';
+import { ChatUnreadReminderEmail } from '@/emails/chat-unread-reminder';
 
 type SessionDecisionStatus = 'accepted' | 'declined';
 
@@ -134,6 +135,26 @@ export async function renderSessionReviewReminderEmail({
     SessionReviewReminderEmail({
       trainingType,
       reviewUrl,
+    }),
+  );
+}
+
+type ChatUnreadReminderEmailArgs = {
+  senderName: string;
+  messagePreview: string;
+  chatUrl?: string | null;
+};
+
+export async function renderChatUnreadReminderEmail({
+  senderName,
+  messagePreview,
+  chatUrl,
+}: ChatUnreadReminderEmailArgs) {
+  return await render(
+    ChatUnreadReminderEmail({
+      senderName,
+      messagePreview,
+      chatUrl,
     }),
   );
 }

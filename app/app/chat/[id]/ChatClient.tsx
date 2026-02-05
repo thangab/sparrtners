@@ -10,6 +10,7 @@ type Message = {
   sender_id: string;
   body: string;
   created_at: string;
+  read_at?: string | null;
 };
 
 export function ChatClient({
@@ -29,10 +30,39 @@ export function ChatClient({
     null,
   );
   const tokenRef = React.useRef<string | null>(null);
+  const markReadTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   React.useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages.length]);
+
+  React.useEffect(() => {
+    if (markReadTimeout.current) {
+      clearTimeout(markReadTimeout.current);
+    }
+    markReadTimeout.current = setTimeout(() => {
+      const markAsRead = async () => {
+        const { error } = await supabase
+          .from('messages')
+          .update({ read_at: new Date().toISOString() })
+          .eq('conversation_id', conversationId)
+          .neq('sender_id', currentUserId)
+          .is('read_at', null);
+        if (error) {
+          console.error('Failed to mark messages as read', error);
+        }
+      };
+      void markAsRead();
+    }, 300);
+
+    return () => {
+      if (markReadTimeout.current) {
+        clearTimeout(markReadTimeout.current);
+      }
+    };
+  }, [conversationId, currentUserId, messages.length, supabase]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -101,7 +131,7 @@ export function ChatClient({
         sender_id: currentUserId,
         body: value,
       })
-      .select('id, sender_id, body, created_at')
+      .select('id, sender_id, body, created_at, read_at')
       .maybeSingle();
     if (data) {
       setMessages((current) => {

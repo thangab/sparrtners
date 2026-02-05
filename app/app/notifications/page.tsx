@@ -22,7 +22,10 @@ export default async function NotificationsPage() {
     .eq('recipient_id', user.id)
     .order('created_at', { ascending: false });
 
-  const getCopy = (type: string) => {
+  const getCopy = (
+    type: string,
+    data?: { conversation_id?: string | null },
+  ) => {
     switch (type) {
       case 'session_request_received':
         return {
@@ -49,6 +52,17 @@ export default async function NotificationsPage() {
           title: 'Nouveau contenu',
           body: 'Un nouvel article est disponible.',
         };
+      case 'chat_unread_message':
+        if (data?.conversation_id) {
+          return {
+            title: 'Nouveau message',
+            body: `Tu as un message en attente. <a class="underline" href="/app/chat/${data.conversation_id}">Ouvrir le chat</a>.`,
+          };
+        }
+        return {
+          title: 'Nouveau message',
+          body: 'Tu as un message en attente. <a class="underline" href="/app/sessions/requests">Ouvrir l’app</a> pour répondre.',
+        };
       case 'session_review_needed':
         return {
           title: 'Laisser un avis',
@@ -73,7 +87,10 @@ export default async function NotificationsPage() {
       {notifications && notifications.length > 0 ? (
         <div className="space-y-3">
           {notifications.map((notif) => {
-            const copy = getCopy(notif.type);
+            const copy = getCopy(
+              notif.type,
+              (notif.data as { conversation_id?: string | null }) ?? undefined,
+            );
             return (
               <div
                 key={notif.id}
