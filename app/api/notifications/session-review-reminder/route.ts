@@ -93,6 +93,8 @@ export async function POST() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? '';
   const sentIds: string[] = [];
   const sentEmails: string[] = [];
+  let skippedReviewed = 0;
+  let skippedNotEligible = 0;
 
   for (const item of items) {
     const sessionId = item.data?.session_id;
@@ -101,19 +103,31 @@ export async function POST() {
     if (
       reviewedSet.has(`${sessionId}:${item.recipient_id}:${reviewedUserId}`)
     ) {
-      sentIds.push(item.id);
+      skippedReviewed += 1;
       continue;
     }
     const session = sessionMap.get(sessionId);
-    if (!session || !session.is_published) continue;
-    if (!session.starts_at) continue;
+    if (!session || !session.is_published) {
+      skippedNotEligible += 1;
+      continue;
+    }
+    if (!session.starts_at) {
+      skippedNotEligible += 1;
+      continue;
+    }
     const duration = session.duration_minutes ?? 60;
     const endAt =
       new Date(session.starts_at).getTime() + duration * 60 * 1000;
-    if (endAt > now) continue;
+    if (endAt > now) {
+      skippedNotEligible += 1;
+      continue;
+    }
 
     const recipientEmail = profileMap.get(item.recipient_id);
-    if (!recipientEmail) continue;
+    if (!recipientEmail) {
+      skippedNotEligible += 1;
+      continue;
+    }
 
     const html = await renderSessionReviewReminderEmail({
       trainingType: session.training_type_name ?? 'Entraînement',
@@ -147,5 +161,11 @@ export async function POST() {
       .in('id', sentIds);
   }
 
-  return NextResponse.json({ ok: true, sent: sentIds.length, sentEmails });
+  return NextResponse.json({
+    ok: true,
+    sent: sentIds.length,
+    sentEmails,
+    skippedReviewed,
+    skippedNotEligible,
+  });
 }
