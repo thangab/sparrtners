@@ -3,12 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
 
-type RelatedName = { name: string } | { name: string }[] | null;
 type SportProfileRow = {
   discipline_id: number;
   skill_level_id: number | null;
-  discipline: RelatedName;
-  skill_level: RelatedName;
+  discipline_name: string | null;
+  skill_level_name: string | null;
 };
 type ReviewRow = {
   reviewer_id: string;
@@ -17,9 +16,8 @@ type ReviewRow = {
   created_at: string;
 };
 
-function extractName(value: RelatedName) {
-  if (!value) return undefined;
-  return Array.isArray(value) ? value[0]?.name : value.name;
+function fallbackName(value: string | null | undefined, fallback: string) {
+  return value?.trim() ? value : fallback;
 }
 
 export default async function FighterProfilePage({
@@ -52,10 +50,8 @@ export default async function FighterProfilePage({
     .eq('id', id)
     .maybeSingle();
   const { data: sportProfiles } = (await supabase
-    .from('user_sport_profiles')
-    .select(
-      'discipline_id, skill_level_id, discipline:disciplines(name), skill_level:skill_levels(name)',
-    )
+    .from('public_user_sport_profiles')
+    .select('discipline_id, skill_level_id, discipline_name, skill_level_name')
     .eq('user_id', id)
     .order('discipline_id', { ascending: true })) as {
     data: SportProfileRow[] | null;
@@ -179,8 +175,8 @@ export default async function FighterProfilePage({
                   <li
                     key={`${profile.discipline_id}-${profile.skill_level_id}`}
                   >
-                    {extractName(profile.discipline) ?? 'Discipline'} ·{' '}
-                    {extractName(profile.skill_level) ?? 'Niveau'}
+                    {fallbackName(profile.discipline_name, 'Discipline')} ·{' '}
+                    {fallbackName(profile.skill_level_name, 'Niveau')}
                   </li>
                 ))}
               </ul>

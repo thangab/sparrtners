@@ -60,13 +60,10 @@ export async function POST() {
   }> = [];
 
   (reviewCandidates ?? []).forEach((row) => {
-    const session = Array.isArray(row.session)
-      ? row.session[0]
-      : row.session;
+    const session = Array.isArray(row.session) ? row.session[0] : row.session;
     if (!session || !session.is_published || !session.starts_at) return;
     const duration = session.duration_minutes ?? 60;
-    const endAt =
-      new Date(session.starts_at).getTime() + duration * 60 * 1000;
+    const endAt = new Date(session.starts_at).getTime() + duration * 60 * 1000;
     if (endAt > now) return;
 
     const hostId = session.host_id;
@@ -185,10 +182,7 @@ export async function POST() {
   );
 
   const { data: profiles } = recipientIds.length
-    ? await supabase
-        .from('profiles')
-        .select('id, email')
-        .in('id', recipientIds)
+    ? await supabase.from('profiles').select('id, email').in('id', recipientIds)
     : { data: [] as { id: string; email: string | null }[] };
   const profileMap = new Map(
     (profiles ?? []).map((profile) => [profile.id, profile.email]),
@@ -300,8 +294,7 @@ export async function POST() {
       continue;
     }
     const duration = session.duration_minutes ?? 60;
-    const endAt =
-      new Date(session.starts_at).getTime() + duration * 60 * 1000;
+    const endAt = new Date(session.starts_at).getTime() + duration * 60 * 1000;
     if (endAt > nowEmail) {
       skippedNotEligible += 1;
       results.push({
