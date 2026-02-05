@@ -197,6 +197,7 @@ export default async function RequestsPage() {
       starts_at: formatSessionDate(session.starts_at),
       starts_at_raw: session.starts_at,
       duration_minutes: session.duration_minutes,
+      is_finished: finished,
       place: `${normalizeOne(session.place)?.name ?? 'Lieu'}${
         normalizeOne(session.place)?.city
           ? ` · ${normalizeOne(session.place)?.city}`
@@ -225,6 +226,10 @@ export default async function RequestsPage() {
       starts_at: formatSessionDate(item.session!.starts_at),
       starts_at_raw: item.session!.starts_at,
       duration_minutes: item.session!.duration_minutes,
+      is_finished: sessionIsFinished(
+        item.session!.starts_at,
+        item.session!.duration_minutes,
+      ),
       place: `${normalizeOne(item.session!.place)?.name ?? 'Lieu'}${
         normalizeOne(item.session!.place)?.city
           ? ` · ${normalizeOne(item.session!.place)?.city}`
@@ -246,6 +251,14 @@ export default async function RequestsPage() {
         `${item.session!.id}:${[userId, item.session!.host_id].sort().join(':')}`,
       ),
     }));
+
+  const completedItems = [...createdItems, ...requestedItems]
+    .filter((item) => item.is_finished || !item.is_published)
+    .sort((a, b) => {
+      const aTime = a.starts_at_raw ? new Date(a.starts_at_raw).getTime() : 0;
+      const bTime = b.starts_at_raw ? new Date(b.starts_at_raw).getTime() : 0;
+      return bTime - aTime;
+    });
 
   const totalItems = createdItems.length + requestedItems.length;
 
@@ -277,7 +290,11 @@ export default async function RequestsPage() {
             </CardContent>
           </Card>
         ) : (
-          <SessionRequestsTable created={createdItems} requested={requestedItems} />
+          <SessionRequestsTable
+            created={createdItems}
+            requested={requestedItems}
+            completed={completedItems}
+          />
         )}
       </div>
     </div>

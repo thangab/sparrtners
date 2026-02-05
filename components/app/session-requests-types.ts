@@ -5,6 +5,7 @@ export type SessionTableRow = {
   starts_at: string;
   starts_at_raw?: string;
   duration_minutes?: number | null;
+  is_finished?: boolean;
   place: string;
   status?: string | null;
   participant_count?: number | null;
@@ -36,4 +37,5 @@ export type SessionTableRow = {
 export type SessionRequestsTableProps = {
   created: SessionTableRow[];
   requested: SessionTableRow[];
+  completed: SessionTableRow[];
 };

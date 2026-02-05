@@ -19,7 +19,7 @@ import { MoreVertical, Eye, EyeOff } from 'lucide-react';
 import { SessionTableRow } from '@/components/app/session-requests-types';
 
 type ColumnsOptions = {
-  view: 'host' | 'requester';
+  view: 'host' | 'requester' | 'completed';
   expanded: Record<string, boolean>;
   setExpanded: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   handleDisableSession: (sessionId: string) => void;
@@ -78,7 +78,12 @@ export function getSessionRequestsColumns({
     },
     {
       accessorKey: 'status',
-      header: view === 'requester' ? 'Statut' : 'Demandes',
+      header:
+        view === 'requester'
+          ? 'Statut'
+          : view === 'host'
+            ? 'Demandes'
+            : 'Statut / demandes',
       cell: ({ row }) =>
         row.original.kind === 'requester' ? (
           <Badge variant="outline">{row.original.status ?? 'pending'}</Badge>
@@ -105,7 +110,9 @@ export function getSessionRequestsColumns({
                 handleFullChange(row.original.id, checked)
               }
               disabled={
-                !row.original.is_published || !!switchLoading[row.original.id]
+                !row.original.is_published ||
+                !!switchLoading[row.original.id] ||
+                row.original.is_finished
               }
             />
             <span>Session complète</span>
@@ -147,7 +154,8 @@ export function getSessionRequestsColumns({
             {row.original.kind === 'requester' &&
             row.original.status === 'accepted' &&
             row.original.is_published &&
-            row.original.host_id ? (
+            row.original.host_id &&
+            !row.original.is_finished ? (
               <OpenChatButton
                 sessionId={row.original.id}
                 otherUserId={row.original.host_id}
@@ -178,16 +186,20 @@ export function getSessionRequestsColumns({
                   <Button
                     size="sm"
                     variant="ghost"
-                    disabled={!row.original.is_published}
+                    disabled={
+                      !row.original.is_published || row.original.is_finished
+                    }
                   >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href={editLink}>Modifier</Link>
-                  </DropdownMenuItem>
-                  {row.original.is_published && (
+                  {!row.original.is_finished && (
+                    <DropdownMenuItem asChild>
+                      <Link href={editLink}>Modifier</Link>
+                    </DropdownMenuItem>
+                  )}
+                  {row.original.is_published && !row.original.is_finished && (
                     <DropdownMenuItem asChild>
                       <Link href={sessionLink}>Voir</Link>
                     </DropdownMenuItem>
@@ -200,7 +212,8 @@ export function getSessionRequestsColumns({
                     }}
                     disabled={
                       actionLoading[row.original.id] ||
-                      !row.original.is_published
+                      !row.original.is_published ||
+                      row.original.is_finished
                     }
                   >
                     Désactiver

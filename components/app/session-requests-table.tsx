@@ -36,15 +36,20 @@ import { useSearchParams } from 'next/navigation';
 export function SessionRequestsTable({
   created,
   requested,
+  completed,
 }: SessionRequestsTableProps) {
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
   const { toast } = useToast();
-  const [view, setView] = React.useState<'host' | 'requester'>('host');
+  const [view, setView] = React.useState<'host' | 'requester' | 'completed'>(
+    'host',
+  );
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
   const [createdRows, setCreatedRows] =
     React.useState<SessionTableRow[]>(created);
   const [requestedRows, setRequestedRows] =
     React.useState<SessionTableRow[]>(requested);
+  const [completedRows, setCompletedRows] =
+    React.useState<SessionTableRow[]>(completed);
   const [actionLoading, setActionLoading] = React.useState<
     Record<string, boolean>
   >({});
@@ -73,25 +78,28 @@ export function SessionRequestsTable({
     setRequestedRows(requested);
   }, [requested]);
 
-  const data = React.useMemo(
-    () => (view === 'host' ? createdRows : requestedRows),
-    [view, createdRows, requestedRows],
-  );
+  React.useEffect(() => {
+    setCompletedRows(completed);
+  }, [completed]);
 
-  const pendingHostReviewCount = React.useMemo(() => {
-    return createdRows.reduce((count, session) => {
-      const sessionPending =
-        session.requests?.filter(
-          (request) => request.can_review && !request.reviewed,
-        ).length ?? 0;
-      return count + sessionPending;
-    }, 0);
-  }, [createdRows]);
-  const pendingRequesterReviewCount = React.useMemo(() => {
-    return requestedRows.filter(
-      (session) => session.can_review && !session.reviewed,
-    ).length;
-  }, [requestedRows]);
+  const hostRows = React.useMemo(
+    () => createdRows.filter((row) => !row.is_finished && row.is_published),
+    [createdRows],
+  );
+  const requesterRows = React.useMemo(
+    () =>
+      requestedRows.filter((row) => !row.is_finished && row.is_published),
+    [requestedRows],
+  );
+  const data = React.useMemo(
+    () =>
+      view === 'host'
+        ? hostRows
+        : view === 'requester'
+          ? requesterRows
+          : completedRows,
+    [view, hostRows, requesterRows, completedRows],
+  );
 
   const reviewTarget = React.useMemo(() => {
     if (!reviewParam || reviewParam !== '1') return null;
@@ -104,7 +112,7 @@ export function SessionRequestsTable({
       );
       if (request) {
         return {
-          kind: 'host' as const,
+          kind: hostRow.is_finished ? ('completed' as const) : ('host' as const),
           sessionId: reviewSessionId,
           reviewedUserId: reviewUserId,
           reviewedUserName: request.requester?.display_name ?? 'Sportif',
@@ -117,7 +125,9 @@ export function SessionRequestsTable({
     );
     if (requesterRow) {
       return {
-        kind: 'requester' as const,
+        kind: requesterRow.is_finished
+          ? ('completed' as const)
+          : ('requester' as const),
         sessionId: reviewSessionId,
         reviewedUserId: reviewUserId,
         reviewedUserName: 'l’hôte',
@@ -128,13 +138,9 @@ export function SessionRequestsTable({
   }, [createdRows, requestedRows, reviewParam, reviewSessionId, reviewUserId]);
 
   React.useEffect(() => {
-    if (!hasReviewParams || deepLinkTarget) return;
-    setDeepLinkTarget({
-      kind: 'requester',
-      sessionId: reviewSessionId,
-      reviewedUserId: reviewUserId,
-      reviewedUserName: 'l’hôte',
-    });
+    if (!reviewTarget) return;
+    setDeepLinkTarget(reviewTarget);
+    if (!hasReviewParams) return;
     const params = new URLSearchParams(window.location.search);
     params.delete('review');
     params.delete('session_id');
@@ -144,12 +150,7 @@ export function SessionRequestsTable({
       ? `${window.location.pathname}?${next}`
       : window.location.pathname;
     window.history.replaceState({}, '', url);
-  }, [hasReviewParams, reviewSessionId, reviewUserId, deepLinkTarget]);
-
-  React.useEffect(() => {
-    if (!reviewTarget) return;
-    setDeepLinkTarget(reviewTarget);
-  }, [reviewTarget]);
+  }, [reviewTarget, hasReviewParams]);
 
   React.useEffect(() => {
     if (!deepLinkTarget) return;
@@ -159,8 +160,20 @@ export function SessionRequestsTable({
         ...current,
         [deepLinkTarget.sessionId]: true,
       }));
+      return;
     }
-  }, [deepLinkTarget]);
+    if (deepLinkTarget.kind === 'completed') {
+      const targetRow = completedRows.find(
+        (row) => row.id === deepLinkTarget.sessionId,
+      );
+      if (targetRow?.kind === 'host') {
+        setExpanded((current) => ({
+          ...current,
+          [deepLinkTarget.sessionId]: true,
+        }));
+      }
+    }
+  }, [deepLinkTarget, completedRows]);
 
   const updateCreatedRow = React.useCallback(
     (id: string, patch: Partial<SessionTableRow>) => {
@@ -259,6 +272,7 @@ export function SessionRequestsTable({
   const table = useReactTable({
     data,
     columns,
+    getRowId: (row) => `${row.kind}-${row.id}`,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 8 } },
@@ -266,9 +280,10 @@ export function SessionRequestsTable({
 
   React.useEffect(() => {
     table.setPageIndex(0);
-    if (view === 'host') {
+    if (view === 'completed') {
       const nextExpanded: Record<string, boolean> = {};
-      createdRows.forEach((row) => {
+      completedRows.forEach((row) => {
+        if (row.kind !== 'host') return;
         const hasPendingReview =
           row.requests?.some(
             (request) => request.can_review && !request.reviewed,
@@ -281,7 +296,7 @@ export function SessionRequestsTable({
     } else {
       setExpanded({});
     }
-  }, [table, view, createdRows]);
+  }, [table, view, completedRows]);
 
   return (
     <div className="space-y-4">
@@ -299,11 +314,14 @@ export function SessionRequestsTable({
       ) : null}
       <Tabs
         value={view}
-        onValueChange={(value) => setView(value as 'host' | 'requester')}
+        onValueChange={(value) =>
+          setView(value as 'host' | 'requester' | 'completed')
+        }
       >
         <TabsList>
           <TabsTrigger value="host">Mes sessions</TabsTrigger>
           <TabsTrigger value="requester">Mes demandes</TabsTrigger>
+          <TabsTrigger value="completed">Sessions terminées</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -316,8 +334,12 @@ export function SessionRequestsTable({
           data.map((row) => {
             const sessionLink = `/sessions/${row.id}`;
             const editLink = `/app/sessions/${row.id}/edit`;
+            const isFinished = !!row.is_finished;
             return (
-              <Card key={row.id} className="space-y-3 p-4">
+              <Card
+                key={`${row.kind}-${row.id}`}
+                className="space-y-3 p-4"
+              >
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="text-base font-semibold text-slate-900">
@@ -367,7 +389,11 @@ export function SessionRequestsTable({
                       onCheckedChange={(checked) =>
                         handleFullChange(row.id, checked)
                       }
-                      disabled={!row.is_published || !!switchLoading[row.id]}
+                      disabled={
+                        !row.is_published ||
+                        !!switchLoading[row.id] ||
+                        isFinished
+                      }
                     />
                     <span>Session complète</span>
                   </div>
@@ -397,7 +423,8 @@ export function SessionRequestsTable({
                   {row.kind === 'requester' &&
                   row.status === 'accepted' &&
                   row.is_published &&
-                  row.host_id ? (
+                  row.host_id &&
+                  !isFinished ? (
                     <OpenChatButton
                       sessionId={row.id}
                       otherUserId={row.host_id}
@@ -429,18 +456,18 @@ export function SessionRequestsTable({
                         <Button
                           size="sm"
                           variant="ghost"
-                          disabled={!row.is_published}
+                          disabled={!row.is_published || isFinished}
                         >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {row.is_published && (
+                        {row.is_published && !isFinished && (
                           <DropdownMenuItem asChild>
                             <Link href={editLink}>Modifier</Link>
                           </DropdownMenuItem>
                         )}
-                        {row.is_published && (
+                        {row.is_published && !isFinished && (
                           <DropdownMenuItem asChild>
                             <Link href={sessionLink}>Voir</Link>
                           </DropdownMenuItem>
@@ -451,7 +478,11 @@ export function SessionRequestsTable({
                             event.preventDefault();
                             handleDisableSession(row.id);
                           }}
-                          disabled={actionLoading[row.id] || !row.is_published}
+                          disabled={
+                            actionLoading[row.id] ||
+                            !row.is_published ||
+                            isFinished
+                          }
                         >
                           Désactiver la session
                         </DropdownMenuItem>
@@ -464,7 +495,7 @@ export function SessionRequestsTable({
                   <div className="pt-2">
                     <SessionRequestsList
                       requests={row.requests ?? []}
-                      sessionDisabled={!row.is_published}
+                      sessionDisabled={!row.is_published || isFinished}
                     />
                   </div>
                 ) : null}
@@ -520,7 +551,10 @@ export function SessionRequestsTable({
                         <td colSpan={columns.length} className="px-4 py-4">
                           <SessionRequestsList
                             requests={row.original.requests ?? []}
-                            sessionDisabled={!row.original.is_published}
+                            sessionDisabled={
+                              !row.original.is_published ||
+                              !!row.original.is_finished
+                            }
                           />
                         </td>
                       </tr>

@@ -72,12 +72,10 @@ export default async function SessionsPage({
   const durationMaxParam = getNumberParam(resolvedSearchParams?.duration_max);
   const trainingTypeDefaultParam = resolvedSearchParams?.training_type_id;
   const defaultTrainingTypeIds = Array.isArray(trainingTypeDefaultParam)
-    ? trainingTypeDefaultParam.filter(
-        (value): value is string => {
-          if (typeof value !== 'string') return false;
-          return value.trim().length > 0;
-        },
-      )
+    ? trainingTypeDefaultParam.filter((value): value is string => {
+        if (typeof value !== 'string') return false;
+        return value.trim().length > 0;
+      })
     : trainingTypeDefaultParam
       ? [String(trainingTypeDefaultParam)]
       : [];
@@ -171,6 +169,7 @@ export default async function SessionsPage({
     supabase.from('training_types').select('id, name').order('id'),
   ]);
   const { data: sessions, error } = sessionsResult;
+  console.log('sessions', sessions);
   const trainingTypes = trainingTypesResult.data ?? [];
   const safeSessions = (sessions ?? []).filter(
     (session: SessionWithDistance) => !!session?.id,
