@@ -12,6 +12,10 @@ type SessionReviewModalProps = {
   reviewedUserName: string;
   triggerLabel?: string;
   disabled?: boolean;
+  hideTrigger?: boolean;
+  autoOpen?: boolean;
+  initialOpen?: boolean;
+  alreadyReviewed?: boolean;
   onReviewed?: () => void;
 };
 
@@ -19,16 +23,44 @@ export function SessionReviewModal({
   sessionId,
   reviewedUserId,
   reviewedUserName,
-  triggerLabel = 'Noter',
+  triggerLabel = 'Donner mon avis',
   disabled = false,
+  hideTrigger = false,
+  autoOpen = true,
+  initialOpen = false,
+  alreadyReviewed = false,
   onReviewed,
 }: SessionReviewModalProps) {
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
   const { toast } = useToast();
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(initialOpen);
   const [rating, setRating] = React.useState<number | null>(null);
   const [comment, setComment] = React.useState('');
   const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!initialOpen || alreadyReviewed) return;
+    setOpen(true);
+  }, [initialOpen, alreadyReviewed]);
+
+  React.useEffect(() => {
+    if (!autoOpen || alreadyReviewed) return;
+    const params = new URLSearchParams(window.location.search);
+    const shouldOpen =
+      params.get('review') === '1' &&
+      params.get('session_id') === sessionId &&
+      params.get('reviewed_user_id') === reviewedUserId;
+    if (!shouldOpen) return;
+    setOpen(true);
+    params.delete('review');
+    params.delete('session_id');
+    params.delete('reviewed_user_id');
+    const next = params.toString();
+    const url = next
+      ? `${window.location.pathname}?${next}`
+      : window.location.pathname;
+    window.history.replaceState({}, '', url);
+  }, [autoOpen, alreadyReviewed, sessionId, reviewedUserId]);
 
   const handleSubmit = async () => {
     if (!rating) {
@@ -84,25 +116,27 @@ export function SessionReviewModal({
 
   return (
     <>
-      <Button
-        size="sm"
-        variant="outline"
-        type="button"
-        disabled={disabled}
-        onClick={() => setOpen(true)}
-      >
-        {triggerLabel}
-      </Button>
+      {!hideTrigger ? (
+        <Button
+          size="sm"
+          variant="outline"
+          type="button"
+          disabled={disabled || alreadyReviewed}
+          onClick={() => setOpen(true)}
+        >
+          {triggerLabel}
+        </Button>
+      ) : null}
       {open ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4"
+          className="fixed inset-0 z-9999 flex items-center justify-center bg-slate-900/40 px-4"
           role="dialog"
           aria-modal="true"
         >
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
             <div className="space-y-2">
               <div className="text-lg font-semibold text-slate-900">
-                Noter {reviewedUserName}
+                Donner mon avis sur {reviewedUserName}
               </div>
               <div className="text-sm text-slate-500">
                 Donne une note pour cette session.

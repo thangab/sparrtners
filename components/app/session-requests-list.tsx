@@ -145,8 +145,7 @@ export function SessionRequestsList({
   return (
     <div className="space-y-2">
       {items.map((request) => {
-        const requesterName =
-          request.requester?.display_name ?? 'Sportif';
+        const requesterName = request.requester?.display_name ?? 'Sportif';
         const requestDate = new Intl.DateTimeFormat('fr-FR', {
           dateStyle: 'medium',
           timeStyle: 'short',
@@ -210,8 +209,9 @@ export function SessionRequestsList({
                   sessionId={request.session_id}
                   reviewedUserId={request.user_id}
                   reviewedUserName={requesterName}
-                  triggerLabel="Noter"
+                  triggerLabel="Donner mon avis"
                   disabled={loadingId === request.id}
+                  autoOpen={false}
                   onReviewed={() =>
                     setItems((current) =>
                       current.map((item) =>

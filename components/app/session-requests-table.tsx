@@ -31,6 +31,7 @@ import { getSessionRequestsColumns } from '@/components/app/session-requests-col
 import { OpenChatButton } from '@/components/app/open-chat-button';
 import { SessionReviewModal } from '@/components/app/session-review-modal';
 import { Eye, MoreVertical } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 
 export function SessionRequestsTable({
   created,
@@ -50,6 +51,19 @@ export function SessionRequestsTable({
   const [switchLoading, setSwitchLoading] = React.useState<
     Record<string, boolean>
   >({});
+  const searchParams = useSearchParams();
+  const [deepLinkTarget, setDeepLinkTarget] = React.useState<{
+    kind: 'host' | 'requester';
+    sessionId: string;
+    reviewedUserId: string;
+    reviewedUserName: string;
+  } | null>(null);
+
+  const reviewSessionId = searchParams.get('session_id') ?? '';
+  const reviewUserId = searchParams.get('reviewed_user_id') ?? '';
+  const reviewParam = searchParams.get('review');
+  const hasReviewParams =
+    reviewParam === '1' && reviewSessionId && reviewUserId;
 
   React.useEffect(() => {
     setCreatedRows(created);
@@ -63,6 +77,90 @@ export function SessionRequestsTable({
     () => (view === 'host' ? createdRows : requestedRows),
     [view, createdRows, requestedRows],
   );
+
+  const pendingHostReviewCount = React.useMemo(() => {
+    return createdRows.reduce((count, session) => {
+      const sessionPending =
+        session.requests?.filter(
+          (request) => request.can_review && !request.reviewed,
+        ).length ?? 0;
+      return count + sessionPending;
+    }, 0);
+  }, [createdRows]);
+  const pendingRequesterReviewCount = React.useMemo(() => {
+    return requestedRows.filter(
+      (session) => session.can_review && !session.reviewed,
+    ).length;
+  }, [requestedRows]);
+
+  const reviewTarget = React.useMemo(() => {
+    if (!reviewParam || reviewParam !== '1') return null;
+    if (!reviewSessionId || !reviewUserId) return null;
+
+    const hostRow = createdRows.find((row) => row.id === reviewSessionId);
+    if (hostRow?.requests) {
+      const request = hostRow.requests.find(
+        (item) => item.user_id === reviewUserId,
+      );
+      if (request) {
+        return {
+          kind: 'host' as const,
+          sessionId: reviewSessionId,
+          reviewedUserId: reviewUserId,
+          reviewedUserName: request.requester?.display_name ?? 'Sportif',
+        };
+      }
+    }
+
+    const requesterRow = requestedRows.find(
+      (row) => row.id === reviewSessionId && row.host_id === reviewUserId,
+    );
+    if (requesterRow) {
+      return {
+        kind: 'requester' as const,
+        sessionId: reviewSessionId,
+        reviewedUserId: reviewUserId,
+        reviewedUserName: 'l’hôte',
+      };
+    }
+
+    return null;
+  }, [createdRows, requestedRows, reviewParam, reviewSessionId, reviewUserId]);
+
+  React.useEffect(() => {
+    if (!hasReviewParams || deepLinkTarget) return;
+    setDeepLinkTarget({
+      kind: 'requester',
+      sessionId: reviewSessionId,
+      reviewedUserId: reviewUserId,
+      reviewedUserName: 'l’hôte',
+    });
+    const params = new URLSearchParams(window.location.search);
+    params.delete('review');
+    params.delete('session_id');
+    params.delete('reviewed_user_id');
+    const next = params.toString();
+    const url = next
+      ? `${window.location.pathname}?${next}`
+      : window.location.pathname;
+    window.history.replaceState({}, '', url);
+  }, [hasReviewParams, reviewSessionId, reviewUserId, deepLinkTarget]);
+
+  React.useEffect(() => {
+    if (!reviewTarget) return;
+    setDeepLinkTarget(reviewTarget);
+  }, [reviewTarget]);
+
+  React.useEffect(() => {
+    if (!deepLinkTarget) return;
+    setView(deepLinkTarget.kind);
+    if (deepLinkTarget.kind === 'host') {
+      setExpanded((current) => ({
+        ...current,
+        [deepLinkTarget.sessionId]: true,
+      }));
+    }
+  }, [deepLinkTarget]);
 
   const updateCreatedRow = React.useCallback(
     (id: string, patch: Partial<SessionTableRow>) => {
@@ -168,12 +266,41 @@ export function SessionRequestsTable({
 
   React.useEffect(() => {
     table.setPageIndex(0);
-    setExpanded({});
-  }, [table, view]);
+    if (view === 'host') {
+      const nextExpanded: Record<string, boolean> = {};
+      createdRows.forEach((row) => {
+        const hasPendingReview =
+          row.requests?.some(
+            (request) => request.can_review && !request.reviewed,
+          ) ?? false;
+        if (hasPendingReview) {
+          nextExpanded[row.id] = true;
+        }
+      });
+      setExpanded(nextExpanded);
+    } else {
+      setExpanded({});
+    }
+  }, [table, view, createdRows]);
 
   return (
     <div className="space-y-4">
-      <Tabs value={view} onValueChange={(value) => setView(value as 'host' | 'requester')}>
+      {deepLinkTarget ? (
+        <SessionReviewModal
+          key={`${deepLinkTarget.sessionId}:${deepLinkTarget.reviewedUserId}`}
+          sessionId={deepLinkTarget.sessionId}
+          reviewedUserId={deepLinkTarget.reviewedUserId}
+          reviewedUserName={deepLinkTarget.reviewedUserName}
+          hideTrigger
+          autoOpen={false}
+          initialOpen
+          alreadyReviewed={false}
+        />
+      ) : null}
+      <Tabs
+        value={view}
+        onValueChange={(value) => setView(value as 'host' | 'requester')}
+      >
         <TabsList>
           <TabsTrigger value="host">Mes sessions</TabsTrigger>
           <TabsTrigger value="requester">Mes demandes</TabsTrigger>
@@ -192,8 +319,25 @@ export function SessionRequestsTable({
             return (
               <Card key={row.id} className="space-y-3 p-4">
                 <div className="space-y-1">
-                  <div className="text-base font-semibold text-slate-900">
-                    {row.title}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-base font-semibold text-slate-900">
+                      {row.title}
+                    </div>
+                    {row.kind === 'host' &&
+                    row.requests?.some(
+                      (request) => request.can_review && !request.reviewed,
+                    ) ? (
+                      <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">
+                        Avis à donner
+                      </Badge>
+                    ) : null}
+                    {row.kind === 'requester' &&
+                    row.can_review &&
+                    !row.reviewed ? (
+                      <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">
+                        Avis à donner
+                      </Badge>
+                    ) : null}
                   </div>
                   <div className="text-xs text-slate-500">{row.starts_at}</div>
                   <div className="text-xs text-slate-500">{row.place}</div>
@@ -223,9 +367,7 @@ export function SessionRequestsTable({
                       onCheckedChange={(checked) =>
                         handleFullChange(row.id, checked)
                       }
-                      disabled={
-                        !row.is_published || !!switchLoading[row.id]
-                      }
+                      disabled={!row.is_published || !!switchLoading[row.id]}
                     />
                     <span>Session complète</span>
                   </div>
@@ -270,7 +412,9 @@ export function SessionRequestsTable({
                       sessionId={row.id}
                       reviewedUserId={row.host_id}
                       reviewedUserName="l’hôte"
-                      triggerLabel="Noter"
+                      triggerLabel="Donner mon avis"
+                      autoOpen={false}
+                      alreadyReviewed={row.reviewed}
                       onReviewed={() =>
                         updateRequestedRow(row.id, { reviewed: true })
                       }

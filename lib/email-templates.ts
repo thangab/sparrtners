@@ -3,6 +3,7 @@ import { SessionRequestStatusEmail } from '@/emails/session-request-status';
 import { SessionCreatedEmail } from '@/emails/session-created';
 import { SessionRequestReceivedEmail } from '@/emails/session-request-received';
 import { SessionHostCalendarInviteEmail } from '@/emails/session-host-calendar-invite';
+import { SessionReviewReminderEmail } from '@/emails/session-review-reminder';
 
 type SessionDecisionStatus = 'accepted' | 'declined';
 
@@ -116,6 +117,23 @@ export async function renderSessionHostCalendarInviteEmail({
       startsAt,
       durationMinutes,
       place,
+    }),
+  );
+}
+
+type SessionReviewReminderEmailArgs = {
+  trainingType: string;
+  reviewUrl?: string | null;
+};
+
+export async function renderSessionReviewReminderEmail({
+  trainingType,
+  reviewUrl,
+}: SessionReviewReminderEmailArgs) {
+  return await render(
+    SessionReviewReminderEmail({
+      trainingType,
+      reviewUrl,
     }),
   );
 }

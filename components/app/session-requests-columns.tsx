@@ -24,7 +24,10 @@ type ColumnsOptions = {
   setExpanded: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   handleDisableSession: (sessionId: string) => void;
   handleFullChange: (sessionId: string, checked: boolean) => void;
-  onReviewComplete: (sessionId: string, patch: Partial<SessionTableRow>) => void;
+  onReviewComplete: (
+    sessionId: string,
+    patch: Partial<SessionTableRow>,
+  ) => void;
   actionLoading: Record<string, boolean>;
   switchLoading: Record<string, boolean>;
 };
@@ -45,7 +48,26 @@ export function getSessionRequestsColumns({
       header: 'Session',
       cell: ({ row }) => (
         <div className="space-y-1">
-          <div className="font-medium text-slate-900">{row.original.title}</div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="font-medium text-slate-900">
+              {row.original.title}
+            </div>
+            {row.original.kind === 'host' &&
+            row.original.requests?.some(
+              (request) => request.can_review && !request.reviewed,
+            ) ? (
+              <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">
+                Avis à donner
+              </Badge>
+            ) : null}
+            {row.original.kind === 'requester' &&
+            row.original.can_review &&
+            !row.original.reviewed ? (
+              <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">
+                Avis à donner
+              </Badge>
+            ) : null}
+          </div>
           <div className="text-xs text-slate-500">{row.original.starts_at}</div>
           <div className="text-xs text-slate-500">{row.original.place}</div>
           {!row.original.is_published ? (
@@ -140,7 +162,8 @@ export function getSessionRequestsColumns({
                 sessionId={row.original.id}
                 reviewedUserId={row.original.host_id}
                 reviewedUserName="l’hôte"
-                triggerLabel="Noter"
+                triggerLabel="Donner mon avis"
+                autoOpen={false}
                 onReviewed={() =>
                   onReviewComplete(row.original.id, { reviewed: true })
                 }
