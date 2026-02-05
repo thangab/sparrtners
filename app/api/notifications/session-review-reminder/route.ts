@@ -13,9 +13,10 @@ type NotificationRow = {
   } | null;
 };
 
-type SessionListingRow = {
+type TrainingTypeRow = { name: string | null };
+type SessionRow = {
   id: string;
-  training_type_name: string | null;
+  training_type: TrainingTypeRow | TrainingTypeRow[] | null;
   starts_at: string | null;
   duration_minutes: number | null;
   is_published: boolean | null;
@@ -57,10 +58,12 @@ export async function POST() {
 
   const { data: sessions } = sessionIds.length
     ? await supabase
-        .from('session_listings')
-        .select('id, training_type_name, starts_at, duration_minutes, is_published')
+        .from('sessions')
+        .select(
+          'id, starts_at, duration_minutes, is_published, training_type:training_types(name)',
+        )
         .in('id', sessionIds)
-    : { data: [] as SessionListingRow[] };
+    : { data: [] as SessionRow[] };
   const sessionMap = new Map(
     (sessions ?? []).map((session) => [session.id, session]),
   );
@@ -173,8 +176,11 @@ export async function POST() {
       continue;
     }
 
+    const trainingType = Array.isArray(session.training_type)
+      ? session.training_type[0]?.name
+      : session.training_type?.name;
     const html = await renderSessionReviewReminderEmail({
-      trainingType: session.training_type_name ?? 'Entraînement',
+      trainingType: trainingType ?? 'Entraînement',
       reviewUrl: `${baseUrl}/app/sessions/requests?review=1&session_id=${sessionId}&reviewed_user_id=${reviewedUserId}`,
     });
 
@@ -187,7 +193,7 @@ export async function POST() {
       body: JSON.stringify({
         from: process.env.RESEND_FROM,
         to: [recipientEmail],
-        subject: `Laisser un avis · Session de ${session.training_type_name ?? 'Entraînement'}`,
+        subject: `Laisser un avis · Session de ${trainingType ?? 'Entraînement'}`,
         html,
       }),
     });
