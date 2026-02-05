@@ -37,18 +37,29 @@ export async function POST() {
     .is('read_at', null)
     .is('notified_at', null)
     .lte('created_at', tenMinutesAgo)
-    .order('created_at', { ascending: true })
-    .limit(100);
+    .order('conversation_id', { ascending: true })
+    .order('created_at', { ascending: false })
+    .limit(300);
 
   if (!messages || messages.length === 0) {
     return NextResponse.json({ ok: true, sent: 0 });
   }
 
   const items = messages as MessageRow[];
-  const senderIds = Array.from(new Set(items.map((item) => item.sender_id)));
+  const latestByConversation = new Map<string, MessageRow>();
+  items.forEach((message) => {
+    if (!latestByConversation.has(message.conversation_id)) {
+      latestByConversation.set(message.conversation_id, message);
+    }
+  });
+  const latestMessages = Array.from(latestByConversation.values());
+
+  const senderIds = Array.from(
+    new Set(latestMessages.map((item) => item.sender_id)),
+  );
   const recipientIds = Array.from(
     new Set(
-      items.map((item) => {
+      latestMessages.map((item) => {
         const convo = Array.isArray(item.conversations)
           ? item.conversations[0]
           : item.conversations;
@@ -102,7 +113,7 @@ export async function POST() {
     reason?: string;
   }> = [];
 
-  for (const message of items) {
+  for (const message of latestMessages) {
     const convo = Array.isArray(message.conversations)
       ? message.conversations[0]
       : message.conversations;
@@ -207,10 +218,22 @@ export async function POST() {
   }
 
   if (sentIds.length > 0) {
-    await supabase
-      .from('messages')
-      .update({ notified_at: new Date().toISOString() })
-      .in('id', sentIds);
+    const notifiedAt = new Date().toISOString();
+    const conversationIds = Array.from(
+      new Set(
+        latestMessages
+          .filter((message) => sentIds.includes(message.id))
+          .map((message) => message.conversation_id),
+      ),
+    );
+    if (conversationIds.length > 0) {
+      await supabase
+        .from('messages')
+        .update({ notified_at: notifiedAt })
+        .in('conversation_id', conversationIds)
+        .is('read_at', null)
+        .is('notified_at', null);
+    }
   }
 
   if (notificationsToInsert.length > 0) {
