@@ -48,6 +48,42 @@ export function SessionFiltersSidebar({
   const [dateEndValue, setDateEndValue] = React.useState(
     defaultDateEnd ?? '',
   );
+  const [selectedTrainingTypes, setSelectedTrainingTypes] = React.useState(
+    defaultTrainingTypeIds,
+  );
+  const [selectedDisciplines, setSelectedDisciplines] = React.useState(
+    defaultDisciplines,
+  );
+  const [selectedDominantHands, setSelectedDominantHands] = React.useState(
+    defaultDominantHands,
+  );
+  const didMountRef = React.useRef(false);
+  const submitFilters = React.useCallback(() => {
+    const form = document.getElementById(
+      'find-sessions-form',
+    ) as HTMLFormElement | null;
+    form?.requestSubmit();
+  }, []);
+
+  React.useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    submitFilters();
+  }, [dateStartValue, dateEndValue, submitFilters]);
+
+  React.useEffect(() => {
+    setSelectedTrainingTypes(defaultTrainingTypeIds);
+  }, [defaultTrainingTypeIds]);
+
+  React.useEffect(() => {
+    setSelectedDisciplines(defaultDisciplines);
+  }, [defaultDisciplines]);
+
+  React.useEffect(() => {
+    setSelectedDominantHands(defaultDominantHands);
+  }, [defaultDominantHands]);
 
   return (
     <aside className="space-y-6 rounded-3xl border border-slate-200/70 bg-white/85 p-6 shadow-sm">
@@ -64,10 +100,9 @@ export function SessionFiltersSidebar({
             setDurationValue(defaultDuration);
             setDateStartValue('');
             setDateEndValue('');
-            const form = document.getElementById(
-              'find-sessions-form',
-            ) as HTMLFormElement | null;
-            form?.reset();
+            setSelectedTrainingTypes([]);
+            setSelectedDisciplines([]);
+            setSelectedDominantHands([]);
             router.replace('/find-sessions');
             router.refresh();
           }}
@@ -107,9 +142,16 @@ export function SessionFiltersSidebar({
                 type="checkbox"
                 name="training_type_id"
                 value={type.id}
-                defaultChecked={defaultTrainingTypeIds.includes(
-                  String(type.id),
-                )}
+                checked={selectedTrainingTypes.includes(String(type.id))}
+                onChange={() => {
+                  setSelectedTrainingTypes((current) => {
+                    if (current.includes(String(type.id))) {
+                      return current.filter((item) => item !== String(type.id));
+                    }
+                    return [...current, String(type.id)];
+                  });
+                  submitFilters();
+                }}
                 className="h-4 w-4 rounded border-slate-400"
               />
               {type.name}
@@ -128,6 +170,10 @@ export function SessionFiltersSidebar({
           step={15}
           value={[durationValue]}
           onValueChange={(value) => setDurationValue(value[0] ?? 60)}
+          onValueCommit={(value) => {
+            setDurationValue(value[0] ?? 60);
+            submitFilters();
+          }}
         />
         <div className="flex items-center justify-between text-xs text-slate-500">
           <span>30 min</span>
@@ -151,6 +197,10 @@ export function SessionFiltersSidebar({
           step={1}
           value={[radiusValue]}
           onValueChange={(value) => setRadiusValue(value[0] ?? 25)}
+          onValueCommit={(value) => {
+            setRadiusValue(value[0] ?? 25);
+            submitFilters();
+          }}
         />
         <div className="flex items-center justify-between text-xs text-slate-500">
           <span>1 km</span>
@@ -172,6 +222,10 @@ export function SessionFiltersSidebar({
           step={1}
           value={heightValue}
           onValueChange={(value) => setHeightValue(value as [number, number])}
+          onValueCommit={(value) => {
+            setHeightValue(value as [number, number]);
+            submitFilters();
+          }}
         />
         <div className="flex items-center justify-between text-xs text-slate-500">
           <span>{heightValue[0]} cm</span>
@@ -207,6 +261,10 @@ export function SessionFiltersSidebar({
           step={1}
           value={weightValue}
           onValueChange={(value) => setWeightValue(value as [number, number])}
+          onValueCommit={(value) => {
+            setWeightValue(value as [number, number]);
+            submitFilters();
+          }}
         />
         <div className="flex items-center justify-between text-xs text-slate-500">
           <span>{weightValue[0]} kg</span>
@@ -248,7 +306,16 @@ export function SessionFiltersSidebar({
                 type="checkbox"
                 name="disciplines"
                 value={item.value}
-                defaultChecked={defaultDisciplines.includes(item.value)}
+                checked={selectedDisciplines.includes(item.value)}
+                onChange={() => {
+                  setSelectedDisciplines((current) => {
+                    if (current.includes(item.value)) {
+                      return current.filter((value) => value !== item.value);
+                    }
+                    return [...current, item.value];
+                  });
+                  submitFilters();
+                }}
                 className="h-4 w-4 rounded border-slate-400"
               />
               {item.label}
@@ -269,7 +336,16 @@ export function SessionFiltersSidebar({
                 type="checkbox"
                 name="dominant_hand"
                 value={item.value}
-                defaultChecked={defaultDominantHands.includes(item.value)}
+                checked={selectedDominantHands.includes(item.value)}
+                onChange={() => {
+                  setSelectedDominantHands((current) => {
+                    if (current.includes(item.value)) {
+                      return current.filter((value) => value !== item.value);
+                    }
+                    return [...current, item.value];
+                  });
+                  submitFilters();
+                }}
                 className="h-4 w-4 rounded border-slate-400"
               />
               {item.label}
@@ -278,9 +354,6 @@ export function SessionFiltersSidebar({
         </div>
       </div>
 
-      <Button type="submit" className="w-full rounded-full">
-        Appliquer les filtres
-      </Button>
     </aside>
   );
 }
