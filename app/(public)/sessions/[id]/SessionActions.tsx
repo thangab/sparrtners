@@ -5,11 +5,16 @@ import { useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 
 export function RequestJoinButton({
@@ -25,6 +30,7 @@ export function RequestJoinButton({
   const [loading, setLoading] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const [participants, setParticipants] = React.useState('1');
+  const [message, setMessage] = React.useState('');
   const [alreadyRequested, setAlreadyRequested] = React.useState(false);
 
   React.useEffect(() => {
@@ -63,6 +69,7 @@ export function RequestJoinButton({
       user_id: userData.user.id,
       status: 'pending',
       participant_count: count,
+      message: message.trim() ? message.trim() : null,
     });
 
     if (error) {
@@ -90,13 +97,14 @@ export function RequestJoinButton({
       description: 'Le host va recevoir ta demande.',
     });
     setAlreadyRequested(true);
+    setMessage('');
     setOpen(false);
     setLoading(false);
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <Button
           disabled={loading || alreadyRequested || isFull}
           className="bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60"
@@ -107,26 +115,48 @@ export function RequestJoinButton({
               ? 'Demande envoyée'
               : 'Demander à rejoindre'}
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="space-y-3">
-        <div className="text-sm font-medium text-slate-900">
-          Nombre de participants
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Demander à rejoindre</DialogTitle>
+          <DialogDescription>
+            Ajoute un message si besoin, puis confirme ta demande.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-900">
+              Nombre de participants
+            </label>
+            <Input
+              type="number"
+              min={1}
+              value={participants}
+              onChange={(event) => setParticipants(event.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-900">
+              Message (optionnel)
+            </label>
+            <Textarea
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              placeholder="Dis quelques mots au host..."
+            />
+          </div>
         </div>
-        <Input
-          type="number"
-          min={1}
-          value={participants}
-          onChange={(event) => setParticipants(event.target.value)}
-        />
-        <Button
-          onClick={handleRequest}
-          disabled={loading}
-          className="w-full bg-emerald-600 text-white hover:bg-emerald-500"
-        >
-          Confirmer la demande
-        </Button>
-      </PopoverContent>
-    </Popover>
+        <DialogFooter>
+          <Button
+            onClick={handleRequest}
+            disabled={loading}
+            className="w-full bg-emerald-600 text-white hover:bg-emerald-500 sm:w-auto"
+          >
+            Confirmer la demande
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

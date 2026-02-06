@@ -26,6 +26,7 @@ export type SessionTableRow = {
     status: string;
     created_at: string;
     participant_count: number;
+    message?: string | null;
     conversation_id?: string | null;
     can_review?: boolean;
     reviewed?: boolean;

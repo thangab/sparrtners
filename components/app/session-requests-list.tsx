@@ -16,6 +16,7 @@ type SessionRequestItem = {
   status: string;
   created_at: string;
   participant_count: number;
+  message?: string | null;
   conversation_id?: string | null;
   can_review?: boolean;
   reviewed?: boolean;
@@ -170,6 +171,11 @@ export function SessionRequestsList({
             <div className="text-xs text-muted-foreground">
               {requestDate} · {request.participant_count ?? 1} participant(s)
             </div>
+            {request.message ? (
+              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
+                {request.message}
+              </div>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <Button
                 size="sm"

@@ -66,7 +66,8 @@ export default async function RequestsPage() {
             user_id,
             status,
             created_at,
-            participant_count
+            participant_count,
+            message
           )
         `,
         )
