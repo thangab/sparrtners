@@ -62,8 +62,20 @@ export function SessionFiltersSidebar({
     const form = document.getElementById(
       'find-sessions-form',
     ) as HTMLFormElement | null;
-    form?.requestSubmit();
-  }, []);
+    if (!form) return;
+    const data = new FormData(form);
+    const params = new URLSearchParams();
+    for (const [key, value] of data.entries()) {
+      const trimmed = String(value).trim();
+      if (!trimmed) continue;
+      params.append(key, trimmed);
+    }
+    if (params.toString().length === 0) {
+      router.replace('/find-sessions');
+      return;
+    }
+    form.requestSubmit();
+  }, [router]);
 
   React.useEffect(() => {
     if (!didMountRef.current) {
