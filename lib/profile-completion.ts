@@ -28,13 +28,11 @@ export function getProfileCompletion({
     hasText(profile?.gender),
     hasText(profile?.firstname),
     hasText(profile?.lastname),
-    hasText(profile?.nickname),
     hasText(profile?.birthdate),
     hasText(profile?.city),
     hasText(profile?.dominant_hand),
     hasNumber(profile?.height_cm),
     hasNumber(profile?.weight_kg),
-    hasText(profile?.avatar_url),
     (sportProfiles ?? []).some(
       (item) => item.discipline_id && item.skill_level_id,
     ),

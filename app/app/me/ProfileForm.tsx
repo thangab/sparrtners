@@ -357,7 +357,6 @@ export function ProfileForm({
                   name="avatar"
                   type="file"
                   accept="image/*"
-                  required={showStep1 && !avatarUrl}
                   onChange={(event) => {
                     const file = event.target.files?.[0] ?? null;
                     if (file && file.size > 2 * 1024 * 1024) {
