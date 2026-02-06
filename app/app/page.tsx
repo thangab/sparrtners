@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckoutButton } from '@/components/app/checkout-button';
+import { DashboardActivityChart } from '@/components/app/dashboard-activity-chart';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
 import { getEntitlements, isPremium } from '@/lib/entitlements';
 
@@ -111,6 +112,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+      <DashboardActivityChart />
     </div>
   );
 }
