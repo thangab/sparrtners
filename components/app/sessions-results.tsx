@@ -117,6 +117,50 @@ export function SessionsResults({
   const [sessions, setSessions] = React.useState(initialSessions);
   const [hasMore, setHasMore] = React.useState(initialHasMore);
   const [loading, setLoading] = React.useState(false);
+  const seenImpressionsRef = React.useRef(new Set<string>());
+  const impressionQueueRef = React.useRef(new Set<string>());
+  const flushTimeoutRef = React.useRef<number | null>(null);
+
+  const sendStats = React.useCallback(
+    (updates: Array<{ session_id: string; impressions?: number; detail_clicks?: number }>) => {
+      if (updates.length === 0) return;
+      const body = JSON.stringify({ updates });
+      if (typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
+        const blob = new Blob([body], { type: 'application/json' });
+        navigator.sendBeacon('/api/sessions/stats', blob);
+        return;
+      }
+      fetch('/api/sessions/stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        keepalive: true,
+      }).catch(() => undefined);
+    },
+    [],
+  );
+
+  const flushImpressions = React.useCallback(() => {
+    const ids = Array.from(impressionQueueRef.current);
+    impressionQueueRef.current.clear();
+    if (ids.length === 0) return;
+    sendStats(ids.map((id) => ({ session_id: id, impressions: 1 })));
+  }, [sendStats]);
+
+  React.useEffect(() => {
+    sessions.forEach((session) => {
+      if (!session?.id) return;
+      if (seenImpressionsRef.current.has(session.id)) return;
+      seenImpressionsRef.current.add(session.id);
+      impressionQueueRef.current.add(session.id);
+    });
+    if (flushTimeoutRef.current == null) {
+      flushTimeoutRef.current = window.setTimeout(() => {
+        flushTimeoutRef.current = null;
+        flushImpressions();
+      }, 800);
+    }
+  }, [sessions, flushImpressions]);
 
   const handleLoadMore = async () => {
     if (loading || !hasMore) return;
@@ -138,6 +182,13 @@ export function SessionsResults({
       setLoading(false);
     }
   };
+
+  const handleDetailClick = React.useCallback(
+    (sessionId: string) => {
+      sendStats([{ session_id: sessionId, detail_clicks: 1 }]);
+    },
+    [sendStats],
+  );
 
   return (
     <div className="space-y-4">
@@ -226,7 +277,12 @@ export function SessionsResults({
                     {session.city ? `· ${session.city}` : ''}
                   </div>
                   <Button variant="outline" size="sm" asChild className="w-fit">
-                    <Link href={`/sessions/${session.id}`}>Voir détail</Link>
+                    <Link
+                      href={`/sessions/${session.id}`}
+                      onClick={() => handleDetailClick(session.id)}
+                    >
+                      Voir détail
+                    </Link>
                   </Button>
                 </div>
               </div>

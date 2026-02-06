@@ -7,6 +7,8 @@ export type SessionTableRow = {
   duration_minutes?: number | null;
   is_finished?: boolean;
   place: string;
+  impressions?: number | null;
+  detail_clicks?: number | null;
   status?: string | null;
   participant_count?: number | null;
   requests_count?: number;

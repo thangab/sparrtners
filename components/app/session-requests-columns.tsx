@@ -70,6 +70,12 @@ export function getSessionRequestsColumns({
           </div>
           <div className="text-xs text-slate-500">{row.original.starts_at}</div>
           <div className="text-xs text-slate-500">{row.original.place}</div>
+          {row.original.kind === 'host' ? (
+            <div className="text-xs text-slate-500">
+              {row.original.impressions ?? 0} impressions ·{' '}
+              {row.original.detail_clicks ?? 0} clics
+            </div>
+          ) : null}
           {!row.original.is_published ? (
             <Badge variant="secondary">Session désactivée</Badge>
           ) : null}

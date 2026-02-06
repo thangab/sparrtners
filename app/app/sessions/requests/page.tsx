@@ -154,6 +154,21 @@ export default async function RequestsPage() {
   const requesterMap = new Map(
     (requesterProfiles ?? []).map((profile) => [profile.id, profile]),
   );
+  const { data: sessionStats } = createdSessionIds.length
+    ? await supabase
+        .from('session_stats')
+        .select('session_id, impressions, detail_clicks')
+        .in('session_id', createdSessionIds)
+    : {
+        data: [] as {
+          session_id: string;
+          impressions: number;
+          detail_clicks: number;
+        }[],
+      };
+  const statsMap = new Map(
+    (sessionStats ?? []).map((stat) => [stat.session_id, stat]),
+  );
 
   const formatSessionDate = (value: string) =>
     new Intl.DateTimeFormat('fr-FR', {
@@ -172,6 +187,7 @@ export default async function RequestsPage() {
       session.starts_at,
       session.duration_minutes,
     );
+    const stats = statsMap.get(session.id);
     const requests = (session.session_requests ?? []).map(
       (request: SessionRequestRow) => {
         const key = `${session.id}:${[userId, request.user_id].sort().join(':')}`;
@@ -203,6 +219,8 @@ export default async function RequestsPage() {
           ? ` · ${normalizeOne(session.place)?.city}`
           : ''
       }`,
+      impressions: stats?.impressions ?? 0,
+      detail_clicks: stats?.detail_clicks ?? 0,
       is_published: session.is_published,
       is_full: session.is_full,
       requests_count: requests.length,
