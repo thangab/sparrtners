@@ -31,6 +31,9 @@ export function RequestJoinButton({
   const [open, setOpen] = React.useState(false);
   const [participants, setParticipants] = React.useState('1');
   const [message, setMessage] = React.useState('');
+  const [participantEmails, setParticipantEmails] = React.useState<string[]>(
+    [],
+  );
   const [alreadyRequested, setAlreadyRequested] = React.useState(false);
 
   React.useEffect(() => {
@@ -54,6 +57,16 @@ export function RequestJoinButton({
     };
   }, [sessionId, supabase]);
 
+  React.useEffect(() => {
+    const count = Math.max(1, Number.parseInt(participants, 10) || 1);
+    const needed = Math.max(0, count - 1);
+    setParticipantEmails((current) => {
+      if (current.length === needed) return current;
+      if (current.length > needed) return current.slice(0, needed);
+      return [...current, ...Array.from({ length: needed - current.length }, () => '')];
+    });
+  }, [participants]);
+
   const handleRequest = async () => {
     setLoading(true);
     const { data: userData } = await supabase.auth.getUser();
@@ -64,12 +77,16 @@ export function RequestJoinButton({
     }
 
     const count = Math.max(1, Number.parseInt(participants, 10) || 1);
+    const emails = participantEmails
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0);
     const { error } = await supabase.from('session_requests').insert({
       session_id: sessionId,
       user_id: userData.user.id,
       status: 'pending',
       participant_count: count,
       message: message.trim() ? message.trim() : null,
+      participant_emails: emails.length > 0 ? emails : null,
     });
 
     if (error) {
@@ -98,6 +115,7 @@ export function RequestJoinButton({
     });
     setAlreadyRequested(true);
     setMessage('');
+    setParticipantEmails([]);
     setOpen(false);
     setLoading(false);
   };
@@ -116,7 +134,7 @@ export function RequestJoinButton({
               : 'Demander à rejoindre'}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Demander à rejoindre</DialogTitle>
           <DialogDescription>
@@ -135,6 +153,31 @@ export function RequestJoinButton({
               onChange={(event) => setParticipants(event.target.value)}
             />
           </div>
+          {participantEmails.length > 0 ? (
+            <div className="space-y-3">
+              <div className="text-sm font-medium text-slate-900">
+                Emails des participants
+              </div>
+              <div className="space-y-2">
+                {participantEmails.map((value, index) => (
+                  <Input
+                    key={`participant-email-${index}`}
+                    type="email"
+                    placeholder={`Email du participant ${index + 2}`}
+                    value={value}
+                    onChange={(event) => {
+                      const next = event.target.value;
+                      setParticipantEmails((current) => {
+                        const updated = [...current];
+                        updated[index] = next;
+                        return updated;
+                      });
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-900">
               Message (optionnel)
