@@ -31,7 +31,7 @@ import { getSessionRequestsColumns } from '@/components/app/session-requests-col
 import { OpenChatButton } from '@/components/app/open-chat-button';
 import { SessionReviewModal } from '@/components/app/session-review-modal';
 import { Eye, MoreVertical } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 export function SessionRequestsTable({
   created,
@@ -57,6 +57,7 @@ export function SessionRequestsTable({
     Record<string, boolean>
   >({});
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [deepLinkTarget, setDeepLinkTarget] = React.useState<{
     kind: 'host' | 'requester' | 'completed';
     sessionId: string;
@@ -67,6 +68,7 @@ export function SessionRequestsTable({
   const reviewSessionId = searchParams.get('session_id') ?? '';
   const reviewUserId = searchParams.get('reviewed_user_id') ?? '';
   const reviewParam = searchParams.get('review');
+  const tabParam = searchParams.get('tab');
   const hasReviewParams =
     reviewParam === '1' && reviewSessionId && reviewUserId;
 
@@ -151,6 +153,13 @@ export function SessionRequestsTable({
       : window.location.pathname;
     window.history.replaceState({}, '', url);
   }, [reviewTarget, hasReviewParams]);
+
+  React.useEffect(() => {
+    if (!tabParam) return;
+    if (tabParam === 'requester' || tabParam === 'completed' || tabParam === 'host') {
+      setView(tabParam);
+    }
+  }, [tabParam]);
 
   React.useEffect(() => {
     if (!deepLinkTarget) return;
@@ -314,9 +323,13 @@ export function SessionRequestsTable({
       ) : null}
       <Tabs
         value={view}
-        onValueChange={(value) =>
-          setView(value as 'host' | 'requester' | 'completed')
-        }
+        onValueChange={(value) => {
+          const next = value as 'host' | 'requester' | 'completed';
+          setView(next);
+          const params = new URLSearchParams(window.location.search);
+          params.set('tab', next);
+          router.replace(`/app/sessions/requests?${params.toString()}`);
+        }}
       >
         <TabsList>
           <TabsTrigger value="host">Mes sessions</TabsTrigger>
