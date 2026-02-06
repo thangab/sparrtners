@@ -4,6 +4,15 @@ import * as React from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 
 type SessionReviewModalProps = {
@@ -115,73 +124,64 @@ export function SessionReviewModal({
   };
 
   return (
-    <>
+    <Dialog open={open} onOpenChange={setOpen}>
       {!hideTrigger ? (
-        <Button
-          size="sm"
-          variant="outline"
-          type="button"
-          disabled={disabled || alreadyReviewed}
-          onClick={() => setOpen(true)}
-        >
-          {triggerLabel}
-        </Button>
+        <DialogTrigger asChild>
+          <Button
+            size="sm"
+            variant="outline"
+            type="button"
+            disabled={disabled || alreadyReviewed}
+          >
+            {triggerLabel}
+          </Button>
+        </DialogTrigger>
       ) : null}
-      {open ? (
-        <div
-          className="fixed inset-0 z-9999 flex items-center justify-center bg-slate-900/40 px-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
-            <div className="space-y-2">
-              <div className="text-lg font-semibold text-slate-900">
-                Donner mon avis sur {reviewedUserName}
-              </div>
-              <div className="text-sm text-slate-500">
-                Donne une note pour cette session.
-              </div>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {[1, 2, 3, 4, 5].map((value) => (
-                <Button
-                  key={value}
-                  type="button"
-                  size="sm"
-                  variant={rating === value ? 'default' : 'outline'}
-                  onClick={() => setRating(value)}
-                >
-                  {value}
-                </Button>
-              ))}
-            </div>
-            <div className="mt-4 space-y-2">
-              <div className="text-sm font-medium text-slate-700">
-                Commentaire (optionnel)
-              </div>
-              <Textarea
-                value={comment}
-                onChange={(event) => setComment(event.target.value)}
-                rows={4}
-                placeholder="Partage ton ressenti sur la session."
-              />
-            </div>
-            <div className="mt-5 flex items-center justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setOpen(false)}
-                disabled={loading}
-              >
-                Annuler
-              </Button>
-              <Button type="button" onClick={handleSubmit} disabled={loading}>
-                Envoyer
-              </Button>
-            </div>
-          </div>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Donner mon avis sur {reviewedUserName}</DialogTitle>
+          <DialogDescription>
+            Donne une note pour cette session.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-wrap gap-2">
+          {[1, 2, 3, 4, 5].map((value) => (
+            <Button
+              key={value}
+              type="button"
+              size="sm"
+              variant={rating === value ? 'default' : 'outline'}
+              onClick={() => setRating(value)}
+            >
+              {value}
+            </Button>
+          ))}
         </div>
-      ) : null}
-    </>
+        <div className="space-y-2">
+          <div className="text-sm font-medium text-slate-700">
+            Commentaire (optionnel)
+          </div>
+          <Textarea
+            value={comment}
+            onChange={(event) => setComment(event.target.value)}
+            rows={4}
+            placeholder="Partage ton ressenti sur la session."
+          />
+        </div>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setOpen(false)}
+            disabled={loading}
+          >
+            Annuler
+          </Button>
+          <Button type="button" onClick={handleSubmit} disabled={loading}>
+            Envoyer
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
