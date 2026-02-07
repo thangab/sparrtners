@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BackLink } from '@/components/app/back-link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -106,9 +107,7 @@ export default async function SessionDetailPage({
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 pb-20 pt-6">
       <div className="flex items-center justify-between text-sm text-slate-500">
-        <Link className="transition hover:text-slate-900" href="/find-sessions">
-          ← Retour
-        </Link>
+        <BackLink label="Retour" fallbackHref="/find-sessions" />
       </div>
 
       <div className="grid gap-6 md:grid-cols-[0.7fr_1.3fr]">

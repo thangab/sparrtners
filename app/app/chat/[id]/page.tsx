@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BackLink } from '@/components/app/back-link';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChatClient } from '@/app/app/chat/[id]/ChatClient';
@@ -70,7 +71,7 @@ export default async function ChatPage({
     <div className="space-y-4">
       <div>
         <div className="text-sm text-muted-foreground">
-          <Link href="/app/sessions/requests">← Retour</Link>
+          <BackLink label="Retour" fallbackHref="/app/sessions/requests" />
         </div>
         <h1 className="text-2xl font-semibold">Chat</h1>
       </div>

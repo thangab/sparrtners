@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { BackLink } from '@/components/app/back-link';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SessionForm } from '@/app/app/sessions/SessionForm';
@@ -76,7 +76,7 @@ export default async function EditSessionPage({
     <div className="space-y-4">
       <div>
         <div className="text-sm text-muted-foreground">
-          <Link href="/app/sessions/requests">← Retour à mes sessions</Link>
+          <BackLink label="Retour" fallbackHref="/app/sessions/requests" />
         </div>
         <h1 className="text-2xl font-semibold">Modifier la session</h1>
         <p className="text-muted-foreground">
