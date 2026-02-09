@@ -35,7 +35,7 @@ export default async function SessionDetailPage({
   const { data: listing } = await supabase
     .from('session_listings')
     .select(
-      'id, title, description, starts_at, duration_minutes, host_id, host_display_name, host_email, host_avatar_url, training_type_name, place_name, city, is_boosted, is_full, disciplines',
+      'id, title, description, starts_at, duration_minutes, host_id, host_display_name, host_email, host_avatar_url, training_type_name, place_id, place_name, city, place_lat, place_lng, is_boosted, is_full, disciplines',
     )
     .eq('id', id)
     .maybeSingle();
@@ -103,6 +103,23 @@ export default async function SessionDetailPage({
     : { data: null };
 
   const canChat = requestStatus?.status === 'accepted' && conversation?.id;
+  const { data: placeDetails } = listing.place_id
+    ? await supabase
+        .from('places')
+        .select('name, address, city')
+        .eq('id', listing.place_id)
+        .maybeSingle()
+    : { data: null };
+  const placeName = placeDetails?.name ?? listing.place_name ?? 'Lieu';
+  const placeAddress = placeDetails?.address;
+  const locationHref =
+    listing.place_lat != null && listing.place_lng != null
+      ? `https://www.google.com/maps/search/?api=1&query=${listing.place_lat},${listing.place_lng}`
+      : placeName
+        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            `${placeName}${placeDetails?.city ? ` ${placeDetails.city}` : listing.city ? ` ${listing.city}` : ''}`,
+          )}`
+        : null;
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 pb-20 pt-6">
@@ -192,9 +209,36 @@ export default async function SessionDetailPage({
                 : ''}
             </div>
             <div>
-              {listing.place_name ?? 'Lieu'}{' '}
-              {listing.city ? `· ${listing.city}` : ''}
+              Nom du lieu : {placeName}
             </div>
+            <div>
+              Adresse :{' '}
+              {placeAddress ??
+                (placeDetails?.city ?? listing.city ?? 'Non renseignée')}
+            </div>
+            {locationHref ? (
+              <div>
+                <Link
+                  href={locationHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline"
+                >
+                  Voir la location
+                </Link>
+              </div>
+            ) : null}
+            {listing.place_lat != null && listing.place_lng != null ? (
+              <div className="overflow-hidden rounded-lg border border-slate-200">
+                <Image
+                  src={`/api/mapbox/static?lat=${listing.place_lat}&lng=${listing.place_lng}&zoom=14&width=900&height=320`}
+                  alt={`Carte de ${placeName}`}
+                  width={900}
+                  height={320}
+                  className="h-56 w-full object-cover"
+                />
+              </div>
+            ) : null}
             {listing.description ? (
               <p className="leading-relaxed">{listing.description}</p>
             ) : null}
