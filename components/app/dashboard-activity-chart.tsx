@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -104,7 +104,7 @@ export function DashboardActivityChart() {
       });
     }
     return items;
-  }, [days, start, rowMap, metric, range]);
+  }, [days, start, rowMap, range]);
 
   const totalSessions = rows.reduce((sum, row) => sum + row.sessions_count, 0);
   const totalHours =
@@ -170,7 +170,7 @@ export function DashboardActivityChart() {
       </CardHeader>
       <CardContent>
         <ChartContainer className="h-72" config={chartConfig}>
-          <BarChart data={series} margin={{ left: 0, right: 8, top: 8 }}>
+          <AreaChart data={series} margin={{ left: 0, right: 8, top: 8 }}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis
               dataKey="label"
@@ -190,12 +190,14 @@ export function DashboardActivityChart() {
                 />
               }
             />
-            <Bar
+            <Area
+              type="linear"
               dataKey={metric}
-              radius={[8, 8, 0, 0]}
+              stroke={`var(--color-${metric})`}
               fill={`var(--color-${metric})`}
+              fillOpacity={0.2}
             />
-          </BarChart>
+          </AreaChart>
         </ChartContainer>
         {loading ? (
           <p className="mt-2 text-xs text-muted-foreground">Chargement…</p>
