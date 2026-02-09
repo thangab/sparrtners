@@ -5,6 +5,30 @@ import { useRouter } from 'next/navigation';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 
+const DEFAULT_RADIUS = 25;
+const DEFAULT_HEIGHT_RANGE: [number, number] = [0, 250];
+const DEFAULT_WEIGHT_RANGE: [number, number] = [0, 200];
+const DEFAULT_DURATION = 60;
+
+const DISCIPLINE_OPTIONS = [
+  { value: 'boxing', label: 'Boxe anglaise' },
+  { value: 'pieds-poings', label: 'Pieds-poings' },
+  { value: 'mma', label: 'MMA' },
+  { value: 'wrestling', label: 'Lutte' },
+];
+
+const DOMINANT_HAND_OPTIONS = [
+  { value: 'right', label: 'Droitier' },
+  { value: 'left', label: 'Gaucher' },
+];
+
+const toggleArrayValue = (current: string[], next: string) => {
+  if (current.includes(next)) {
+    return current.filter((value) => value !== next);
+  }
+  return [...current, next];
+};
+
 type SessionFiltersSidebarProps = {
   radiusKm?: number;
   heightRange?: [number, number];
@@ -30,10 +54,6 @@ export function SessionFiltersSidebar({
   defaultTrainingTypeIds = [],
   defaultDurationValue = 60,
 }: SessionFiltersSidebarProps) {
-  const defaultRadius = 25;
-  const defaultHeightRange: [number, number] = [0, 250];
-  const defaultWeightRange: [number, number] = [0, 200];
-  const defaultDuration = 60;
   const router = useRouter();
   const [radiusValue, setRadiusValue] = React.useState(radiusKm);
   const [heightValue, setHeightValue] =
@@ -57,7 +77,8 @@ export function SessionFiltersSidebar({
   const [selectedDominantHands, setSelectedDominantHands] = React.useState(
     defaultDominantHands,
   );
-  const didMountRef = React.useRef(false);
+  const submitFrameRef = React.useRef<number | null>(null);
+
   const submitFilters = React.useCallback(() => {
     const form = document.getElementById(
       'find-sessions-form',
@@ -77,13 +98,47 @@ export function SessionFiltersSidebar({
     form.requestSubmit();
   }, [router]);
 
-  React.useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true;
-      return;
+  const scheduleSubmit = React.useCallback(() => {
+    if (submitFrameRef.current !== null) {
+      cancelAnimationFrame(submitFrameRef.current);
     }
-    submitFilters();
-  }, [dateStartValue, dateEndValue, submitFilters]);
+    submitFrameRef.current = requestAnimationFrame(() => {
+      submitFrameRef.current = null;
+      submitFilters();
+    });
+  }, [submitFilters]);
+
+  React.useEffect(() => {
+    return () => {
+      if (submitFrameRef.current !== null) {
+        cancelAnimationFrame(submitFrameRef.current);
+      }
+    };
+  }, []);
+
+  React.useEffect(() => {
+    setRadiusValue(radiusKm);
+  }, [radiusKm]);
+
+  React.useEffect(() => {
+    setHeightValue(heightRange);
+  }, [heightRange]);
+
+  React.useEffect(() => {
+    setWeightValue(weightRange);
+  }, [weightRange]);
+
+  React.useEffect(() => {
+    setDurationValue(defaultDurationValue);
+  }, [defaultDurationValue]);
+
+  React.useEffect(() => {
+    setDateStartValue(defaultDateStart ?? '');
+  }, [defaultDateStart]);
+
+  React.useEffect(() => {
+    setDateEndValue(defaultDateEnd ?? '');
+  }, [defaultDateEnd]);
 
   React.useEffect(() => {
     setSelectedTrainingTypes(defaultTrainingTypeIds);
@@ -106,17 +161,16 @@ export function SessionFiltersSidebar({
           variant="ghost"
           className="text-xs text-slate-600 cursor-pointer"
           onClick={() => {
-            setRadiusValue(defaultRadius);
-            setHeightValue(defaultHeightRange);
-            setWeightValue(defaultWeightRange);
-            setDurationValue(defaultDuration);
+            setRadiusValue(DEFAULT_RADIUS);
+            setHeightValue(DEFAULT_HEIGHT_RANGE);
+            setWeightValue(DEFAULT_WEIGHT_RANGE);
+            setDurationValue(DEFAULT_DURATION);
             setDateStartValue('');
             setDateEndValue('');
             setSelectedTrainingTypes([]);
             setSelectedDisciplines([]);
             setSelectedDominantHands([]);
             router.replace('/find-sessions');
-            router.refresh();
           }}
         >
           Tout effacer
@@ -130,14 +184,20 @@ export function SessionFiltersSidebar({
             type="date"
             name={dateStartValue ? 'date_start' : undefined}
             value={dateStartValue}
-            onChange={(event) => setDateStartValue(event.target.value)}
+            onChange={(event) => {
+              setDateStartValue(event.target.value);
+              scheduleSubmit();
+            }}
             className="h-10 w-full rounded-(--radius) border border-border bg-white px-3 text-sm shadow-sm"
           />
           <input
             type="date"
             name={dateEndValue ? 'date_end' : undefined}
             value={dateEndValue}
-            onChange={(event) => setDateEndValue(event.target.value)}
+            onChange={(event) => {
+              setDateEndValue(event.target.value);
+              scheduleSubmit();
+            }}
             className="h-10 w-full rounded-(--radius) border border-border bg-white px-3 text-sm shadow-sm"
           />
         </div>
@@ -157,12 +217,9 @@ export function SessionFiltersSidebar({
                 checked={selectedTrainingTypes.includes(String(type.id))}
                 onChange={() => {
                   setSelectedTrainingTypes((current) => {
-                    if (current.includes(String(type.id))) {
-                      return current.filter((item) => item !== String(type.id));
-                    }
-                    return [...current, String(type.id)];
+                    return toggleArrayValue(current, String(type.id));
                   });
-                  submitFilters();
+                  scheduleSubmit();
                 }}
                 className="h-4 w-4 rounded border-slate-400"
               />
@@ -181,10 +238,10 @@ export function SessionFiltersSidebar({
           max={240}
           step={15}
           value={[durationValue]}
-          onValueChange={(value) => setDurationValue(value[0] ?? 60)}
+          onValueChange={(value) => setDurationValue(value[0] ?? DEFAULT_DURATION)}
           onValueCommit={(value) => {
-            setDurationValue(value[0] ?? 60);
-            submitFilters();
+            setDurationValue(value[0] ?? DEFAULT_DURATION);
+            scheduleSubmit();
           }}
         />
         <div className="flex items-center justify-between text-xs text-slate-500">
@@ -194,7 +251,7 @@ export function SessionFiltersSidebar({
         </div>
         <input
           type="hidden"
-          name={durationValue !== defaultDuration ? 'duration_max' : undefined}
+          name={durationValue !== DEFAULT_DURATION ? 'duration_max' : undefined}
           value={durationValue}
         />
       </div>
@@ -208,10 +265,10 @@ export function SessionFiltersSidebar({
           max={100}
           step={1}
           value={[radiusValue]}
-          onValueChange={(value) => setRadiusValue(value[0] ?? 25)}
+          onValueChange={(value) => setRadiusValue(value[0] ?? DEFAULT_RADIUS)}
           onValueCommit={(value) => {
-            setRadiusValue(value[0] ?? 25);
-            submitFilters();
+            setRadiusValue(value[0] ?? DEFAULT_RADIUS);
+            scheduleSubmit();
           }}
         />
         <div className="flex items-center justify-between text-xs text-slate-500">
@@ -221,7 +278,7 @@ export function SessionFiltersSidebar({
         </div>
         <input
           type="hidden"
-          name={radiusValue !== defaultRadius ? 'radius_km' : undefined}
+          name={radiusValue !== DEFAULT_RADIUS ? 'radius_km' : undefined}
           value={radiusValue}
         />
       </div>
@@ -236,7 +293,7 @@ export function SessionFiltersSidebar({
           onValueChange={(value) => setHeightValue(value as [number, number])}
           onValueCommit={(value) => {
             setHeightValue(value as [number, number]);
-            submitFilters();
+            scheduleSubmit();
           }}
         />
         <div className="flex items-center justify-between text-xs text-slate-500">
@@ -246,7 +303,7 @@ export function SessionFiltersSidebar({
         <input
           type="hidden"
           name={
-            heightValue[0] !== defaultHeightRange[0]
+            heightValue[0] !== DEFAULT_HEIGHT_RANGE[0]
               ? 'height_min'
               : undefined
           }
@@ -256,7 +313,7 @@ export function SessionFiltersSidebar({
         <input
           type="hidden"
           name={
-            heightValue[1] !== defaultHeightRange[1]
+            heightValue[1] !== DEFAULT_HEIGHT_RANGE[1]
               ? 'height_max'
               : undefined
           }
@@ -275,7 +332,7 @@ export function SessionFiltersSidebar({
           onValueChange={(value) => setWeightValue(value as [number, number])}
           onValueCommit={(value) => {
             setWeightValue(value as [number, number]);
-            submitFilters();
+            scheduleSubmit();
           }}
         />
         <div className="flex items-center justify-between text-xs text-slate-500">
@@ -285,7 +342,7 @@ export function SessionFiltersSidebar({
         <input
           type="hidden"
           name={
-            weightValue[0] !== defaultWeightRange[0]
+            weightValue[0] !== DEFAULT_WEIGHT_RANGE[0]
               ? 'weight_min'
               : undefined
           }
@@ -294,7 +351,7 @@ export function SessionFiltersSidebar({
         <input
           type="hidden"
           name={
-            weightValue[1] !== defaultWeightRange[1]
+            weightValue[1] !== DEFAULT_WEIGHT_RANGE[1]
               ? 'weight_max'
               : undefined
           }
@@ -307,12 +364,7 @@ export function SessionFiltersSidebar({
           Disciplines recherchées
         </div>
         <div className="flex flex-col gap-2 text-sm text-slate-700">
-          {[
-            { value: 'boxing', label: 'Boxe anglaise' },
-            { value: 'pieds-poings', label: 'Pieds-poings' },
-            { value: 'mma', label: 'MMA' },
-            { value: 'wrestling', label: 'Lutte' },
-          ].map((item) => (
+          {DISCIPLINE_OPTIONS.map((item) => (
             <label key={item.value} className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -321,12 +373,9 @@ export function SessionFiltersSidebar({
                 checked={selectedDisciplines.includes(item.value)}
                 onChange={() => {
                   setSelectedDisciplines((current) => {
-                    if (current.includes(item.value)) {
-                      return current.filter((value) => value !== item.value);
-                    }
-                    return [...current, item.value];
+                    return toggleArrayValue(current, item.value);
                   });
-                  submitFilters();
+                  scheduleSubmit();
                 }}
                 className="h-4 w-4 rounded border-slate-400"
               />
@@ -339,10 +388,7 @@ export function SessionFiltersSidebar({
       <div className="space-y-3">
         <div className="text-sm font-medium text-slate-700">Main forte</div>
         <div className="flex flex-col gap-2 text-sm text-slate-700">
-          {[
-            { value: 'right', label: 'Droitier' },
-            { value: 'left', label: 'Gaucher' },
-          ].map((item) => (
+          {DOMINANT_HAND_OPTIONS.map((item) => (
             <label key={item.value} className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -351,12 +397,9 @@ export function SessionFiltersSidebar({
                 checked={selectedDominantHands.includes(item.value)}
                 onChange={() => {
                   setSelectedDominantHands((current) => {
-                    if (current.includes(item.value)) {
-                      return current.filter((value) => value !== item.value);
-                    }
-                    return [...current, item.value];
+                    return toggleArrayValue(current, item.value);
                   });
-                  submitFilters();
+                  scheduleSubmit();
                 }}
                 className="h-4 w-4 rounded border-slate-400"
               />

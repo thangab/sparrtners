@@ -43,6 +43,14 @@ export function PlaceSearchInput({
   const isCompact = variant === 'compact';
   const [labelValue, setLabelValue] = React.useState(defaultLabel ?? '');
 
+  React.useEffect(() => {
+    setLabelValue(defaultLabel ?? '');
+  }, [defaultLabel]);
+
+  React.useEffect(() => {
+    setCoords(defaultCoords);
+  }, [defaultCoords]);
+
   const handleLocate = () => {
     setGeoError(null);
     setSelected(null);

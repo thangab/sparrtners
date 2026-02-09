@@ -121,6 +121,17 @@ export function SessionsResults({
   const impressionQueueRef = React.useRef(new Set<string>());
   const flushTimeoutRef = React.useRef<number | null>(null);
 
+  React.useEffect(() => {
+    setSessions(initialSessions);
+    setHasMore(initialHasMore);
+    seenImpressionsRef.current.clear();
+    impressionQueueRef.current.clear();
+    if (flushTimeoutRef.current != null) {
+      window.clearTimeout(flushTimeoutRef.current);
+      flushTimeoutRef.current = null;
+    }
+  }, [initialSessions, initialHasMore]);
+
   const sendStats = React.useCallback(
     (updates: Array<{ session_id: string; impressions?: number; detail_clicks?: number }>) => {
       if (updates.length === 0) return;

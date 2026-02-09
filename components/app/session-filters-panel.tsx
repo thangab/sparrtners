@@ -63,10 +63,7 @@ export function SessionFiltersPanel(props: SessionFiltersPanelProps) {
               </Button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 pb-6 pt-4 lg:p-0">
-              <SessionFiltersSidebar
-                key={JSON.stringify(props)}
-                {...props}
-              />
+              <SessionFiltersSidebar {...props} />
             </div>
           </div>
         </div>
