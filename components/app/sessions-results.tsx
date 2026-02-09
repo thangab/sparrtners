@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, CalendarClock, MapPin, Route, UserRound } from 'lucide-react';
+import { CalendarClock, MapPin, Route, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -299,114 +299,98 @@ export function SessionsResults({
 
           return (
             <Card key={session.id} className="border-slate-200/70 bg-white/90">
-              <div className="grid gap-5 p-5 md:grid-cols-[180px_1fr]">
-                <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-gradient-to-br from-slate-50 to-slate-100 p-4 text-slate-900 shadow-sm">
-                  <div className="mb-3">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      Host de la session
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="shrink-0">
+              <div className="space-y-3 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <CardTitle className="truncate text-lg">{title}</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      target="_blank"
+                      href={profileHref}
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-700"
+                    >
                       {session.host_avatar_url ? (
                         <Image
                           src={session.host_avatar_url}
                           alt={hostLabel}
-                          width={56}
-                          height={56}
-                          className="h-14 w-14 rounded-full object-cover ring-2 ring-white"
+                          width={24}
+                          height={24}
+                          className="h-6 w-6 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200">
-                          <UserRound className="h-6 w-6 text-slate-600" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-900">
-                        {hostLabel}
-                      </p>
-                      <Link
-                        target="_blank"
-                        href={profileHref}
-                        className="text-xs text-slate-700 underline underline-offset-2"
-                      >
-                        Voir le profil
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <CardTitle className="text-xl">{title}</CardTitle>
-                    <div className="flex items-center gap-2">
-                      {distanceLabel ? (
-                        <Badge variant="outline" className="gap-1">
-                          <Route className="h-3.5 w-3.5" />
-                          {distanceLabel}
-                        </Badge>
-                      ) : null}
-                      {session.is_boosted ? (
-                        <Badge className="bg-amber-200 text-amber-900 hover:bg-amber-200">
-                          Boostée
-                        </Badge>
-                      ) : null}
-                    </div>
-                  </div>
-                  {disciplines.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {disciplines.map((discipline) => (
-                        <span
-                          key={`${session.id}-${discipline}`}
-                          className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700"
-                        >
-                          {discipline}
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200">
+                          <UserRound className="h-3 w-3 text-slate-600" />
                         </span>
-                      ))}
-                    </div>
-                  ) : null}
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-3">
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                        Infos session
-                      </p>
-                      <div className="grid gap-2 text-sm text-slate-600">
-                        <div className="flex items-start gap-2">
-                          <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
-                          <span>{schedule}</span>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
-                          <span>{place}</span>
-                        </div>
+                      )}
+                      <span className="truncate max-w-36 font-medium">{hostLabel}</span>
+                      <span className="text-xs text-slate-500">Voir profil</span>
+                    </Link>
+                    {distanceLabel ? (
+                      <Badge variant="outline" className="gap-1">
+                        <Route className="h-3.5 w-3.5" />
+                        {distanceLabel}
+                      </Badge>
+                    ) : null}
+                    {session.is_boosted ? (
+                      <Badge className="bg-amber-200 text-amber-900 hover:bg-amber-200">
+                        Boostée
+                      </Badge>
+                    ) : null}
+                  </div>
+                </div>
+
+                {disciplines.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {disciplines.map((discipline) => (
+                      <span
+                        key={`${session.id}-${discipline}`}
+                        className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700"
+                      >
+                        {discipline}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-3">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                      Infos session
+                    </p>
+                    <div className="grid gap-2 text-sm text-slate-600">
+                      <div className="flex items-start gap-2">
+                        <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                        <span>{schedule}</span>
                       </div>
-                    </div>
-                    <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-3">
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                        Profil recherché
-                      </p>
-                      <div className="grid gap-1 text-sm text-slate-600">
-                        {heightLabel ? <p>Taille: {heightLabel}</p> : null}
-                        {weightLabel ? <p>Poids: {weightLabel}</p> : null}
-                        {dominantHandLabel ? (
-                          <p>Main forte: {dominantHandLabel}</p>
-                        ) : null}
-                        {!heightLabel && !weightLabel && !dominantHandLabel ? (
-                          <p className="text-slate-500">Aucun critère spécifique.</p>
-                        ) : null}
+                      <div className="flex items-start gap-2">
+                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                        <span>{place}</span>
                       </div>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" asChild className="w-fit">
-                    <Link
-                      href={sessionHref}
-                      onClick={() => handleDetailClick(session.id)}
-                    >
-                      Voir la session
-                      <ArrowRight className="ml-1 h-4 w-4" />
-                    </Link>
-                  </Button>
+                  <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-3">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                      Profil recherché
+                    </p>
+                    <div className="grid gap-1 text-sm text-slate-600">
+                      {heightLabel ? <p>Taille: {heightLabel}</p> : null}
+                      {weightLabel ? <p>Poids: {weightLabel}</p> : null}
+                      {dominantHandLabel ? (
+                        <p>Main forte: {dominantHandLabel}</p>
+                      ) : null}
+                      {!heightLabel && !weightLabel && !dominantHandLabel ? (
+                        <p className="text-slate-500">Aucun critère spécifique.</p>
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
+              </div>
+              <div className="border-t border-slate-200/70 px-4 pb-4 pt-3">
+                <Link
+                  href={sessionHref}
+                  onClick={() => handleDetailClick(session.id)}
+                  className="flex w-full items-center justify-center rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
+                >
+                  Voir les détails de la session
+                </Link>
               </div>
             </Card>
           );

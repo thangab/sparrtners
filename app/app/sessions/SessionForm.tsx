@@ -572,7 +572,7 @@ export function SessionForm({
   );
 
   return (
-    <form className="space-y-8" onSubmit={handleSubmit} ref={formRef}>
+    <form className="space-y-8" onSubmit={handleSubmit} ref={formRef} noValidate>
       {isCreate ? (
         <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
           <div className="flex items-center gap-3 text-sm">
@@ -1019,7 +1019,7 @@ export function SessionForm({
         step === 1 ? (
           <div className="sticky bottom-4 z-10 flex flex-wrap justify-end gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur">
             <Button
-              type="submit"
+              type="button"
               variant="ghost"
               onClick={handleSkipOptional}
               disabled={loading}

@@ -13,7 +13,6 @@ import {
   Users,
 } from 'lucide-react';
 import { BackLink } from '@/components/app/back-link';
-import { TrustScore } from '@/components/app/trust-score';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
@@ -72,6 +71,47 @@ function getInitials(name: string) {
     .slice(0, 2);
   if (parts.length === 0) return 'SP';
   return parts.map((part) => part[0]?.toUpperCase() ?? '').join('');
+}
+
+function getTrustAvatarStyle(score?: number | null, reviewCount?: number | null) {
+  const safeScore =
+    typeof score === 'number' && Number.isFinite(score)
+      ? Math.max(0, Math.min(5, score))
+      : null;
+  const safeCount =
+    typeof reviewCount === 'number' && Number.isFinite(reviewCount)
+      ? Math.max(0, reviewCount)
+      : 0;
+
+  if (safeScore == null || safeCount === 0) {
+    return {
+      ringClass: 'ring-2 ring-slate-300',
+      badgeClass: 'border-slate-300 bg-slate-50 text-slate-700',
+      badgeLabel: 'Nouveau profil',
+    };
+  }
+
+  if (safeScore >= 4.5) {
+    return {
+      ringClass: 'ring-4 ring-emerald-400 shadow-[0_0_0_6px_rgba(16,185,129,0.18)]',
+      badgeClass: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+      badgeLabel: 'Fiabilité élevée',
+    };
+  }
+
+  if (safeScore >= 3.8) {
+    return {
+      ringClass: 'ring-4 ring-blue-400 shadow-[0_0_0_6px_rgba(59,130,246,0.16)]',
+      badgeClass: 'border-blue-200 bg-blue-50 text-blue-800',
+      badgeLabel: 'Fiabilité confirmée',
+    };
+  }
+
+  return {
+    ringClass: 'ring-4 ring-amber-400 shadow-[0_0_0_6px_rgba(251,191,36,0.18)]',
+    badgeClass: 'border-amber-200 bg-amber-50 text-amber-800',
+    badgeLabel: 'Profil en progression',
+  };
 }
 
 export default async function FighterProfilePage({
@@ -174,6 +214,12 @@ export default async function FighterProfilePage({
   const dominantHandLabel = formatDominantHand(profile?.dominant_hand);
   const genderLabel = formatGender(profile?.gender);
   const reviewCount = trustScore?.review_count ?? 0;
+  const trustDisplayScore =
+    typeof trustScore?.score === 'number' ? trustScore.score.toFixed(1) : null;
+  const avatarTrustStyle = getTrustAvatarStyle(
+    trustScore?.score,
+    trustScore?.review_count,
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-20 pt-6 md:px-6">
@@ -194,10 +240,12 @@ export default async function FighterProfilePage({
                   alt={displayName}
                   width={64}
                   height={64}
-                  className="h-16 w-16 rounded-full border border-slate-200 object-cover"
+                  className={`h-16 w-16 rounded-full object-cover ${avatarTrustStyle.ringClass}`}
                 />
               ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-lg font-bold text-slate-700">
+                <div
+                  className={`flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-lg font-bold text-slate-700 ${avatarTrustStyle.ringClass}`}
+                >
                   {getInitials(displayName)}
                 </div>
               )}
@@ -238,12 +286,15 @@ export default async function FighterProfilePage({
               <p className="text-xs uppercase tracking-[0.12em] text-slate-500">
                 Confiance
               </p>
-              <div className="mt-2">
-                <TrustScore
-                  score={trustScore?.score}
-                  reviewCount={trustScore?.review_count}
-                  showReviewCount={false}
-                />
+              <div className="mt-2 space-y-1">
+                <p className="text-xl font-semibold text-slate-900">
+                  {trustDisplayScore ? `${trustDisplayScore}/5` : 'Aucun score'}
+                </p>
+                <span
+                  className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${avatarTrustStyle.badgeClass}`}
+                >
+                  {avatarTrustStyle.badgeLabel}
+                </span>
               </div>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">

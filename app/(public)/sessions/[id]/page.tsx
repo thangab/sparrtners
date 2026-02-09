@@ -82,8 +82,6 @@ export default async function SessionDetailPage({
     hostProfileResult,
     requestStatusResult,
     conversationResult,
-    acceptedCountResult,
-    pendingCountResult,
     hostPublishedCountResult,
     hostTrustResult,
     placeDetailsResult,
@@ -110,16 +108,6 @@ export default async function SessionDetailPage({
           .maybeSingle()
       : Promise.resolve({ data: null }),
     supabase
-      .from('session_requests')
-      .select('id', { count: 'exact', head: true })
-      .eq('session_id', listing.id)
-      .eq('status', 'accepted'),
-    supabase
-      .from('session_requests')
-      .select('id', { count: 'exact', head: true })
-      .eq('session_id', listing.id)
-      .eq('status', 'pending'),
-    supabase
       .from('session_listings')
       .select('id', { count: 'exact', head: true })
       .eq('host_id', listing.host_id)
@@ -141,8 +129,6 @@ export default async function SessionDetailPage({
   const hostProfile = hostProfileResult.data;
   const requestStatus = requestStatusResult.data;
   const conversation = conversationResult.data;
-  const acceptedCount = acceptedCountResult.count ?? 0;
-  const pendingCount = pendingCountResult.count ?? 0;
   const hostPublishedCount = hostPublishedCountResult.count ?? 0;
   const hostTrust = hostTrustResult.data;
   const placeDetails = placeDetailsResult.data;
@@ -254,10 +240,7 @@ export default async function SessionDetailPage({
                         Participants
                       </p>
                       <p className="font-medium text-slate-900">
-                        {acceptedCount} accepté(s) · {pendingCount} en attente
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        Capacité cible: {listing.capacity ?? 0}
+                        Capacité recherchée: {listing.capacity ?? 0}
                       </p>
                     </div>
                   </div>
