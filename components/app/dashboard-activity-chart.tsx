@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, XAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -170,7 +170,7 @@ export function DashboardActivityChart() {
       </CardHeader>
       <CardContent>
         <ChartContainer className="h-72" config={chartConfig}>
-          <AreaChart data={series} margin={{ left: 0, right: 8, top: 8 }}>
+          <LineChart data={series} margin={{ left: 0, right: 8, top: 8 }}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis
               dataKey="label"
@@ -190,14 +190,14 @@ export function DashboardActivityChart() {
                 />
               }
             />
-            <Area
+            <Line
               type="linear"
               dataKey={metric}
               stroke={`var(--color-${metric})`}
-              fill={`var(--color-${metric})`}
-              fillOpacity={0.2}
+              strokeWidth={2}
+              dot={false}
             />
-          </AreaChart>
+          </LineChart>
         </ChartContainer>
         {loading ? (
           <p className="mt-2 text-xs text-muted-foreground">Chargement…</p>
