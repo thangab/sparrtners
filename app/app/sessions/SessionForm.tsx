@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectItem } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { Slider } from '@/components/ui/slider';
 import {
@@ -89,7 +88,7 @@ export function SessionForm({
             ? String(entry.skill_level_id)
             : '',
         }))
-      : [{ disciplineId: '', skillLevelId: '' }],
+      : [],
   );
   const [selectedPlace, setSelectedPlace] = React.useState<PlaceDetails | null>(
     defaultPlace ?? null,
@@ -100,6 +99,14 @@ export function SessionForm({
   );
   const [dominantHandValue, setDominantHandValue] = React.useState(
     defaultValues?.dominant_hand ?? '',
+  );
+  const [trainingTypeValue, setTrainingTypeValue] = React.useState(
+    defaultValues?.training_type_id != null
+      ? String(defaultValues.training_type_id)
+      : '',
+  );
+  const [gloveSizeValue, setGloveSizeValue] = React.useState(
+    defaultValues?.glove_size ?? '',
   );
   const hasWeightDefaults =
     typeof defaultValues?.weight_min === 'number' ||
@@ -139,6 +146,16 @@ export function SessionForm({
           : 190;
     return [Math.min(minDefault, maxDefault), Math.max(minDefault, maxDefault)];
   });
+
+  React.useEffect(() => {
+    if (trainingTypeValue) return;
+    const sparringType = trainingTypes.find((item) =>
+      item.name.toLowerCase().includes('sparring'),
+    );
+    if (sparringType) {
+      setTrainingTypeValue(String(sparringType.id));
+    }
+  }, [trainingTypes, trainingTypeValue]);
 
   const handlePlaceSelect = async (place: PlaceSuggestion) => {
     if (!place.details?.mapbox_id || !place.details?.session_token) {
@@ -181,11 +198,14 @@ export function SessionForm({
     }
   };
 
-  const addEntry = () => {
-    setEntries((current) => [
-      ...current,
-      { disciplineId: '', skillLevelId: '' },
-    ]);
+  const addDisciplineEntry = (disciplineId: string) => {
+    if (!disciplineId) return;
+    setEntries((current) => {
+      if (current.some((entry) => entry.disciplineId === disciplineId)) {
+        return current;
+      }
+      return [...current, { disciplineId, skillLevelId: '' }];
+    });
   };
 
   const removeEntry = (index: number) => {
@@ -541,246 +561,272 @@ export function SessionForm({
     await submitSession(form, { skipOptional: true });
   };
 
+  const selectedDisciplineIds = entries
+    .map((entry) => entry.disciplineId)
+    .filter((value) => value.length > 0);
+  const availableDisciplines = disciplines.filter(
+    (discipline) => !selectedDisciplineIds.includes(String(discipline.id)),
+  );
+  const disciplineNameById = new Map(
+    disciplines.map((discipline) => [String(discipline.id), discipline.name]),
+  );
+
   return (
-    <form className="space-y-6" onSubmit={handleSubmit} ref={formRef}>
+    <form className="space-y-8" onSubmit={handleSubmit} ref={formRef}>
       {isCreate ? (
-        <div className="flex w-full items-center gap-4 rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm text-slate-600">
-          <button
-            type="button"
-            onClick={() => setStep(1)}
-            className="flex items-center gap-2"
-          >
-            <span
-              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
-                step === 1
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-500'
-              }`}
+        <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-3 text-sm">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="inline-flex items-center gap-2"
             >
-              1
-            </span>
-            <span
-              className={`hidden text-slate-900 sm:inline ${step === 1 ? '' : 'text-slate-600'}`}
+              <span
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
+                  step === 1
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                1
+              </span>
+              <span className={step === 1 ? 'font-semibold text-slate-900' : 'text-slate-500'}>
+                Infos session
+              </span>
+            </button>
+            <div className="h-px flex-1 bg-slate-200" />
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className="inline-flex items-center gap-2"
             >
-              Infos session
-            </span>
-          </button>
-          <div className="h-px flex-1 bg-slate-200" />
-          <button
-            type="button"
-            onClick={() => setStep(2)}
-            className="flex items-center gap-2"
-          >
-            <span
-              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
-                step === 2
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-500'
-              }`}
-            >
-              2
-            </span>
-            <span
-              className={`hidden text-slate-900 sm:inline ${step === 2 ? '' : 'text-slate-600'}`}
-            >
-              Profil recherché
-            </span>
-          </button>
+              <span
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
+                  step === 2
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                2
+              </span>
+              <span className={step === 2 ? 'font-semibold text-slate-900' : 'text-slate-500'}>
+                Profil recherché
+              </span>
+            </button>
+          </div>
         </div>
       ) : null}
-      <div className={showStep1 ? 'space-y-6' : 'hidden'}>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <PlaceAutocomplete
-              label="Lieu"
-              placeholder="Recherche un lieu (ex: Gymnase, club, adresse)"
-              required={requireStep1}
-              defaultValue={
-                defaultPlace
-                  ? `${defaultPlace.name}${
-                      defaultPlace.city ? ` · ${defaultPlace.city}` : ''
-                    }`
-                  : ''
-              }
-              onSelect={handlePlaceSelect}
-              onQueryChange={() => {
-                if (selectedPlace) {
-                  setSelectedPlace(null);
+
+      <div className={showStep1 ? 'space-y-5' : 'hidden'}>
+        <section className="space-y-4 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm">
+          <div>
+            <h3 className="text-base font-semibold text-slate-900">
+              Détails de la session
+            </h3>
+            <p className="text-sm text-slate-500">
+              Le minimum pour publier une annonce claire.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <PlaceAutocomplete
+                label="Lieu"
+                placeholder="Recherche un lieu (ex: Gymnase, club, adresse)"
+                required={requireStep1}
+                defaultValue={
+                  defaultPlace
+                    ? `${defaultPlace.name}${
+                        defaultPlace.city ? ` · ${defaultPlace.city}` : ''
+                      }`
+                    : ''
                 }
-              }}
-            />
-            <input
-              type="hidden"
-              name="place_id"
-              value={selectedPlace?.id ?? ''}
-            />
-            {selectedPlace ? (
-              <div className="text-xs text-muted-foreground">
-                {selectedPlace.address ??
-                  selectedPlace.city ??
-                  'Lieu sélectionné'}
-              </div>
-            ) : placeLoading ? (
-              <div className="text-xs text-muted-foreground">
-                Vérification du lieu...
-              </div>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="starts_at">Date et heure</Label>
-            <Input
-              id="starts_at"
-              name="starts_at"
-              type="datetime-local"
-              defaultValue={toLocalDateTimeInput(defaultValues?.starts_at)}
-              required={requireStep1}
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="training_type_id">Type dentraînement</Label>
-            <Select
-              id="training_type_id"
-              name="training_type_id"
-              required={requireStep1}
-              defaultValue={defaultValues?.training_type_id ?? 1}
-            >
-              <SelectItem value="" disabled>
-                Choisir
-              </SelectItem>
-              {trainingTypes.map((item) => (
-                <SelectItem key={item.id} value={item.id}>
-                  {item.name}
-                </SelectItem>
-              ))}
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="capacity">Capacité</Label>
-            <Input
-              id="capacity"
-              name="capacity"
-              type="number"
-              min={1}
-              defaultValue={defaultValues?.capacity ?? 1}
-              required={requireStep1}
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="duration_minutes">Durée (minutes)</Label>
-            <Input
-              id="duration_minutes"
-              name="duration_minutes"
-              type="number"
-              min={15}
-              step={5}
-              defaultValue={defaultValues?.duration_minutes ?? 60}
-              required={requireStep1}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm font-medium text-foreground">
-                Disciplines & niveaux
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Tu peux proposer plusieurs disciplines dans une même session.
-              </div>
+                onSelect={handlePlaceSelect}
+                onQueryChange={() => {
+                  if (selectedPlace) setSelectedPlace(null);
+                }}
+              />
+              <input type="hidden" name="place_id" value={selectedPlace?.id ?? ''} />
+              {selectedPlace ? (
+                <div className="text-xs text-muted-foreground">
+                  {selectedPlace.address ?? selectedPlace.city ?? 'Lieu sélectionné'}
+                </div>
+              ) : placeLoading ? (
+                <div className="text-xs text-muted-foreground">
+                  Vérification du lieu...
+                </div>
+              ) : null}
             </div>
-            <Button type="button" variant="secondary" onClick={addEntry}>
-              Ajouter
-            </Button>
-          </div>
-          <div className="space-y-3">
-            {entries.map((entry, index) => (
-              <div
-                key={`${entry.disciplineId}-${index}`}
-                className="grid gap-3 md:grid-cols-[1fr_1fr_auto]"
-              >
-                <Select
-                  value={entry.disciplineId}
-                  onChange={(event) =>
-                    updateEntry(index, { disciplineId: event.target.value })
-                  }
-                  required={requireStep1}
-                >
-                  <SelectItem value="" disabled>
-                    Discipline
-                  </SelectItem>
-                  {disciplines.map((item) => (
-                    <SelectItem key={item.id} value={item.id}>
+            <div className="space-y-2">
+              <Label htmlFor="starts_at">Date et heure</Label>
+              <Input
+                id="starts_at"
+                name="starts_at"
+                type="datetime-local"
+                defaultValue={toLocalDateTimeInput(defaultValues?.starts_at)}
+                required={requireStep1}
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="training_type_id">Type d&apos;entraînement</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {trainingTypes.map((item) => {
+                  const isActive = trainingTypeValue === String(item.id);
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setTrainingTypeValue(String(item.id))}
+                      className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
+                        isActive
+                          ? 'border-slate-900 bg-slate-100 text-slate-900'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                      }`}
+                    >
                       {item.name}
-                    </SelectItem>
-                  ))}
-                </Select>
-                <Select
-                  value={entry.skillLevelId}
-                  onChange={(event) =>
-                    updateEntry(index, { skillLevelId: event.target.value })
-                  }
-                  required={requireStep1}
-                >
-                  <SelectItem value="" disabled>
-                    Niveau
-                  </SelectItem>
-                  {skillLevels.map((item) => (
-                    <SelectItem key={item.id} value={item.id}>
-                      {item.name}
-                    </SelectItem>
-                  ))}
-                </Select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => removeEntry(index)}
-                  disabled={entries.length === 1}
-                >
-                  Retirer
-                </Button>
+                    </button>
+                  );
+                })}
               </div>
-            ))}
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="description_step1">Plus d&apos;infos</Label>
-          <Textarea
-            id="description_step1"
-            name="description"
-            value={descriptionText}
-            onChange={(event) => setDescriptionText(event.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className={showStep2 ? 'space-y-3' : 'hidden'}>
-        <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr] md:items-start">
-          <div className="flex justify-center md:hidden">
-            <div className="w-full max-w-27.5">
-              <Image
-                src="/illustration-fighter.webp"
-                alt="Sparring"
-                width={110}
-                height={140}
-                className="h-auto w-full object-cover"
+              <input
+                id="training_type_id"
+                type="hidden"
+                name="training_type_id"
+                value={trainingTypeValue}
+                required={requireStep1}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="capacity">Participants recherchés</Label>
+              <Input
+                id="capacity"
+                name="capacity"
+                type="number"
+                min={1}
+                defaultValue={defaultValues?.capacity ?? 1}
+                required={requireStep1}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="duration_minutes">Durée (minutes)</Label>
+              <Input
+                id="duration_minutes"
+                name="duration_minutes"
+                type="number"
+                min={15}
+                step={5}
+                defaultValue={defaultValues?.duration_minutes ?? 60}
+                required={requireStep1}
               />
             </div>
           </div>
-          <div className="space-y-3">
+        </section>
+
+        <section className="space-y-4 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm">
+          <div>
             <div>
-              <div className="text-sm font-medium text-foreground">
-                Profil recherché (optionnel)
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Renseigne des critères pour ton sparring partner.
-              </div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Disciplines et niveaux
+              </h3>
+              <p className="text-sm text-slate-500">
+                Ajoute une ou plusieurs disciplines avec le niveau visé.
+              </p>
             </div>
-            <div className="grid gap-4 md:grid-cols-1">
-              <div className="space-y-2">
+          </div>
+
+          <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+              Disciplines disponibles
+            </p>
+            {availableDisciplines.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {availableDisciplines.map((discipline) => (
+                  <button
+                    key={discipline.id}
+                    type="button"
+                    onClick={() => addDisciplineEntry(String(discipline.id))}
+                    className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 transition hover:border-slate-400"
+                  >
+                    + {discipline.name}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500">
+                Toutes les disciplines disponibles ont été ajoutées.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            {entries.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                Ajoute au moins une discipline.
+              </div>
+            ) : null}
+            {entries.map((entry, index) => (
+              <div
+                key={`${entry.disciplineId}-${index}`}
+                className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-slate-800">
+                    {disciplineNameById.get(entry.disciplineId) ??
+                      `Discipline ${index + 1}`}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => removeEntry(index)}
+                  >
+                    Retirer
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+                    Niveau
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {skillLevels.map((item) => {
+                      const isActive = entry.skillLevelId === String(item.id);
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() =>
+                            updateEntry(index, { skillLevelId: String(item.id) })
+                          }
+                          className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                            isActive
+                              ? 'border-slate-900 bg-slate-900 text-white'
+                              : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+                          }`}
+                        >
+                          {item.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      <div className={showStep2 ? 'space-y-5' : 'hidden'}>
+        <section className="grid gap-6 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm md:grid-cols-[1.2fr_0.8fr] md:items-start">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Profil recherché (optionnel)
+              </h3>
+              <p className="text-sm text-slate-500">
+                Affine ton matching avec des critères physiques et techniques.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="weight_range">Poids (kg)</Label>
                   <Button
@@ -819,7 +865,8 @@ export function SessionForm({
                   value={weightTouched ? String(weightRange[1]) : ''}
                 />
               </div>
-              <div className="space-y-2">
+
+              <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="height_range">Taille (cm)</Label>
                   <Button
@@ -858,9 +905,10 @@ export function SessionForm({
                   value={heightTouched ? String(heightRange[1]) : ''}
                 />
               </div>
+
               <div className="space-y-2">
                 <Label>Main forte</Label>
-                <div className="grid gap-3 grid-cols-3">
+                <div className="grid grid-cols-3 gap-3">
                   {[
                     {
                       value: 'right',
@@ -882,7 +930,7 @@ export function SessionForm({
                         onClick={() => setDominantHandValue(option.value)}
                         className={`flex flex-col items-center gap-2 rounded-2xl border px-3 py-2 text-center text-sm transition ${
                           isActive
-                            ? 'border-slate-900 bg-slate-200 text-slate-900'
+                            ? 'border-slate-900 bg-slate-100 text-slate-900'
                             : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                         }`}
                       >
@@ -906,36 +954,55 @@ export function SessionForm({
                   value={dominantHandValue}
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="glove_size">Taille des gants</Label>
-                <Select
+                <div className="grid grid-cols-3 gap-2">
+                  {['8oz', '10oz', '12oz', '14oz', '16oz'].map((size) => {
+                    const isActive = gloveSizeValue === size;
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() =>
+                          setGloveSizeValue((current) =>
+                            current === size ? '' : size,
+                          )
+                        }
+                        className={`rounded-xl border px-3 py-2 text-sm transition ${
+                          isActive
+                            ? 'border-slate-900 bg-slate-100 text-slate-900'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
+                </div>
+                <input
                   id="glove_size"
+                  type="hidden"
                   name="glove_size"
-                  defaultValue={defaultValues?.glove_size ?? ''}
-                >
-                  <SelectItem value="" disabled>
-                    Choisir
-                  </SelectItem>
-                  <SelectItem value="8oz">8 oz</SelectItem>
-                  <SelectItem value="10oz">10 oz</SelectItem>
-                  <SelectItem value="12oz">12 oz</SelectItem>
-                  <SelectItem value="14oz">14 oz</SelectItem>
-                  <SelectItem value="16oz">16 oz</SelectItem>
-                </Select>
+                  value={gloveSizeValue}
+                />
               </div>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="description_step2">Plus d&apos;infos</Label>
+              <Label htmlFor="description">Description de la session</Label>
               <Textarea
-                id="description_step2"
+                id="description"
                 name="description"
                 value={descriptionText}
                 onChange={(event) => setDescriptionText(event.target.value)}
+                placeholder="Objectif, intensité, équipements, infos utiles..."
               />
             </div>
           </div>
-          <div className="flex justify-center md:justify-end">
-            <div className="w-full max-w-xs hidden md:block">
+
+          <div className="hidden md:block">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
               <Image
                 src="/illustration-fighter.webp"
                 alt="Sparring"
@@ -945,26 +1012,26 @@ export function SessionForm({
               />
             </div>
           </div>
-        </div>
+        </section>
       </div>
 
       {isCreate ? (
         step === 1 ? (
-          <div className="flex justify-end gap-3">
+          <div className="sticky bottom-4 z-10 flex flex-wrap justify-end gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur">
             <Button
               type="submit"
               variant="ghost"
               onClick={handleSkipOptional}
               disabled={loading}
             >
-              Ignorer l&apos;étape suivante et publier
+              Publier directement
             </Button>
             <Button type="button" onClick={handleNextStep} disabled={loading}>
               Continuer
             </Button>
           </div>
         ) : (
-          <div className="flex flex-wrap justify-between gap-3">
+          <div className="sticky bottom-4 z-10 flex flex-wrap justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur">
             <Button
               type="button"
               variant="outline"
@@ -973,17 +1040,17 @@ export function SessionForm({
             >
               Retour
             </Button>
-            <div className="flex flex-wrap gap-3">
-              <Button type="submit" disabled={loading}>
-                Publier la session
-              </Button>
-            </div>
+            <Button type="submit" disabled={loading}>
+              Publier la session
+            </Button>
           </div>
         )
       ) : (
-        <Button type="submit" disabled={loading}>
-          Mettre à jour
-        </Button>
+        <div className="sticky bottom-4 z-10 flex justify-end rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur">
+          <Button type="submit" disabled={loading}>
+            Mettre à jour
+          </Button>
+        </div>
       )}
     </form>
   );

@@ -21,7 +21,7 @@ export function SessionFiltersPanel(props: SessionFiltersPanelProps) {
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="h-fit self-start">
+    <div className="h-fit self-start lg:sticky lg:top-24">
       <div className="flex justify-end lg:hidden">
         <Button
           type="button"
@@ -62,7 +62,7 @@ export function SessionFiltersPanel(props: SessionFiltersPanelProps) {
                 Fermer
               </Button>
             </div>
-            <div className="flex-1 overflow-y-auto px-5 pb-6 pt-4 lg:p-0">
+            <div className="flex-1 overflow-y-auto px-5 pb-6 pt-4 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:px-0 lg:pb-0 lg:pt-0 lg:pr-1">
               <SessionFiltersSidebar {...props} />
             </div>
           </div>

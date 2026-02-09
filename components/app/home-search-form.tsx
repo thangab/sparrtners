@@ -36,7 +36,7 @@ export function HomeSearchForm({
     <form onSubmit={handleSubmit} className="flex flex-row items-stretch gap-0">
       <PlaceSearchInput
         variant="compact"
-        placeholder="Où ?"
+        placeholder="Trouve une session de sparring près de chez toi"
         containerClassName="flex-1"
         inputClassName="h-11 rounded-full bg-white rounded-r-none"
         defaultLabel={defaultLabel}

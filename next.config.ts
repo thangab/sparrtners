@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
       {
         pathname: "/api/mapbox/static",
       },
+      {
+        pathname: "/**",
+      },
     ],
     remotePatterns: [
       {

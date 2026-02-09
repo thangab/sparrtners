@@ -73,14 +73,16 @@ export default async function EditSessionPage({
     : { data: null };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <div className="text-sm text-muted-foreground">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
+      <div className="rounded-2xl border border-slate-200/70 bg-white/85 p-6 shadow-sm">
+        <div className="text-sm text-slate-600">
           <BackLink label="Retour" fallbackHref="/app/sessions/requests" />
         </div>
-        <h1 className="text-2xl font-semibold">Modifier la session</h1>
-        <p className="text-muted-foreground">
-          Mets à jour les infos de ta session.
+        <h1 className="mt-2 text-2xl font-semibold text-slate-900">
+          Modifier la session
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Ajuste les infos de ta session et garde une annonce propre.
         </p>
       </div>
       <SessionForm

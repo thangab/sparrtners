@@ -17,11 +17,14 @@ export default async function NewSessionPage() {
     .order('id');
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Créer une session</h1>
-        <p className="text-muted-foreground">
-          Publie une nouvelle session pour trouver des partenaires.
+    <div className="mx-auto w-full max-w-5xl space-y-6">
+      <div className="rounded-2xl border border-slate-200/70 bg-white/85 p-6 shadow-sm">
+        <h1 className="text-2xl font-semibold text-slate-900">
+          Créer une session
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Publie une annonce claire pour trouver les bons partenaires
+          rapidement.
         </p>
       </div>
       <SessionForm

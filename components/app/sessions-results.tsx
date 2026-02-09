@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { ArrowRight, CalendarClock, MapPin, Route, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -201,8 +202,39 @@ export function SessionsResults({
     [sendStats],
   );
 
+  const activeFiltersCount = React.useMemo(() => {
+    let count = 0;
+    if (filters.dateStart) count += 1;
+    if (filters.dateEnd) count += 1;
+    if (filters.durationMin != null || filters.durationMax != null) count += 1;
+    if (filters.heightMin != null || filters.heightMax != null) count += 1;
+    if (filters.weightMin != null || filters.weightMax != null) count += 1;
+    if ((filters.disciplines?.length ?? 0) > 0) count += 1;
+    if ((filters.dominantHands?.length ?? 0) > 0) count += 1;
+    if ((filters.trainingTypeIds?.length ?? 0) > 0) count += 1;
+    if (filters.radiusKm !== 25) count += 1;
+    return count;
+  }, [filters]);
+
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-2 rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.15em] text-slate-500">
+            Résultats
+          </p>
+          <p className="text-lg font-semibold text-slate-900">
+            {sessions.length} session{sessions.length > 1 ? 's' : ''} affichée
+            {sessions.length > 1 ? 's' : ''}
+          </p>
+        </div>
+        {activeFiltersCount > 0 ? (
+          <Badge variant="secondary">
+            {activeFiltersCount} filtre{activeFiltersCount > 1 ? 's' : ''} actif
+            {activeFiltersCount > 1 ? 's' : ''}
+          </Badge>
+        ) : null}
+      </div>
       {sessions.length === 0 ? (
         <Card>
           <CardHeader>
@@ -215,7 +247,7 @@ export function SessionsResults({
       ) : (
         sessions.map((session) => {
           const hostLabel = session.host_display_name || 'Combattant';
-          const disciplineLabel = Array.isArray(session.disciplines)
+          const disciplines = Array.isArray(session.disciplines)
             ? session.disciplines
                 .map(
                   (item: {
@@ -229,70 +261,149 @@ export function SessionsResults({
                   },
                 )
                 .filter(Boolean)
-                .join(' · ')
+            : [];
+
+          const title = `Session de ${session.training_type_name ?? 'training'}`;
+          const place = `${session.place_name ?? 'Lieu'}${
+            session.city ? ` · ${session.city}` : ''
+          }`;
+          const schedule = `Prévu le ${formatDateTime(session.starts_at)}${
+            session.duration_minutes ? ` · ${session.duration_minutes} min` : ''
+          }`;
+
+          const profileHref = session.host_id
+            ? `/profile/${session.host_id}`
+            : '/find-sessions';
+
+          const sessionHref = `/sessions/${session.id}`;
+          const distanceLabel =
+            typeof session.distance === 'number'
+              ? formatDistanceKm(session.distance)
+              : null;
+
+          const heightLabel =
+            session.height_min != null || session.height_max != null
+              ? `${session.height_min ?? '?'} - ${session.height_max ?? '?'} cm`
+              : null;
+          const weightLabel =
+            session.weight_min != null || session.weight_max != null
+              ? `${session.weight_min ?? '?'} - ${session.weight_max ?? '?'} kg`
+              : null;
+          const dominantHandLabel = session.dominant_hand
+            ? session.dominant_hand === 'right'
+              ? 'Droitier'
+              : session.dominant_hand === 'left'
+                ? 'Gaucher'
+                : 'Ambidextre'
             : '';
 
           return (
             <Card key={session.id} className="border-slate-200/70 bg-white/90">
-              <div className="grid gap-6 p-6 md:grid-cols-[160px_1fr]">
-                <div className="flex flex-col items-start gap-3">
-                  {session.host_avatar_url ? (
-                    <Image
-                      src={session.host_avatar_url}
-                      alt={hostLabel}
-                      width={56}
-                      height={56}
-                      className="h-14 w-14 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-14 w-14 rounded-full bg-slate-200" />
-                  )}
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                    Host
+              <div className="grid gap-5 p-5 md:grid-cols-[180px_1fr]">
+                <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-gradient-to-br from-slate-50 to-slate-100 p-4 text-slate-900 shadow-sm">
+                  <div className="mb-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Host de la session
+                    </div>
                   </div>
-                  <Link
-                    target="_blank"
-                    href={`/profile/${session.host_id}`}
-                    className="font-medium text-slate-900 underline"
-                  >
-                    {hostLabel}
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <div className="shrink-0">
+                      {session.host_avatar_url ? (
+                        <Image
+                          src={session.host_avatar_url}
+                          alt={hostLabel}
+                          width={56}
+                          height={56}
+                          className="h-14 w-14 rounded-full object-cover ring-2 ring-white"
+                        />
+                      ) : (
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200">
+                          <UserRound className="h-6 w-6 text-slate-600" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {hostLabel}
+                      </p>
+                      <Link
+                        target="_blank"
+                        href={profileHref}
+                        className="text-xs text-slate-700 underline underline-offset-2"
+                      >
+                        Voir le profil
+                      </Link>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl">
-                      Session de {session.training_type_name ?? 'training'}
-                    </CardTitle>
-                    {session.is_boosted ? (
-                      <Badge className="bg-amber-200 text-amber-900 hover:bg-amber-200">
-                        Boostée
-                      </Badge>
-                    ) : null}
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <CardTitle className="text-xl">{title}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      {distanceLabel ? (
+                        <Badge variant="outline" className="gap-1">
+                          <Route className="h-3.5 w-3.5" />
+                          {distanceLabel}
+                        </Badge>
+                      ) : null}
+                      {session.is_boosted ? (
+                        <Badge className="bg-amber-200 text-amber-900 hover:bg-amber-200">
+                          Boostée
+                        </Badge>
+                      ) : null}
+                    </div>
                   </div>
-                  {disciplineLabel ? (
-                    <div className="text-sm text-slate-600">
-                      {disciplineLabel}
+                  {disciplines.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {disciplines.map((discipline) => (
+                        <span
+                          key={`${session.id}-${discipline}`}
+                          className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700"
+                        >
+                          {discipline}
+                        </span>
+                      ))}
                     </div>
                   ) : null}
-                  {typeof session.distance === 'number' ? (
-                    <div>Distance: {formatDistanceKm(session.distance)}</div>
-                  ) : null}
-                  <div className="text-sm text-slate-600">
-                    Prévu le {formatDateTime(session.starts_at)}
-                    {session.duration_minutes
-                      ? ` · ${session.duration_minutes} min`
-                      : ''}
-                  </div>
-                  <div className="text-sm text-slate-600">
-                    Lieu : {session.place_name}{' '}
-                    {session.city ? `· ${session.city}` : ''}
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-3">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        Infos session
+                      </p>
+                      <div className="grid gap-2 text-sm text-slate-600">
+                        <div className="flex items-start gap-2">
+                          <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                          <span>{schedule}</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                          <span>{place}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-3">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        Profil recherché
+                      </p>
+                      <div className="grid gap-1 text-sm text-slate-600">
+                        {heightLabel ? <p>Taille: {heightLabel}</p> : null}
+                        {weightLabel ? <p>Poids: {weightLabel}</p> : null}
+                        {dominantHandLabel ? (
+                          <p>Main forte: {dominantHandLabel}</p>
+                        ) : null}
+                        {!heightLabel && !weightLabel && !dominantHandLabel ? (
+                          <p className="text-slate-500">Aucun critère spécifique.</p>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
                   <Button variant="outline" size="sm" asChild className="w-fit">
                     <Link
-                      href={`/sessions/${session.id}`}
+                      href={sessionHref}
                       onClick={() => handleDetailClick(session.id)}
                     >
-                      Voir détail
+                      Voir la session
+                      <ArrowRight className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
                 </div>
@@ -302,9 +413,9 @@ export function SessionsResults({
         })
       )}
       {hasMore ? (
-        <div className="flex justify-center">
+        <div className="flex justify-center py-2">
           <Button variant="outline" type="button" onClick={handleLoadMore}>
-            {loading ? 'Chargement...' : 'Afficher la suite des sessions'}
+            {loading ? 'Chargement...' : 'Afficher plus de sessions'}
           </Button>
         </div>
       ) : null}

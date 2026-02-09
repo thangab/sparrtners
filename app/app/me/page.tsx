@@ -41,18 +41,18 @@ export default async function ProfilePage({
   const completionPercent = completion?.percent ?? 0;
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Mon profil</h1>
-        <p className="text-muted-foreground">
-          Gère tes infos personnelles et tes préférences sportives.
+    <div className="mx-auto w-full max-w-5xl space-y-6">
+      <div className="rounded-2xl border border-slate-200/70 bg-white/85 p-6 shadow-sm">
+        <h1 className="text-2xl font-semibold text-slate-900">Mon profil</h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Mets à jour ton profil public et tes préférences sportives.
         </p>
         {resolvedSearchParams?.required === '1' ? (
           <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">
             Profil requis pour accéder à l&apos;application
           </div>
         ) : null}
-        <div className="mt-3 space-y-2">
+        <div className="mt-4 space-y-2">
           <div className="text-sm text-slate-600">
             Profil complété à {completionPercent}%
           </div>
@@ -62,6 +62,17 @@ export default async function ProfilePage({
               style={{ width: `${completionPercent}%` }}
             />
           </div>
+          {completionPercent < 100 ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              Un profil complété à <strong>100%</strong> est requis pour
+              accéder à toutes les actions: dashboard, publication de session,
+              demandes et fonctionnalités avancées.
+            </div>
+          ) : (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+              Profil à 100%: toutes les actions sont débloquées.
+            </div>
+          )}
         </div>
       </div>
       <ProfileForm
