@@ -13,6 +13,7 @@ import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
 import { getEntitlements, isPremium } from '@/lib/entitlements';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { DashboardNextSessionCard } from '@/components/app/dashboard-next-session-card';
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClientReadOnly();
@@ -76,7 +77,10 @@ export default async function DashboardPage() {
         .lt('created_at', nextMonthStart.toISOString())
     : { count: 0 };
 
-  const [recentSessionsResult, recentRequestsResult] = await Promise.all([
+  const [
+    recentSessionsResult,
+    recentRequestsResult,
+  ] = await Promise.all([
     user
       ? supabase
           .from('sessions')
@@ -249,6 +253,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+      <DashboardNextSessionCard userId={user?.id} />
       <DashboardActivityChart />
       <div className="grid gap-4 lg:grid-cols-2">
         <DashboardMiniTable
