@@ -542,6 +542,14 @@ export function SessionForm({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isCreate) {
+      if (step === 1) {
+        const formData = new FormData(event.currentTarget);
+        if (!validateBasics(formData)) return;
+        setStep(2);
+      }
+      return;
+    }
     await submitSession(event.currentTarget);
   };
 
@@ -559,6 +567,12 @@ export function SessionForm({
     const formData = new FormData(form);
     if (!validateBasics(formData)) return;
     await submitSession(form, { skipOptional: true });
+  };
+
+  const handlePublish = async () => {
+    const form = formRef.current;
+    if (!form) return;
+    await submitSession(form);
   };
 
   const selectedDisciplineIds = entries
@@ -1073,7 +1087,7 @@ export function SessionForm({
             >
               Retour
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="button" onClick={handlePublish} disabled={loading}>
               Publier la session
             </Button>
           </div>
