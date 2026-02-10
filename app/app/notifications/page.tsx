@@ -191,48 +191,6 @@ export default async function NotificationsPage() {
 
   return (
     <div className="w-full max-w-full space-y-6 overflow-x-hidden">
-      <section className="rounded-3xl border border-slate-200/80 bg-[radial-gradient(circle_at_top_left,#eef2ff_0,#ffffff_48%,#f8fafc_100%)] px-5 py-6 shadow-[0_20px_45px_-35px_rgba(15,23,42,0.35)] md:px-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-          Notifications
-        </p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
-          Ton centre d&apos;activité
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600 md:text-base">
-          Toutes les actions importantes liées à tes sessions, ton chat et tes
-          avis, au même endroit.
-        </p>
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white/90 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-500">
-              Total
-            </p>
-            <p className="mt-1 text-2xl font-black text-slate-900">
-              {rows.length}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white/90 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-500">
-              Nouvelles
-            </p>
-            <p className="mt-1 text-2xl font-black text-slate-900">
-              {unreadCount}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white/90 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-500">
-              Statut
-            </p>
-            <p className="mt-1 text-sm font-semibold text-slate-700">
-              {unreadCount > 0
-                ? 'Marquées comme lues à l’ouverture'
-                : 'Tout est à jour'}
-            </p>
-          </div>
-        </div>
-      </section>
-
       {rows.length > 0 ? (
         <section className="space-y-3">
           {rows.map((notif) => {
