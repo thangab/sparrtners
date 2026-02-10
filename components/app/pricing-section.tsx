@@ -1,4 +1,7 @@
-import { PricingCheckout, type PricingPlan } from '@/components/app/pricing-checkout';
+import {
+  PricingCheckout,
+  type PricingPlan,
+} from '@/components/app/pricing-checkout';
 import { stripe } from '@/lib/stripe';
 
 type PricingSectionProps = {
@@ -66,7 +69,7 @@ export async function PricingSection({
   const features = [
     ['Inscriptions illimitées aux évènements', '✓', '✓'],
     ['Historique', '✓', '✓'],
-    ['Publication d’évènement illimitée', '4 max', '✓'],
+    ['Publication d’évènement illimitée', '4/mois', '✓'],
     ['Statistiques avancées des publications', '✗', '✓'],
     ['Boosts des événements', 'à l’unité', '4'],
   ];
@@ -104,4 +107,3 @@ export async function PricingSection({
     </div>
   );
 }
-

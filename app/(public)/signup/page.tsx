@@ -1,15 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function SignupPage() {
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
@@ -18,12 +17,12 @@ export default function SignupPage() {
   const [loading, setLoading] = React.useState(false);
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [showPassword, setShowPassword] = React.useState(false);
   const [signupEmail, setSignupEmail] = React.useState<string | null>(null);
 
   const handleGoogle = async () => {
     setLoading(true);
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${siteUrl}/api/auth/callback` },
@@ -40,143 +39,169 @@ export default function SignupPage() {
 
   const handleSignup = async () => {
     setLoading(true);
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: {
-        emailRedirectTo: `${siteUrl}/api/auth/callback`,
-      },
+      options: { emailRedirectTo: `${siteUrl}/api/auth/callback` },
     });
     if (error) {
       toast({
-        title: 'Inscription échouée',
+        title: 'Inscription echouee',
         description: error.message,
         variant: 'destructive',
       });
       setLoading(false);
       return;
     }
+
     setSignupEmail(email.trim());
     if (data.session) {
       router.push('/app');
+    } else {
+      setLoading(false);
     }
   };
 
   return (
-    <main>
-      <div className="mx-auto grid w-full max-w-6xl gap-10 px-2 pb-20 pt-6 md:grid-cols-[1fr_1.1fr] md:items-center md:gap-16 md:px-6">
-        <div className="space-y-8">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold text-slate-900">
-              Créer un compte
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff7ed_0,#f8fafc_45%,#eef2ff_100%)]">
+      <div className="grid min-h-screen w-full lg:grid-cols-[420px_1fr]">
+        <section className="relative flex min-h-screen flex-col justify-center border-r border-slate-200 bg-white px-7 py-10 sm:px-10">
+          <div className="mx-auto w-full max-w-[340px]">
+            <Link
+              href="/"
+              className="mb-10 inline-flex items-center text-3xl font-black tracking-tight text-slate-950"
+            >
+              Sparrtners
+            </Link>
+
+            <h1 className="text-4xl font-black tracking-tight text-slate-900">
+              Inscription
             </h1>
-            <p className="text-sm text-slate-500">
-              Crée ton compte Sparrtners.
+            <p className="mt-1 text-sm text-slate-500">
+              Cree ton compte et commence tes sessions.
             </p>
-          </div>
 
-          <Card className="border-slate-200/80 bg-white shadow-sm">
-            <CardContent className="space-y-6 pt-6">
-              <Button
-                className="w-full justify-center gap-3 bg-slate-100 text-slate-900 hover:bg-slate-200"
-                onClick={handleGoogle}
-                disabled={loading}
-              >
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-semibold text-slate-900 shadow">
-                  G
-                </span>
-                Continuer avec Google
-              </Button>
-
-              <div className="flex items-center gap-3 text-xs text-slate-400">
-                <div className="h-px flex-1 bg-slate-200" />
-                <span>Ou avec l’email</span>
-                <div className="h-px flex-1 bg-slate-200" />
+            {signupEmail ? (
+              <div className="mt-8 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-800">
+                Compte cree avec <span className="font-semibold">{signupEmail}</span>.
+                Pense a confirmer ton email si demande.
               </div>
-
-              {signupEmail ? (
-                <div className="space-y-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-5 text-sm text-emerald-900">
-                  <div className="text-base font-semibold">
-                    Compte créé
-                  </div>
-                  <p>
-                    Ton compte a bien été créé avec l’email{' '}
-                    <span className="font-semibold">{signupEmail}</span>.
-                    Pense à confirmer ton email pour activer ton compte.
-                  </p>
-                </div>
-              ) : (
+            ) : (
+              <>
                 <form
-                  className="space-y-4"
+                  className="mt-8 space-y-5"
                   onSubmit={(event) => {
                     event.preventDefault();
                     handleSignup();
                   }}
                 >
-                  <fieldset className="space-y-4" disabled={loading}>
+                  <fieldset className="space-y-5" disabled={loading}>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
+                      <Label htmlFor="email" className="text-slate-700">
+                        E-mail
+                      </Label>
                       <Input
-                        id="signup-email"
-                        name="email"
+                        id="email"
                         type="email"
                         required
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
+                        className="h-11 rounded-md border-slate-300 bg-white"
+                        placeholder="name@email.com"
                       />
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="signup-password">Mot de passe</Label>
-                      <Input
-                        id="signup-password"
-                        name="password"
-                        type="password"
-                        autoComplete="new-password"
-                        required
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                      />
+                      <Label htmlFor="password" className="text-slate-700">
+                        Mot de passe
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          autoComplete="new-password"
+                          required
+                          value={password}
+                          onChange={(event) => setPassword(event.target.value)}
+                          className="h-11 rounded-md border-slate-300 bg-white pr-10"
+                          placeholder="Au moins 8 caracteres"
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+                          onClick={() => setShowPassword((value) => !value)}
+                          aria-label="Afficher ou masquer le mot de passe"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
+
                     <Button
-                      className="w-full"
                       type="submit"
-                      disabled={!email || !password}
+                      disabled={!email || !password || loading}
+                      className="h-11 w-full rounded-md bg-slate-900 text-white hover:bg-slate-800"
                     >
-                      Créer un compte
+                      Creer mon compte
                     </Button>
                   </fieldset>
                 </form>
-              )}
 
-              <div className="space-y-2 text-center text-sm">
-                <div className="text-slate-500">
-                  Déjà un compte ?{' '}
-                  <Link href="/login" className="text-slate-900 underline">
-                    Se connecter
-                  </Link>
+                <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-slate-400">
+                  <div className="h-px flex-1 bg-slate-300" />
+                  <span>Or</span>
+                  <div className="h-px flex-1 bg-slate-300" />
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
-        <div className="relative hidden min-h-130 p-6 md:block">
-          <div className="absolute -left-12 top-10 h-72 w-72 rounded-full border border-blue-200/70" />
-          <div className="absolute -right-12 bottom-10 h-72 w-72 rounded-full border border-blue-200/70" />
-          <div className="relative mx-auto flex h-full max-w-md items-center justify-center">
-            <div className="p-6">
-              <Image
-                src="/illustration-fighter.webp"
-                alt="Sparrtners app preview"
-                width={520}
-                height={520}
-                className="h-auto w-full object-cover"
-              />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 w-full rounded-md border-slate-300 bg-white text-slate-800 hover:bg-slate-100"
+                  onClick={handleGoogle}
+                  disabled={loading}
+                >
+                  Continuer avec Google
+                </Button>
+              </>
+            )}
+
+            <p className="mt-5 text-center text-sm text-slate-600">
+              Deja un compte ?{' '}
+              <Link href="/login" className="font-semibold text-orange-700">
+                Se connecter
+              </Link>
+            </p>
+          </div>
+        </section>
+
+        <section className="relative hidden overflow-hidden bg-white lg:flex lg:min-h-screen lg:items-center lg:justify-center">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(251,146,60,0.24),transparent_35%),radial-gradient(circle_at_82%_14%,rgba(99,102,241,0.14),transparent_34%),linear-gradient(140deg,#fff7ed_0%,#f8fafc_52%,#eef2ff_100%)]" />
+          <div className="pointer-events-none absolute inset-0 opacity-20 [background:repeating-linear-gradient(120deg,rgba(15,23,42,0.06)_0,rgba(15,23,42,0.06)_2px,transparent_2px,transparent_18px)]" />
+
+          <div className="relative z-10 w-full max-w-3xl px-10">
+            <p className="text-6xl font-black tracking-tight text-slate-950">
+              Sparrtners
+            </p>
+            <p className="mt-4 text-xl font-semibold text-orange-700">
+              Rejoins la communaute d&apos;entrainement
+            </p>
+
+            <div className="mt-12 rounded-2xl border border-orange-100/80 bg-white/85 p-8 text-slate-900 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.25)] backdrop-blur-sm">
+              <h2 className="text-4xl font-black leading-tight text-slate-950">
+                Publie, rejoins, progresse.
+              </h2>
+              <p className="mt-5 text-lg leading-relaxed text-slate-700">
+                Cree ton compte pour organiser tes sessions, trouver de nouveaux
+                partenaires et suivre toute ton activite depuis un seul espace.
+              </p>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </main>
   );

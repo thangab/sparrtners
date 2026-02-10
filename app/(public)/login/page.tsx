@@ -1,15 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import Image from 'next/image';
-import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import Link from 'next/link';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const { toast } = useToast();
@@ -18,13 +17,13 @@ export default function LoginPage() {
   const [loading, setLoading] = React.useState(false);
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [showPassword, setShowPassword] = React.useState(false);
   const [showRecovery, setShowRecovery] = React.useState(false);
   const [recoveryEmail, setRecoveryEmail] = React.useState<string | null>(null);
 
   const handleGoogle = async () => {
     setLoading(true);
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${siteUrl}/api/auth/callback` },
@@ -39,39 +38,26 @@ export default function LoginPage() {
     }
   };
 
-  const handleEmailPassword = async (mode: 'signin' | 'signup') => {
+  const handleSignIn = async () => {
     setLoading(true);
-    const normalizedEmail = email.trim();
-
-    const { data, error } =
-      mode === 'signup'
-        ? await supabase.auth.signUp({
-            email: normalizedEmail,
-            password,
-          })
-        : await supabase.auth.signInWithPassword({
-            email: normalizedEmail,
-            password,
-          });
-
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
     if (error) {
       toast({
-        title: mode === 'signup' ? 'Inscription échouée' : 'Connexion échouée',
+        title: 'Connexion echouee',
         description: error.message,
         variant: 'destructive',
       });
       setLoading(false);
       return;
     }
-
     toast({
-      title: mode === 'signup' ? 'Compte créé' : 'Connecté',
-      description:
-        mode === 'signup'
-          ? 'Ton compte est prêt. Tu peux te connecter.'
-          : 'Tu es maintenant connecté.',
+      title: 'Connexion reussie',
+      description: 'Bienvenue sur Sparrtners.',
     });
-    if (mode === 'signin' || data?.session) {
+    if (data?.session) {
       router.push('/app');
     }
   };
@@ -80,20 +66,20 @@ export default function LoginPage() {
     if (!email.trim()) {
       toast({
         title: 'Email requis',
-        description: 'Renseigne ton email pour réinitialiser ton mot de passe.',
+        description: 'Renseigne ton email pour recevoir le lien de reset.',
         variant: 'destructive',
       });
       return;
     }
+
     setLoading(true);
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${siteUrl}/reset-password`,
     });
     if (error) {
       toast({
-        title: 'Réinitialisation échouée',
+        title: 'Envoi echoue',
         description: error.message,
         variant: 'destructive',
       });
@@ -105,177 +91,193 @@ export default function LoginPage() {
   };
 
   return (
-    <main>
-      <div className="mx-auto grid w-full max-w-6xl gap-10 px-2 pb-20 pt-6 md:grid-cols-[1fr_1.1fr] md:items-center md:gap-16 md:px-6">
-        <div className="space-y-8">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold text-slate-900">
-              Se connecter
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff7ed_0,#f8fafc_45%,#eef2ff_100%)]">
+      <div className="grid min-h-screen w-full lg:grid-cols-[420px_1fr]">
+        <section className="relative flex min-h-screen flex-col justify-center border-r border-slate-200 bg-white px-7 py-10 sm:px-10">
+          <div className="mx-auto w-full max-w-[340px]">
+            <Link
+              href="/"
+              className="mb-10 inline-flex items-center text-3xl font-black tracking-tight text-slate-950"
+            >
+              Sparrtners
+            </Link>
+
+            <h1 className="text-4xl font-black tracking-tight text-slate-900">
+              Connexion
             </h1>
-            <p className="text-sm text-slate-500">
-              Accède à ton espace Sparrtners.
+            <p className="mt-1 text-sm text-slate-500">
+              Accede a ton espace pour gerer tes sessions.
             </p>
-          </div>
 
-          <Card className="border-slate-200/80 bg-white shadow-sm">
-            <CardContent className="space-y-6 pt-6">
-              <Button
-                className="w-full justify-center gap-3 bg-slate-100 text-slate-900 hover:bg-slate-200"
-                onClick={handleGoogle}
-                disabled={loading}
-              >
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-semibold text-slate-900 shadow">
-                  G
-                </span>
-                Continuer avec Google
-              </Button>
+            {!showRecovery ? (
+              <>
+                <form
+                  className="mt-8 space-y-5"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    handleSignIn();
+                  }}
+                >
+                  <fieldset className="space-y-5" disabled={loading}>
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-slate-700">
+                        E-mail
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        className="h-11 rounded-md border-slate-300 bg-white"
+                        placeholder="name@email.com"
+                      />
+                    </div>
 
-              <div className="flex items-center gap-3 text-xs text-slate-400">
-                <div className="h-px flex-1 bg-slate-200" />
-                <span>Ou avec l’email</span>
-                <div className="h-px flex-1 bg-slate-200" />
-              </div>
-
-              {!showRecovery ? (
-                <>
-                  <form
-                    className="space-y-4"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      handleEmailPassword('signin');
-                    }}
-                  >
-                    <fieldset className="space-y-4" disabled={loading}>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          required
-                          value={email}
-                          onChange={(event) => setEmail(event.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="password">Mot de passe</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="text-slate-700">
+                        Mot de passe
+                      </Label>
+                      <div className="relative">
                         <Input
                           id="password"
-                          name="password"
-                          type="password"
+                          type={showPassword ? 'text' : 'password'}
                           autoComplete="current-password"
                           required
                           value={password}
                           onChange={(event) => setPassword(event.target.value)}
+                          className="h-11 rounded-md border-slate-300 bg-white pr-10"
+                          placeholder="Au moins 8 caracteres"
                         />
-                      </div>
-                      <Button
-                        className="w-full"
-                        type="submit"
-                        disabled={!email || !password}
-                      >
-                        Se connecter
-                      </Button>
-                    </fieldset>
-                  </form>
-
-                  <div className="space-y-2 text-center text-sm">
-                    <button
-                      type="button"
-                      className="text-slate-500 hover:text-slate-900"
-                      onClick={() => setShowRecovery(true)}
-                      disabled={loading}
-                    >
-                      Mot de passe oublié
-                    </button>
-                    <div className="text-slate-500">
-                      Nouveau sur Sparrtners ?{' '}
-                      <Link href="/signup" className="text-slate-900 underline">
-                        Créer un compte
-                      </Link>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="space-y-4">
-                  <div className="space-y-2 text-center">
-                    <h2 className="text-base font-semibold text-slate-900">
-                      Récupération du mot de passe
-                    </h2>
-                    <p className="text-sm text-slate-500">
-                      Entre ton email. Si un compte existe, on t’enverra un lien
-                      pour réinitialiser ton mot de passe.
-                    </p>
-                  </div>
-                  {recoveryEmail ? (
-                    <div className="space-y-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-5 text-sm text-emerald-900">
-                      <div className="text-base font-semibold">
-                        Email envoyé
-                      </div>
-                      <p>
-                        Si un compte existe pour{' '}
-                        <span className="font-semibold">{recoveryEmail}</span>,
-                        tu recevras un lien pour réinitialiser ton mot de passe.
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <fieldset className="space-y-4" disabled={loading}>
-                        <div className="space-y-2">
-                          <Label htmlFor="recovery-email">Email</Label>
-                          <Input
-                            id="recovery-email"
-                            name="recovery-email"
-                            type="email"
-                            required
-                            value={email}
-                            onChange={(event) => setEmail(event.target.value)}
-                          />
-                        </div>
-                        <Button
-                          className="w-full"
-                          onClick={handlePasswordReset}
-                          disabled={!email}
+                        <button
+                          type="button"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+                          onClick={() => setShowPassword((value) => !value)}
+                          aria-label="Afficher ou masquer le mot de passe"
                         >
-                          Envoyer le lien de récupération
-                        </Button>
-                      </fieldset>
-                    </>
-                  )}
-                  <div className="text-center text-sm">
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
                     <button
                       type="button"
-                      className="text-slate-500 hover:text-slate-900"
-                      onClick={() => {
-                        setShowRecovery(false);
-                        setRecoveryEmail(null);
-                      }}
-                      disabled={loading}
+                      className="text-sm font-medium text-orange-700 hover:text-orange-800"
+                      onClick={() => setShowRecovery(true)}
                     >
-                      Retour à la connexion
+                      Mot de passe oublie ?
                     </button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
 
-        <div className="relative hidden min-h-130 p-6 md:block">
-          <div className="absolute -left-12 top-10 h-72 w-72 rounded-full border border-blue-200/70" />
-          <div className="absolute -right-12 bottom-10 h-72 w-72 rounded-full border border-blue-200/70" />
-          <div className="relative mx-auto flex h-full max-w-md items-center justify-center">
-            <div className="p-6">
-              <Image
-                src="/illustration-fighter.webp"
-                alt="Sparrtners app preview"
-                width={520}
-                height={520}
-                className="h-auto w-full  object-cover"
-              />
+                    <Button
+                      type="submit"
+                      disabled={!email || !password || loading}
+                      className="h-11 w-full rounded-md bg-slate-900 text-white hover:bg-slate-800"
+                    >
+                      Se connecter
+                    </Button>
+                  </fieldset>
+                </form>
+
+                <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-slate-400">
+                  <div className="h-px flex-1 bg-slate-300" />
+                  <span>Or</span>
+                  <div className="h-px flex-1 bg-slate-300" />
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 w-full rounded-md border-slate-300 bg-white text-slate-800 hover:bg-slate-100"
+                  onClick={handleGoogle}
+                  disabled={loading}
+                >
+                  Se connecter avec Google
+                </Button>
+
+                <p className="mt-5 text-center text-sm text-slate-600">
+                  Pas encore de compte ?{' '}
+                  <Link href="/signup" className="font-semibold text-orange-700">
+                    Creer un compte
+                  </Link>
+                </p>
+              </>
+            ) : (
+              <div className="mt-8 space-y-4">
+                <p className="text-sm text-slate-600">
+                  Entre ton email. Si un compte existe, on enverra un lien de
+                  reinitialisation.
+                </p>
+                {recoveryEmail ? (
+                  <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-800">
+                    Email envoye a <span className="font-semibold">{recoveryEmail}</span>.
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="recovery-email" className="text-slate-700">
+                        E-mail
+                      </Label>
+                      <Input
+                        id="recovery-email"
+                        type="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        className="h-11 rounded-md border-slate-300 bg-white"
+                        placeholder="name@email.com"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handlePasswordReset}
+                      disabled={!email || loading}
+                      className="h-11 w-full rounded-md bg-slate-900 text-white hover:bg-slate-800"
+                    >
+                      Envoyer le lien
+                    </Button>
+                  </>
+                )}
+                <button
+                  type="button"
+                  className="text-sm font-medium text-orange-700 hover:text-orange-800"
+                  onClick={() => {
+                    setShowRecovery(false);
+                    setRecoveryEmail(null);
+                  }}
+                >
+                  Retour a la connexion
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="relative hidden overflow-hidden bg-white lg:flex lg:min-h-screen lg:items-center lg:justify-center">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(251,146,60,0.24),transparent_35%),radial-gradient(circle_at_82%_14%,rgba(99,102,241,0.14),transparent_34%),linear-gradient(140deg,#fff7ed_0%,#f8fafc_52%,#eef2ff_100%)]" />
+          <div className="pointer-events-none absolute inset-0 opacity-20 [background:repeating-linear-gradient(120deg,rgba(15,23,42,0.06)_0,rgba(15,23,42,0.06)_2px,transparent_2px,transparent_18px)]" />
+
+          <div className="relative z-10 w-full max-w-3xl px-10">
+            <p className="text-6xl font-black tracking-tight text-slate-950">
+              Sparrtners
+            </p>
+            <p className="mt-4 text-xl font-semibold text-orange-700">
+              Plateforme d&apos;entrainement entre partenaires
+            </p>
+
+            <div className="mt-12 rounded-2xl border border-orange-100/80 bg-white/85 p-8 text-slate-900 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.25)] backdrop-blur-sm">
+              <h2 className="text-4xl font-black leading-tight text-slate-950">
+                Organise tes sessions sans friction.
+              </h2>
+              <p className="mt-5 text-lg leading-relaxed text-slate-700">
+                Reponds aux demandes, confirme les participants et discute
+                directement dans le chat avant chaque entrainement.
+              </p>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </main>
   );
