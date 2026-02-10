@@ -315,6 +315,7 @@ export function SessionRequestsList({
                 <Button
                   size="sm"
                   variant="outline"
+                  className="ml-auto"
                   onClick={() => handleCancelAcceptance(request)}
                   disabled={sessionDisabled || loadingId === request.id}
                 >
