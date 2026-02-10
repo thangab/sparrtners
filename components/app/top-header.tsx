@@ -110,10 +110,10 @@ export function TopHeader({ user, notificationsCount = 0 }: TopHeaderProps) {
                 <span className="absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full bg-white/90" />
               </div>
               <div className="hidden text-sm font-semibold min-[430px]:block md:text-base">
-                <span className="text-orange-600 uppercase font-extrabold italic">
+                <span className="text-orange-600 uppercase font-extrabold italic text-sm">
                   Sparr
                 </span>
-                <span className="italic font-medium">tners</span>
+                <span className="italic font-medium text-md">tners</span>
               </div>
             </div>
           </Link>

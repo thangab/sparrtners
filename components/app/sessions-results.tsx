@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { CalendarClock, MapPin, Route, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -115,6 +116,7 @@ export function SessionsResults({
   pageSize = 10,
   filters,
 }: SessionsResultsProps) {
+  const router = useRouter();
   const [sessions, setSessions] = React.useState(initialSessions);
   const [hasMore, setHasMore] = React.useState(initialHasMore);
   const [loading, setLoading] = React.useState(false);
@@ -134,7 +136,13 @@ export function SessionsResults({
   }, [initialSessions, initialHasMore]);
 
   const sendStats = React.useCallback(
-    (updates: Array<{ session_id: string; impressions?: number; detail_clicks?: number }>) => {
+    (
+      updates: Array<{
+        session_id: string;
+        impressions?: number;
+        detail_clicks?: number;
+      }>,
+    ) => {
       if (updates.length === 0) return;
       const body = JSON.stringify({ updates });
       if (typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
@@ -202,6 +210,14 @@ export function SessionsResults({
     [sendStats],
   );
 
+  const handleCardNavigation = React.useCallback(
+    (sessionId: string) => {
+      handleDetailClick(sessionId);
+      router.push(`/sessions/${sessionId}`);
+    },
+    [handleDetailClick, router],
+  );
+
   const activeFiltersCount = React.useMemo(() => {
     let count = 0;
     if (filters.dateStart) count += 1;
@@ -241,7 +257,8 @@ export function SessionsResults({
             <CardTitle>Aucune session</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-slate-600">
-            Publie une session pour commencer à matcher avec d&apos;autres sportifs.
+            Publie une session pour commencer à matcher avec d&apos;autres
+            sportifs.
           </CardContent>
         </Card>
       ) : (
@@ -275,7 +292,6 @@ export function SessionsResults({
             ? `/profile/${session.host_id}`
             : '/find-sessions';
 
-          const sessionHref = `/sessions/${session.id}`;
           const distanceLabel =
             typeof session.distance === 'number'
               ? formatDistanceKm(session.distance)
@@ -298,7 +314,19 @@ export function SessionsResults({
             : '';
 
           return (
-            <Card key={session.id} className="border-slate-200/70 bg-white/90">
+            <Card
+              key={session.id}
+              role="link"
+              tabIndex={0}
+              onClick={() => handleCardNavigation(session.id)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  handleCardNavigation(session.id);
+                }
+              }}
+              className="cursor-pointer border-2! border-transparent! bg-white/90 transition-colors duration-200 hover:border-orange-500! focus-visible:border-orange-500! focus-visible:ring-0"
+            >
               <div className="space-y-3 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <CardTitle className="truncate text-lg">{title}</CardTitle>
@@ -306,6 +334,8 @@ export function SessionsResults({
                     <Link
                       target="_blank"
                       href={profileHref}
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
                       className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-700"
                     >
                       {session.host_avatar_url ? (
@@ -321,8 +351,12 @@ export function SessionsResults({
                           <UserRound className="h-3 w-3 text-slate-600" />
                         </span>
                       )}
-                      <span className="truncate max-w-36 font-medium">{hostLabel}</span>
-                      <span className="text-xs text-slate-500">Voir profil</span>
+                      <span className="truncate max-w-36 font-medium">
+                        {hostLabel}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        Voir profil
+                      </span>
                     </Link>
                     {distanceLabel ? (
                       <Badge variant="outline" className="gap-1">
@@ -338,18 +372,24 @@ export function SessionsResults({
                   </div>
                 </div>
 
-                {disciplines.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {disciplines.map((discipline) => (
-                      <span
-                        key={`${session.id}-${discipline}`}
-                        className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700"
-                      >
-                        {discipline}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
+                <div className="flex flex-wrap items-center gap-2">
+                  {disciplines.length > 0 ? (
+                    <>
+                      {disciplines.map((discipline) => (
+                        <span
+                          key={`${session.id}-${discipline}`}
+                          className="rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[11px] font-medium text-slate-700"
+                        >
+                          {discipline}
+                        </span>
+                      ))}
+                    </>
+                  ) : (
+                    <span className="text-xs text-slate-500">
+                      Non renseignées
+                    </span>
+                  )}
+                </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-3">
                     <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
@@ -377,20 +417,13 @@ export function SessionsResults({
                         <p>Main forte: {dominantHandLabel}</p>
                       ) : null}
                       {!heightLabel && !weightLabel && !dominantHandLabel ? (
-                        <p className="text-slate-500">Aucun critère spécifique.</p>
+                        <p className="text-slate-500">
+                          Aucun critère spécifique.
+                        </p>
                       ) : null}
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="border-t border-slate-200/70 px-4 pb-4 pt-3">
-                <Link
-                  href={sessionHref}
-                  onClick={() => handleDetailClick(session.id)}
-                  className="flex w-full items-center justify-center rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
-                >
-                  Voir les détails de la session
-                </Link>
               </div>
             </Card>
           );
