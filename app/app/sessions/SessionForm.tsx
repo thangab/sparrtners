@@ -668,7 +668,7 @@ export function SessionForm({
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="training_type_id">Type d&apos;entraînement</Label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-wrap gap-2">
                 {trainingTypes.map((item) => {
                   const isActive = trainingTypeValue === String(item.id);
                   return (
@@ -676,10 +676,10 @@ export function SessionForm({
                       key={item.id}
                       type="button"
                       onClick={() => setTrainingTypeValue(String(item.id))}
-                      className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
+                      className={`rounded-full border px-3 py-1.5 text-sm transition ${
                         isActive
-                          ? 'border-slate-900 bg-slate-100 text-slate-900'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                          ? 'border-slate-900 bg-slate-900 text-white'
+                          : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
                       }`}
                     >
                       {item.name}

@@ -175,7 +175,10 @@ export function getSessionRequestsColumns({
               <SessionReviewModal
                 sessionId={row.original.id}
                 reviewedUserId={row.original.host_id}
-                reviewedUserName="l’hôte"
+                reviewedUserName={row.original.host_display_name ?? 'l’hôte'}
+                sessionTitle={row.original.title}
+                sessionPlace={row.original.place}
+                sessionStartsAt={row.original.starts_at}
                 triggerLabel="Donner mon avis"
                 autoOpen={false}
                 onReviewed={() =>

@@ -16,6 +16,7 @@ export type SessionTableRow = {
   is_published: boolean;
   is_full?: boolean;
   host_id?: string | null;
+  host_display_name?: string | null;
   conversation_id?: string | null;
   can_review?: boolean;
   reviewed?: boolean;

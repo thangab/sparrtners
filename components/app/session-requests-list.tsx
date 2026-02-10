@@ -29,11 +29,17 @@ type SessionRequestItem = {
 type SessionRequestsListProps = {
   requests: SessionRequestItem[];
   sessionDisabled?: boolean;
+  sessionTitle?: string;
+  sessionPlace?: string;
+  sessionStartsAt?: string;
 };
 
 export function SessionRequestsList({
   requests,
   sessionDisabled = false,
+  sessionTitle,
+  sessionPlace,
+  sessionStartsAt,
 }: SessionRequestsListProps) {
   const supabase = React.useMemo(() => createSupabaseBrowserClient(), []);
   const { toast } = useToast();
@@ -215,6 +221,9 @@ export function SessionRequestsList({
                   sessionId={request.session_id}
                   reviewedUserId={request.user_id}
                   reviewedUserName={requesterName}
+                  sessionTitle={sessionTitle}
+                  sessionPlace={sessionPlace}
+                  sessionStartsAt={sessionStartsAt}
                   triggerLabel="Donner mon avis"
                   disabled={loadingId === request.id}
                   autoOpen={false}

@@ -63,6 +63,9 @@ export function SessionRequestsTable({
     sessionId: string;
     reviewedUserId: string;
     reviewedUserName: string;
+    sessionTitle: string;
+    sessionPlace: string;
+    sessionStartsAt: string;
   } | null>(null);
 
   const reviewSessionId = searchParams.get('session_id') ?? '';
@@ -118,6 +121,9 @@ export function SessionRequestsTable({
           sessionId: reviewSessionId,
           reviewedUserId: reviewUserId,
           reviewedUserName: request.requester?.display_name ?? 'Sportif',
+          sessionTitle: hostRow.title,
+          sessionPlace: hostRow.place,
+          sessionStartsAt: hostRow.starts_at,
         };
       }
     }
@@ -132,7 +138,10 @@ export function SessionRequestsTable({
           : ('requester' as const),
         sessionId: reviewSessionId,
         reviewedUserId: reviewUserId,
-        reviewedUserName: 'l’hôte',
+        reviewedUserName: requesterRow.host_display_name ?? 'l’hôte',
+        sessionTitle: requesterRow.title,
+        sessionPlace: requesterRow.place,
+        sessionStartsAt: requesterRow.starts_at,
       };
     }
 
@@ -200,6 +209,56 @@ export function SessionRequestsTable({
     },
     [],
   );
+  const markReviewAsSent = React.useCallback(
+    (sessionId: string, reviewedUserId: string) => {
+      setRequestedRows((current) =>
+        current.map((row) =>
+          row.id === sessionId && row.host_id === reviewedUserId
+            ? { ...row, reviewed: true }
+            : row,
+        ),
+      );
+
+      setCreatedRows((current) =>
+        current.map((row) => {
+          if (row.id !== sessionId) return row;
+          if (!row.requests || row.requests.length === 0) return row;
+          return {
+            ...row,
+            requests: row.requests.map((request) =>
+              request.user_id === reviewedUserId
+                ? { ...request, reviewed: true }
+                : request,
+            ),
+          };
+        }),
+      );
+
+      setCompletedRows((current) =>
+        current.map((row) => {
+          if (row.id !== sessionId) return row;
+
+          if (row.kind === 'requester' && row.host_id === reviewedUserId) {
+            return { ...row, reviewed: true };
+          }
+
+          if (row.kind === 'host' && row.requests && row.requests.length > 0) {
+            return {
+              ...row,
+              requests: row.requests.map((request) =>
+                request.user_id === reviewedUserId
+                  ? { ...request, reviewed: true }
+                  : request,
+              ),
+            };
+          }
+
+          return row;
+        }),
+      );
+    },
+    [],
+  );
 
   const handleDisableSession = React.useCallback(
     async (sessionId: string) => {
@@ -263,7 +322,18 @@ export function SessionRequestsTable({
         setExpanded,
         handleDisableSession,
         handleFullChange,
-        onReviewComplete: updateRequestedRow,
+        onReviewComplete: (sessionId, patch) => {
+          if (patch.reviewed !== true) {
+            updateRequestedRow(sessionId, patch);
+            return;
+          }
+          const target = requestedRows.find((row) => row.id === sessionId);
+          if (!target?.host_id) {
+            updateRequestedRow(sessionId, patch);
+            return;
+          }
+          markReviewAsSent(sessionId, target.host_id);
+        },
         actionLoading,
         switchLoading,
       }),
@@ -273,6 +343,8 @@ export function SessionRequestsTable({
       handleDisableSession,
       handleFullChange,
       updateRequestedRow,
+      requestedRows,
+      markReviewAsSent,
       actionLoading,
       switchLoading,
     ],
@@ -315,10 +387,20 @@ export function SessionRequestsTable({
           sessionId={deepLinkTarget.sessionId}
           reviewedUserId={deepLinkTarget.reviewedUserId}
           reviewedUserName={deepLinkTarget.reviewedUserName}
+          sessionTitle={deepLinkTarget.sessionTitle}
+          sessionPlace={deepLinkTarget.sessionPlace}
+          sessionStartsAt={deepLinkTarget.sessionStartsAt}
           hideTrigger
           autoOpen={false}
           initialOpen
           alreadyReviewed={false}
+          onReviewed={() => {
+            markReviewAsSent(
+              deepLinkTarget.sessionId,
+              deepLinkTarget.reviewedUserId,
+            );
+            setDeepLinkTarget(null);
+          }}
         />
       ) : null}
       <Tabs
@@ -457,13 +539,14 @@ export function SessionRequestsTable({
                     <SessionReviewModal
                       sessionId={row.id}
                       reviewedUserId={row.host_id}
-                      reviewedUserName="l’hôte"
+                      reviewedUserName={row.host_display_name ?? 'l’hôte'}
+                      sessionTitle={row.title}
+                      sessionPlace={row.place}
+                      sessionStartsAt={row.starts_at}
                       triggerLabel="Donner mon avis"
                       autoOpen={false}
                       alreadyReviewed={row.reviewed}
-                      onReviewed={() =>
-                        updateRequestedRow(row.id, { reviewed: true })
-                      }
+                      onReviewed={() => markReviewAsSent(row.id, row.host_id)}
                     />
                   ) : null}
                   {row.kind === 'requester' && row.reviewed ? (
@@ -515,6 +598,9 @@ export function SessionRequestsTable({
                     <SessionRequestsList
                       requests={row.requests ?? []}
                       sessionDisabled={!row.is_published || isFinished}
+                      sessionTitle={row.title}
+                      sessionPlace={row.place}
+                      sessionStartsAt={row.starts_at}
                     />
                   </div>
                 ) : null}
@@ -574,6 +660,9 @@ export function SessionRequestsTable({
                               !row.original.is_published ||
                               !!row.original.is_finished
                             }
+                            sessionTitle={row.original.title}
+                            sessionPlace={row.original.place}
+                            sessionStartsAt={row.original.starts_at}
                           />
                         </td>
                       </tr>

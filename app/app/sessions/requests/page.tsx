@@ -116,6 +116,13 @@ export default async function RequestsPage() {
   const requestedSessionIds = (myRequests ?? [])
     .map((item) => normalizeOne(item.session)?.id)
     .filter(Boolean) as string[];
+  const requestedHostIds = Array.from(
+    new Set(
+      (myRequests ?? [])
+        .map((item) => normalizeOne(item.session)?.host_id)
+        .filter((value): value is string => !!value),
+    ),
+  );
   const allSessionIds = Array.from(
     new Set([...createdSessionIds, ...requestedSessionIds]),
   );
@@ -154,6 +161,15 @@ export default async function RequestsPage() {
     : { data: [] as { id: string; display_name: string | null; avatar_url: string | null }[] };
   const requesterMap = new Map(
     (requesterProfiles ?? []).map((profile) => [profile.id, profile]),
+  );
+  const { data: hostProfiles } = requestedHostIds.length
+    ? await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', requestedHostIds)
+    : { data: [] as { id: string; display_name: string | null }[] };
+  const hostMap = new Map(
+    (hostProfiles ?? []).map((profile) => [profile.id, profile]),
   );
   const { data: sessionStats } = createdSessionIds.length
     ? await supabase
@@ -258,6 +274,8 @@ export default async function RequestsPage() {
       status: item.request.status,
       participant_count: item.request.participant_count ?? 1,
       host_id: item.session!.host_id,
+      host_display_name:
+        hostMap.get(item.session!.host_id)?.display_name ?? null,
       can_review:
         item.request.status === 'accepted' &&
         sessionIsFinished(

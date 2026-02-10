@@ -14,11 +14,15 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
+import { Star } from 'lucide-react';
 
 type SessionReviewModalProps = {
   sessionId: string;
   reviewedUserId: string;
   reviewedUserName: string;
+  sessionTitle?: string;
+  sessionPlace?: string;
+  sessionStartsAt?: string;
   triggerLabel?: string;
   disabled?: boolean;
   hideTrigger?: boolean;
@@ -32,6 +36,9 @@ export function SessionReviewModal({
   sessionId,
   reviewedUserId,
   reviewedUserName,
+  sessionTitle,
+  sessionPlace,
+  sessionStartsAt,
   triggerLabel = 'Donner mon avis',
   disabled = false,
   hideTrigger = false,
@@ -44,6 +51,7 @@ export function SessionReviewModal({
   const { toast } = useToast();
   const [open, setOpen] = React.useState(initialOpen);
   const [rating, setRating] = React.useState<number | null>(null);
+  const [hoverRating, setHoverRating] = React.useState<number | null>(null);
   const [comment, setComment] = React.useState('');
   const [loading, setLoading] = React.useState(false);
 
@@ -119,6 +127,7 @@ export function SessionReviewModal({
     setLoading(false);
     setOpen(false);
     setRating(null);
+    setHoverRating(null);
     setComment('');
     onReviewed?.();
   };
@@ -137,27 +146,57 @@ export function SessionReviewModal({
           </Button>
         </DialogTrigger>
       ) : null}
-      <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-h-[80vh] overflow-y-auto border-slate-200/80 bg-gradient-to-b from-white to-orange-50/40 p-0 sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Donner mon avis sur {reviewedUserName}</DialogTitle>
-          <DialogDescription>
-            Donne une note pour cette session.
-          </DialogDescription>
+          <div className="space-y-1 border-b border-slate-200/80 px-6 pt-6 pb-4">
+            <DialogTitle>Donner mon avis sur {reviewedUserName}</DialogTitle>
+            <DialogDescription>
+              Note la session en sélectionnant une étoile.
+            </DialogDescription>
+            {sessionTitle || sessionPlace || sessionStartsAt ? (
+              <p className="pt-2 text-xs text-slate-500">
+                {(sessionTitle ?? 'Session') +
+                  (sessionPlace ? ` à ${sessionPlace}` : '') +
+                  (sessionStartsAt ? ` le ${sessionStartsAt}` : '')}
+              </p>
+            ) : null}
+          </div>
         </DialogHeader>
-        <div className="flex flex-wrap gap-2">
-          {[1, 2, 3, 4, 5].map((value) => (
-            <Button
-              key={value}
-              type="button"
-              size="sm"
-              variant={rating === value ? 'default' : 'outline'}
-              onClick={() => setRating(value)}
+        <div className="space-y-5 px-6 py-5">
+          <div className="rounded-2xl border border-amber-200/70 bg-white/90 p-4">
+            <p className="mb-3 text-sm font-medium text-slate-700">Ta note</p>
+            <div
+              className="flex items-center gap-1"
+              onMouseLeave={() => setHoverRating(null)}
             >
-              {value}
-            </Button>
-          ))}
+              {[1, 2, 3, 4, 5].map((value) => {
+                const activeValue = hoverRating ?? rating ?? 0;
+                const isActive = value <= activeValue;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-label={`${value} étoile${value > 1 ? 's' : ''}`}
+                    onMouseEnter={() => setHoverRating(value)}
+                    onFocus={() => setHoverRating(value)}
+                    onClick={() => setRating(value)}
+                    className="rounded-md p-1 transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                  >
+                    <Star
+                      className={`h-7 w-7 ${isActive ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              {rating
+                ? `${rating}/5 sélectionné`
+                : 'Sélectionne une note de 1 à 5'}
+            </p>
+          </div>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 px-6 pb-2">
           <div className="text-sm font-medium text-slate-700">
             Commentaire (optionnel)
           </div>
@@ -166,9 +205,10 @@ export function SessionReviewModal({
             onChange={(event) => setComment(event.target.value)}
             rows={4}
             placeholder="Partage ton ressenti sur la session."
+            className="border-slate-200 bg-white/95"
           />
         </div>
-        <DialogFooter>
+        <DialogFooter className="border-t border-slate-200/80 px-6 py-4">
           <Button
             type="button"
             variant="ghost"
@@ -177,8 +217,13 @@ export function SessionReviewModal({
           >
             Annuler
           </Button>
-          <Button type="button" onClick={handleSubmit} disabled={loading}>
-            Envoyer
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading}
+            className="bg-linear-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600"
+          >
+            Envoyer mon avis
           </Button>
         </DialogFooter>
       </DialogContent>
