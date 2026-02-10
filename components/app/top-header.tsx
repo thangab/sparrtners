@@ -110,7 +110,7 @@ export function TopHeader({ user, notificationsCount = 0 }: TopHeaderProps) {
                 <span className="text-orange-600 uppercase font-extrabold italic">
                   Sparr
                 </span>
-                <span className="italic font-normal">tners</span>
+                <span className="italic font-medium">tners</span>
               </div>
             </div>
           </Link>

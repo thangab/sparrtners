@@ -85,10 +85,7 @@ export default async function DashboardPage() {
         .lt('created_at', nextMonthStart.toISOString())
     : { count: 0 };
 
-  const [
-    recentSessionsResult,
-    recentRequestsResult,
-  ] = await Promise.all([
+  const [recentSessionsResult, recentRequestsResult] = await Promise.all([
     user
       ? supabase
           .from('sessions')
@@ -134,8 +131,19 @@ export default async function DashboardPage() {
     Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
 
   const recentSessions: DashboardSessionRow[] = (
-    (recentSessionsResult as { data?: Array<{ id: string; created_at: string; is_published: boolean; training_type?: { name?: string | null } | { name?: string | null }[] | null }> })
-      .data ?? []
+    (
+      recentSessionsResult as {
+        data?: Array<{
+          id: string;
+          created_at: string;
+          is_published: boolean;
+          training_type?:
+            | { name?: string | null }
+            | { name?: string | null }[]
+            | null;
+        }>;
+      }
+    ).data ?? []
   ).map((session) => ({
     id: session.id,
     title: `Session de ${normalizeOne(session.training_type)?.name ?? 'Entraînement'}`,
@@ -144,8 +152,29 @@ export default async function DashboardPage() {
   }));
 
   const recentRequests: DashboardRequestRow[] = (
-    (recentRequestsResult as { data?: Array<{ id: string; created_at: string; status: string; session?: { training_type?: { name?: string | null } | { name?: string | null }[] | null } | { training_type?: { name?: string | null } | { name?: string | null }[] | null }[] | null }> })
-      .data ?? []
+    (
+      recentRequestsResult as {
+        data?: Array<{
+          id: string;
+          created_at: string;
+          status: string;
+          session?:
+            | {
+                training_type?:
+                  | { name?: string | null }
+                  | { name?: string | null }[]
+                  | null;
+              }
+            | {
+                training_type?:
+                  | { name?: string | null }
+                  | { name?: string | null }[]
+                  | null;
+              }[]
+            | null;
+        }>;
+      }
+    ).data ?? []
   ).map((request) => ({
     id: request.id,
     title: `Session de ${
@@ -175,16 +204,17 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button asChild className="bg-slate-900 text-white hover:bg-slate-800">
+            <Button
+              asChild
+              className="bg-slate-900 text-white hover:bg-slate-800"
+            >
               <Link href="/app/sessions/new">
                 Créer une session
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/app/sessions/requests?tab=requester">
-                Mes demandes
-              </Link>
+              <Link href="/app/sessions/requests">Mes sessions</Link>
             </Button>
           </div>
         </div>
@@ -230,9 +260,6 @@ export default async function DashboardPage() {
             <div className="flex flex-wrap gap-2">
               <Button asChild>
                 <Link href="/pricing">Voir les offres</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/app/sessions/requests">Gérer mes sessions</Link>
               </Button>
             </div>
           </CardContent>
