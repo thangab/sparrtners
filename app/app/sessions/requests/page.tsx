@@ -255,6 +255,7 @@ export default async function RequestsPage() {
     .map((item) => ({
       kind: 'requester' as const,
       id: item.session!.id,
+      request_id: item.request.id,
       title: `Session de ${
         normalizeOne(item.session!.training_type)?.name ?? 'Entraînement'
       }`,
@@ -290,7 +291,14 @@ export default async function RequestsPage() {
     }));
 
   const completedItems = [...createdItems, ...requestedItems]
-    .filter((item) => item.is_finished || !item.is_published)
+    .filter((item) => {
+      if (item.kind === 'requester') {
+        const requesterInactive =
+          !['pending', 'accepted'].includes((item.status ?? '').toLowerCase());
+        return item.is_finished || !item.is_published || requesterInactive;
+      }
+      return item.is_finished || !item.is_published;
+    })
     .sort((a, b) => {
       const aTime = a.starts_at_raw ? new Date(a.starts_at_raw).getTime() : 0;
       const bTime = b.starts_at_raw ? new Date(b.starts_at_raw).getTime() : 0;

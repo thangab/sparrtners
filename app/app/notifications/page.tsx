@@ -33,14 +33,7 @@ type NotificationCopy = {
   actionLabel: string;
   actionHref: string;
   icon: typeof Bell;
-  tone:
-    | 'slate'
-    | 'emerald'
-    | 'orange'
-    | 'rose'
-    | 'blue'
-    | 'amber'
-    | 'violet';
+  tone: 'slate' | 'emerald' | 'orange' | 'rose' | 'blue' | 'amber' | 'violet';
 };
 
 function toneClasses(tone: NotificationCopy['tone']) {
@@ -65,7 +58,10 @@ function toneClasses(tone: NotificationCopy['tone']) {
   return 'border-slate-200 bg-slate-50/80 text-slate-700';
 }
 
-function getNotificationCopy(type: string, data?: NotificationData): NotificationCopy {
+function getNotificationCopy(
+  type: string,
+  data?: NotificationData,
+): NotificationCopy {
   switch (type) {
     case 'session_request_received':
       return {
@@ -103,9 +99,19 @@ function getNotificationCopy(type: string, data?: NotificationData): Notificatio
         description:
           'Cette session n’est plus disponible pour toi. Tu peux candidater sur d’autres sessions.',
         actionLabel: 'Explorer les sessions',
-        actionHref: '/sessions',
+        actionHref: '/find-sessions',
         icon: ShieldAlert,
         tone: 'rose',
+      };
+    case 'session_request_withdrawn':
+      return {
+        title: 'Participation annulée',
+        description:
+          'Un participant a retiré sa demande ou quitté la session. Tu peux rouvrir les demandes si besoin.',
+        actionLabel: 'Gérer mes sessions',
+        actionHref: '/app/sessions/requests?tab=host',
+        icon: MailWarning,
+        tone: 'orange',
       };
     case 'chat_unread_message':
       return {
@@ -199,17 +205,29 @@ export default async function NotificationsPage() {
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-white/90 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-500">Total</p>
-            <p className="mt-1 text-2xl font-black text-slate-900">{rows.length}</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500">
+              Total
+            </p>
+            <p className="mt-1 text-2xl font-black text-slate-900">
+              {rows.length}
+            </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white/90 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-500">Nouvelles</p>
-            <p className="mt-1 text-2xl font-black text-slate-900">{unreadCount}</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500">
+              Nouvelles
+            </p>
+            <p className="mt-1 text-2xl font-black text-slate-900">
+              {unreadCount}
+            </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white/90 p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-500">Statut</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500">
+              Statut
+            </p>
             <p className="mt-1 text-sm font-semibold text-slate-700">
-              {unreadCount > 0 ? 'Marquées comme lues à l’ouverture' : 'Tout est à jour'}
+              {unreadCount > 0
+                ? 'Marquées comme lues à l’ouverture'
+                : 'Tout est à jour'}
             </p>
           </div>
         </div>
@@ -258,7 +276,12 @@ export default async function NotificationsPage() {
                       timeZone: 'Europe/Paris',
                     })}
                   </div>
-                  <Button asChild size="sm" variant="outline" className="rounded-full">
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="outline"
+                    className="rounded-full"
+                  >
                     <Link href={copy.actionHref}>{copy.actionLabel}</Link>
                   </Button>
                 </div>
@@ -271,7 +294,9 @@ export default async function NotificationsPage() {
           <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-500">
             <Bell className="h-5 w-5" />
           </div>
-          <h2 className="text-lg font-bold text-slate-900">Boîte vide pour l’instant</h2>
+          <h2 className="text-lg font-bold text-slate-900">
+            Boîte vide pour l’instant
+          </h2>
           <p className="mt-1 text-sm text-slate-600">
             Tes prochaines notifications apparaîtront ici quand il y aura du
             nouveau sur tes sessions ou tes messages.
@@ -281,7 +306,7 @@ export default async function NotificationsPage() {
               <Link href="/app/sessions/requests">Mes sessions</Link>
             </Button>
             <Button asChild>
-              <Link href="/sessions">Explorer les sessions</Link>
+              <Link href="/find-sessions">Explorer les sessions</Link>
             </Button>
           </div>
         </section>

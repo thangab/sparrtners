@@ -30,6 +30,7 @@ type ColumnsOptions = {
   expanded: Record<string, boolean>;
   setExpanded: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   handleDisableSession: (sessionId: string) => void;
+  handleCancelRequest: (sessionId: string) => void;
   handleFullChange: (sessionId: string, checked: boolean) => void;
   onReviewComplete: (
     sessionId: string,
@@ -37,6 +38,7 @@ type ColumnsOptions = {
   ) => void;
   actionLoading: Record<string, boolean>;
   switchLoading: Record<string, boolean>;
+  cancelLoading: Record<string, boolean>;
 };
 
 export function getSessionRequestsColumns({
@@ -44,10 +46,12 @@ export function getSessionRequestsColumns({
   expanded,
   setExpanded,
   handleDisableSession,
+  handleCancelRequest,
   handleFullChange,
   onReviewComplete,
   actionLoading,
   switchLoading,
+  cancelLoading,
 }: ColumnsOptions): ColumnDef<SessionTableRow>[] {
   return [
     {
@@ -245,6 +249,22 @@ export function getSessionRequestsColumns({
             ) : null}
             {row.original.kind === 'requester' && row.original.reviewed ? (
               <Badge variant="secondary">Avis envoyé</Badge>
+            ) : null}
+            {row.original.kind === 'requester' &&
+            ['pending', 'accepted'].includes(
+              (row.original.status ?? '').toLowerCase(),
+            ) &&
+            !row.original.is_finished ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleCancelRequest(row.original.id)}
+                disabled={!!cancelLoading[row.original.id]}
+              >
+                {(row.original.status ?? '').toLowerCase() === 'accepted'
+                  ? 'Quitter la session'
+                  : 'Annuler ma demande'}
+              </Button>
             ) : null}
             {row.original.kind === 'host' ? (
               <DropdownMenu>

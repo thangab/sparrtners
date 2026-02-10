@@ -5,6 +5,7 @@ import { SessionRequestReceivedEmail } from '@/emails/session-request-received';
 import { SessionHostCalendarInviteEmail } from '@/emails/session-host-calendar-invite';
 import { SessionReviewReminderEmail } from '@/emails/session-review-reminder';
 import { ChatUnreadReminderEmail } from '@/emails/chat-unread-reminder';
+import { SessionRequestWithdrawnEmail } from '@/emails/session-request-withdrawn';
 
 type SessionDecisionStatus = 'accepted' | 'declined';
 
@@ -155,6 +156,35 @@ export async function renderChatUnreadReminderEmail({
       senderName,
       messagePreview,
       chatUrl,
+    }),
+  );
+}
+
+type SessionRequestWithdrawnEmailArgs = {
+  requesterName: string;
+  trainingType: string;
+  startsAt?: string | null;
+  durationMinutes?: number | null;
+  place?: string | null;
+  sessionsUrl?: string | null;
+};
+
+export async function renderSessionRequestWithdrawnEmail({
+  requesterName,
+  trainingType,
+  startsAt,
+  durationMinutes,
+  place,
+  sessionsUrl,
+}: SessionRequestWithdrawnEmailArgs) {
+  return await render(
+    SessionRequestWithdrawnEmail({
+      requesterName,
+      trainingType,
+      startsAt,
+      durationMinutes,
+      place,
+      sessionsUrl,
     }),
   );
 }

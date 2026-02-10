@@ -1,5 +1,6 @@
 export type SessionTableRow = {
   id: string;
+  request_id?: string | null;
   kind: 'host' | 'requester';
   title: string;
   starts_at: string;

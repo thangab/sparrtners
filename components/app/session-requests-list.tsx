@@ -92,6 +92,47 @@ export function SessionRequestsList({
     setLoadingId(null);
   };
 
+  const handleCancelAcceptance = async (request: SessionRequestItem) => {
+    setLoadingId(request.id);
+    const { error } = await supabase.rpc('cancel_accepted_session_request', {
+      p_request_id: request.id,
+      p_reason: null,
+    });
+
+    if (error) {
+      toast({
+        title: 'Erreur',
+        description: error.message,
+        variant: 'destructive',
+      });
+      setLoadingId(null);
+      return;
+    }
+
+    setItems((current) =>
+      current.map((item) =>
+        item.id === request.id ? { ...item, status: 'declined' } : item,
+      ),
+    );
+    toast({
+      title: 'Acceptation annulée',
+      description: 'La demande est repassée en refusée.',
+    });
+    try {
+      await fetch('/api/notifications/session-request-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestId: request.id,
+          decision: 'declined',
+        }),
+      });
+    } catch (error) {
+      console.warn('Session request status email failed', error);
+    }
+    setLoadingId(null);
+  };
+
   const handleOpenChat = async (request: SessionRequestItem) => {
     if (request.conversation_id) {
       router.push(`/app/chat/${request.conversation_id}`);
@@ -262,12 +303,22 @@ export function SessionRequestsList({
               {request.status === 'accepted' ? (
                 <Button
                   size="sm"
-                  className="bg-gradient-to-r from-slate-900 to-slate-700 text-white hover:from-slate-800 hover:to-slate-600"
+                  className="bg-linear-to-r from-slate-900 to-slate-700 text-white hover:from-slate-800 hover:to-slate-600"
                   onClick={() => handleOpenChat(request)}
                   disabled={sessionDisabled || loadingId === request.id}
                 >
                   <MessageCircle className="mr-2 h-4 w-4" />
                   Discuter maintenant
+                </Button>
+              ) : null}
+              {request.status === 'accepted' ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleCancelAcceptance(request)}
+                  disabled={sessionDisabled || loadingId === request.id}
+                >
+                  Annuler la demande
                 </Button>
               ) : null}
               {request.can_review && !request.reviewed ? (

@@ -44,6 +44,9 @@ import { useSearchParams, useRouter } from 'next/navigation';
 type QuickFilter = 'all' | 'attention' | 'reviews' | 'inactive';
 
 function getRequesterStatusTone(status?: string | null) {
+  if (status === 'canceled' || status === 'withdrawn') {
+    return 'border-slate-300 bg-slate-100 text-slate-700';
+  }
   if (status === 'accepted') {
     return 'border-emerald-200 bg-emerald-50/70 text-emerald-700';
   }
@@ -74,6 +77,9 @@ export function SessionRequestsTable({
     Record<string, boolean>
   >({});
   const [switchLoading, setSwitchLoading] = React.useState<
+    Record<string, boolean>
+  >({});
+  const [cancelLoading, setCancelLoading] = React.useState<
     Record<string, boolean>
   >({});
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -115,7 +121,13 @@ export function SessionRequestsTable({
     [createdRows],
   );
   const requesterRows = React.useMemo(
-    () => requestedRows.filter((row) => !row.is_finished && row.is_published),
+    () =>
+      requestedRows.filter(
+        (row) =>
+          !row.is_finished &&
+          row.is_published &&
+          ['pending', 'accepted'].includes((row.status ?? '').toLowerCase()),
+      ),
     [requestedRows],
   );
   const allRowsForView = React.useMemo(
@@ -344,6 +356,70 @@ export function SessionRequestsTable({
     [supabase, toast, updateCreatedRow],
   );
 
+  const handleCancelRequest = React.useCallback(
+    async (sessionId: string) => {
+      setCancelLoading((current) => ({ ...current, [sessionId]: true }));
+      const targetRow = requestedRows.find((row) => row.id === sessionId);
+      const wasAccepted =
+        (targetRow?.status ?? '').toLowerCase() === 'accepted';
+      const { error } = await supabase.rpc('cancel_my_session_request', {
+        p_session_id: sessionId,
+        p_reason: null,
+      });
+      if (error) {
+        toast({
+          title: 'Erreur',
+          description: error.message,
+          variant: 'destructive',
+        });
+        setCancelLoading((current) => ({ ...current, [sessionId]: false }));
+        return;
+      }
+
+      let completedRow: SessionTableRow | null = null;
+      setRequestedRows((current) =>
+        current.map((row) => {
+          if (row.id !== sessionId) return row;
+          completedRow = { ...row, status: 'withdrawn' };
+          return completedRow;
+        }),
+      );
+      if (completedRow) {
+        setCompletedRows((current) => [
+          completedRow as SessionTableRow,
+          ...current.filter(
+            (row) =>
+              !(
+                row.id === (completedRow as SessionTableRow).id &&
+                row.kind === (completedRow as SessionTableRow).kind
+              ),
+          ),
+        ]);
+      }
+
+      toast({
+        title: 'Demande annulée',
+        description: 'Ta participation a bien été retirée.',
+      });
+      if (targetRow?.request_id) {
+        try {
+          await fetch('/api/notifications/session-request-withdrawn', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              requestId: targetRow.request_id,
+              sendEmail: wasAccepted,
+            }),
+          });
+        } catch (mailError) {
+          console.warn('Session request withdrawn notification failed', mailError);
+        }
+      }
+      setCancelLoading((current) => ({ ...current, [sessionId]: false }));
+    },
+    [requestedRows, supabase, toast],
+  );
+
   const viewCounts = React.useMemo(
     () => ({
       host: hostRows.length,
@@ -431,6 +507,7 @@ export function SessionRequestsTable({
         expanded,
         setExpanded,
         handleDisableSession,
+        handleCancelRequest,
         handleFullChange,
         onReviewComplete: (sessionId, patch) => {
           if (patch.reviewed !== true) {
@@ -446,17 +523,20 @@ export function SessionRequestsTable({
         },
         actionLoading,
         switchLoading,
+        cancelLoading,
       }),
     [
       view,
       expanded,
       handleDisableSession,
+      handleCancelRequest,
       handleFullChange,
       updateRequestedRow,
       requestedRows,
       markReviewAsSent,
       actionLoading,
       switchLoading,
+      cancelLoading,
     ],
   );
 
@@ -798,6 +878,22 @@ export function SessionRequestsTable({
 
                     {row.kind === 'requester' && row.reviewed ? (
                       <Badge variant="secondary">Avis envoyé</Badge>
+                    ) : null}
+                    {row.kind === 'requester' &&
+                    ['pending', 'accepted'].includes(
+                      (row.status ?? '').toLowerCase(),
+                    ) &&
+                    !isFinished ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleCancelRequest(row.id)}
+                        disabled={!!cancelLoading[row.id]}
+                      >
+                        {(row.status ?? '').toLowerCase() === 'accepted'
+                          ? 'Quitter la session'
+                          : 'Annuler ma demande'}
+                      </Button>
                     ) : null}
 
                     {row.kind === 'host' ? (

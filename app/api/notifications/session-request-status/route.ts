@@ -67,6 +67,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   }
 
+  await supabase.from('notifications').insert({
+    recipient_id: requestRow.user_id,
+    actor_id: session.host_id,
+    type: decision === 'accepted' ? 'session_request_accepted' : 'session_request_refused',
+    data: {
+      session_id: requestRow.session_id,
+      request_id: requestRow.id,
+      status: decision,
+    },
+  });
+
   const { data: requesterProfile } = await supabase
     .from('profiles')
     .select('email, firstname, lastname, nickname, display_name')
