@@ -588,7 +588,7 @@ export function SessionRequestsTable({
               />
             </div>
             <div className="flex min-w-0 items-center gap-2 overflow-x-auto pb-1 md:pb-0">
-              <span className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-widest text-slate-500">
                 <Filter className="h-3.5 w-3.5" />
                 Filtres
               </span>
@@ -647,7 +647,7 @@ export function SessionRequestsTable({
                       >
                         {row.kind === 'host' ? 'Hôte' : 'Demandeur'}
                       </Badge>
-                      <p className="min-w-0 break-words text-base font-semibold text-slate-900">
+                      <p className="min-w-0 wrap-break-word text-base font-semibold text-slate-900">
                         {row.title}
                       </p>
                     </div>
@@ -658,7 +658,9 @@ export function SessionRequestsTable({
                       </div>
                       <div className="flex items-center gap-2">
                         <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                        <span className="min-w-0 break-words">{row.place}</span>
+                        <span className="min-w-0 wrap-break-word">
+                          {row.place}
+                        </span>
                       </div>
                       {row.kind === 'host' ? (
                         <div className="flex items-center gap-2">

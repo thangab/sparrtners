@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { MessageCircle } from 'lucide-react';
 
 type OpenChatButtonProps = {
   sessionId: string;
@@ -69,11 +70,13 @@ export function OpenChatButton({
   return (
     <Button
       size="sm"
-      variant="outline"
+      variant="default"
       onClick={handleOpenChat}
       disabled={isLoading}
+      className="bg-gradient-to-r from-slate-900 to-slate-700 text-white hover:from-slate-800 hover:to-slate-600"
     >
-      Ouvrir le chat
+      <MessageCircle className="mr-2 h-4 w-4" />
+      {isLoading ? 'Ouverture...' : 'Discuter maintenant'}
     </Button>
   );
 }

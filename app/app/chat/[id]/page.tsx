@@ -43,7 +43,7 @@ export default async function ChatPage({
 
   const { data: conversation } = await supabase
     .from('conversations')
-    .select('id, user_a, user_b')
+    .select('id, user_a, user_b, session_id')
     .eq('id', conversationId)
     .maybeSingle();
 
@@ -67,6 +67,44 @@ export default async function ChatPage({
     .eq('conversation_id', conversationId)
     .order('created_at', { ascending: true });
 
+  const otherUserId =
+    conversation.user_a === user.id ? conversation.user_b : conversation.user_a;
+
+  const [{ data: otherUserProfile }, { data: sessionMeta }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('display_name, avatar_url')
+      .eq('id', otherUserId)
+      .maybeSingle(),
+    conversation.session_id
+      ? supabase
+          .from('sessions')
+          .select(
+            'starts_at, training_type:training_types(name), place:places(name, city)',
+          )
+          .eq('id', conversation.session_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const trainingTypeRaw = sessionMeta?.training_type;
+  const placeRaw = sessionMeta?.place;
+  const trainingType = Array.isArray(trainingTypeRaw)
+    ? trainingTypeRaw[0]
+    : trainingTypeRaw;
+  const place = Array.isArray(placeRaw) ? placeRaw[0] : placeRaw;
+  const sessionLabel = trainingType?.name
+    ? `Session de ${trainingType.name}`
+    : 'Session';
+  const sessionPlace = `${place?.name ?? 'Lieu'}${place?.city ? ` · ${place.city}` : ''}`;
+  const sessionDate = sessionMeta?.starts_at
+    ? new Intl.DateTimeFormat('fr-FR', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        timeZone: 'Europe/Paris',
+      }).format(new Date(sessionMeta.starts_at))
+    : null;
+
   return (
     <div className="space-y-4">
       <div>
@@ -79,6 +117,11 @@ export default async function ChatPage({
         conversationId={conversationId}
         initialMessages={messages ?? []}
         currentUserId={user.id}
+        otherUserName={otherUserProfile?.display_name ?? 'Sportif'}
+        otherUserAvatarUrl={otherUserProfile?.avatar_url ?? null}
+        sessionLabel={sessionLabel}
+        sessionPlace={sessionPlace}
+        sessionDate={sessionDate}
       />
     </div>
   );

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { SessionReviewModal } from '@/components/app/session-review-modal';
+import { MessageCircle } from 'lucide-react';
 
 type SessionRequestItem = {
   id: string;
@@ -211,11 +212,12 @@ export function SessionRequestsList({
               {request.status === 'accepted' ? (
                 <Button
                   size="sm"
-                  variant="outline"
+                  className="bg-gradient-to-r from-slate-900 to-slate-700 text-white hover:from-slate-800 hover:to-slate-600"
                   onClick={() => handleOpenChat(request)}
                   disabled={sessionDisabled || loadingId === request.id}
                 >
-                  Ouvrir le chat
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Discuter maintenant
                 </Button>
               ) : null}
               {request.can_review && !request.reviewed ? (
