@@ -1,8 +1,42 @@
 import { SessionForm } from '@/app/app/sessions/SessionForm';
+import { getEntitlements, isPremium } from '@/lib/entitlements';
+import { redirect } from 'next/navigation';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
 
 export default async function NewSessionPage() {
   const supabase = await createSupabaseServerClientReadOnly();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  const now = new Date();
+  const monthStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+  );
+  const nextMonthStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
+  );
+
+  const entitlement = await getEntitlements(user.id);
+  const premium = isPremium(entitlement);
+
+  if (!premium) {
+    const { count: monthlySessionCount } = await supabase
+      .from('sessions')
+      .select('id', { count: 'exact', head: true })
+      .eq('host_id', user.id)
+      .gte('created_at', monthStart.toISOString())
+      .lt('created_at', nextMonthStart.toISOString());
+
+    if ((monthlySessionCount ?? 0) >= 4) {
+      redirect('/pricing?limit=sessions');
+    }
+  }
+
   const { data: disciplines } = await supabase
     .from('disciplines')
     .select('id, name')
