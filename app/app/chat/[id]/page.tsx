@@ -70,22 +70,24 @@ export default async function ChatPage({
   const otherUserId =
     conversation.user_a === user.id ? conversation.user_b : conversation.user_a;
 
-  const [{ data: otherUserProfile }, { data: sessionMeta }] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select('display_name, avatar_url')
-      .eq('id', otherUserId)
-      .maybeSingle(),
-    conversation.session_id
-      ? supabase
-          .from('sessions')
-          .select(
-            'starts_at, training_type:training_types(name), place:places(name, city)',
-          )
-          .eq('id', conversation.session_id)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-  ]);
+  const [{ data: otherUserProfile }, { data: sessionMeta }] = await Promise.all(
+    [
+      supabase
+        .from('profiles')
+        .select('display_name, avatar_url')
+        .eq('id', otherUserId)
+        .maybeSingle(),
+      conversation.session_id
+        ? supabase
+            .from('sessions')
+            .select(
+              'starts_at, training_type:training_types(name), place:places(name, city)',
+            )
+            .eq('id', conversation.session_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+    ],
+  );
 
   const trainingTypeRaw = sessionMeta?.training_type;
   const placeRaw = sessionMeta?.place;
@@ -111,7 +113,6 @@ export default async function ChatPage({
         <div className="text-sm text-muted-foreground">
           <BackLink label="Retour" fallbackHref="/app/sessions/requests" />
         </div>
-        <h1 className="text-2xl font-semibold">Chat</h1>
       </div>
       <ChatClient
         conversationId={conversationId}

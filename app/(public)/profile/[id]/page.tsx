@@ -15,6 +15,8 @@ import {
 import { BackLink } from '@/components/app/back-link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { isPremium } from '@/lib/entitlements';
+import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
 
 type SportProfileRow = {
@@ -136,6 +138,10 @@ export default async function FighterProfilePage({
   }
 
   const supabase = await createSupabaseServerClientReadOnly();
+  const admin =
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
+      ? createSupabaseAdminClient()
+      : null;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -147,6 +153,7 @@ export default async function FighterProfilePage({
     publishedSessionsCountResult,
     trustResult,
     reviewsResult,
+    entitlementResult,
   ] =
     await Promise.all([
       supabase
@@ -184,6 +191,13 @@ export default async function FighterProfilePage({
         .eq('reviewed_user_id', id)
         .order('created_at', { ascending: false })
         .limit(5),
+      admin
+        ? admin
+            .from('entitlements')
+            .select('user_id, plan, premium_until, is_lifetime, updated_at, source')
+            .eq('user_id', id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
 
   const profile = profileResult.data;
@@ -223,6 +237,7 @@ export default async function FighterProfilePage({
     trustScore?.score,
     trustScore?.review_count,
   );
+  const premium = isPremium(entitlementResult.data ?? null);
   const isOwnProfile = user?.id === id;
 
   return (
@@ -259,9 +274,20 @@ export default async function FighterProfilePage({
                 </div>
               )}
               <div>
-                <h1 className="text-3xl font-semibold text-slate-900">
-                  {displayName}
-                </h1>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-3xl font-semibold text-slate-900">
+                    {displayName}
+                  </h1>
+                  <span
+                    className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] ${
+                      premium
+                        ? 'border-slate-900 bg-slate-900 text-white'
+                        : 'border-slate-200 bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {premium ? 'PRO' : 'Free'}
+                  </span>
+                </div>
                 <p className="mt-1 flex items-center gap-1 text-sm text-slate-600">
                   <MapPin className="h-4 w-4" />
                   {cityLabel}
