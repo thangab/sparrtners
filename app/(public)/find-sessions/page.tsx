@@ -1,10 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
 import { SessionFiltersPanel } from '@/components/app/session-filters-panel';
-import { PlaceSearchInput } from '@/components/app/place-search-input';
+import { PlaceSearchBar } from '@/components/app/place-search-bar';
 import { SessionsResults } from '@/components/app/sessions-results';
-import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
 
 type SessionWithDistance = {
   id: string;
@@ -192,23 +190,10 @@ export default async function SessionsPage({
             <h1 className="text-3xl font-semibold text-slate-900">
               Trouve une session près de toi
             </h1>
-            <div className="flex flex-row items-stretch gap-0">
-              <PlaceSearchInput
-                variant="compact"
-                placeholder="Où ?"
-                containerClassName="flex-1"
-                inputClassName="h-11 rounded-full bg-white rounded-r-none"
-                defaultLabel={defaultLabel}
-                defaultCoords={defaultCoords}
-              />
-              <Button
-                type="submit"
-                className="h-11 rounded-full bg-slate-900 px-6 text-white rounded-l-none"
-              >
-                <Search className="h-4 w-4 md:hidden" />
-                <span className="hidden md:flex">Rechercher</span>
-              </Button>
-            </div>
+            <PlaceSearchBar
+              defaultLabel={defaultLabel}
+              defaultCoords={defaultCoords}
+            />
           </div>
         </section>
 

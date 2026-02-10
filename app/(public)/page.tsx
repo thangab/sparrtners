@@ -134,24 +134,21 @@ export default async function HomePage({
       : '';
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#fff7ed_0,_#f8fafc_40%,_#eef2ff_100%)] text-slate-900">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff7ed_0,#f8fafc_40%,#eef2ff_100%)] text-slate-900">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-4 pb-20 pt-8 md:px-6 md:gap-20">
         <section className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/80 px-6 py-8 shadow-[0_20px_70px_-40px_rgba(15,23,42,0.55)] backdrop-blur md:px-10 md:py-12">
-          <div className="pointer-events-none absolute -top-20 right-[-80px] h-64 w-64 rounded-full bg-orange-200/50 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-28 left-[-90px] h-64 w-64 rounded-full bg-indigo-200/40 blur-3xl" />
+          <div className="pointer-events-none absolute -top-20 -right-20 h-64 w-64 rounded-full bg-orange-200/50 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-28 -left-22.5 h-64 w-64 rounded-full bg-indigo-200/40 blur-3xl" />
 
           <div className="relative grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
             <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-orange-700">
-                <Sparkles className="h-3.5 w-3.5" />
-                Plateforme dédiée sports de combat
-              </div>
-
               <div className="space-y-4">
                 <h1 className="text-4xl font-black leading-[0.95] tracking-tight text-slate-950 sm:text-5xl md:text-6xl">
                   Trouve ton
                   <br />
-                  <span className="text-orange-600">sparring partenaire</span>
+                  <span className="text-orange-600 italic">
+                    sparring partenaire
+                  </span>
                   <br />
                   dans le bon cadre.
                 </h1>
@@ -169,12 +166,6 @@ export default async function HomePage({
                 >
                   Explorer les sessions
                   <ArrowRight className="h-4 w-4" />
-                </a>
-                <a
-                  href="/pricing"
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:border-slate-400"
-                >
-                  Voir les offres PRO
                 </a>
               </div>
 
@@ -214,28 +205,14 @@ export default async function HomePage({
                 })}
               </div>
             </div>
-
-            <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-4 shadow-2xl">
-              <div className="absolute inset-x-6 top-4 z-10 flex items-center justify-between rounded-xl border border-white/50 bg-white/75 px-3 py-2 backdrop-blur">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
-                  Trouve ton prochain sparring
-                </p>
-                <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-1 text-[11px] font-semibold text-orange-700">
-                  <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-                  Live
-                </span>
-              </div>
-              <div className="overflow-hidden rounded-2xl bg-slate-100 pt-10">
-                <Image
-                  src="/hero-sparring-v2.webp"
-                  alt="Illustration d'une session de sparring"
-                  width={900}
-                  height={700}
-                  className="h-95 w-full object-cover object-center"
-                  priority
-                />
-              </div>
-            </div>
+            <Image
+              src="/hero-sparring-v2.webp"
+              alt="Illustration d'une session de sparring"
+              width={900}
+              height={700}
+              className="h-95 w-full object-cover object-center"
+              priority
+            />
           </div>
         </section>
 
@@ -437,7 +414,6 @@ export default async function HomePage({
           </div>
         </section>
       </main>
-
     </div>
   );
 }
