@@ -136,6 +136,9 @@ export default async function FighterProfilePage({
   }
 
   const supabase = await createSupabaseServerClientReadOnly();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const nowIso = new Date().toISOString();
   const [
     profileResult,
@@ -220,11 +223,17 @@ export default async function FighterProfilePage({
     trustScore?.score,
     trustScore?.review_count,
   );
+  const isOwnProfile = user?.id === id;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-20 pt-6 md:px-6">
       <div className="flex items-center justify-between text-sm text-slate-500">
         <BackLink label="Retour" fallbackHref="/find-sessions" />
+        {isOwnProfile ? (
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/app/me">Modifier mon profil</Link>
+          </Button>
+        ) : null}
       </div>
 
       <section className="relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white/95 p-6 md:p-8">
