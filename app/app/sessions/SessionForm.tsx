@@ -570,9 +570,26 @@ export function SessionForm({
   const disciplineNameById = new Map(
     disciplines.map((discipline) => [String(discipline.id), discipline.name]),
   );
+  const dominantHandPreview = React.useMemo(() => {
+    if (dominantHandValue === 'left') {
+      return { src: '/fighter-left.webp', alt: 'Stance gaucher' };
+    }
+    if (dominantHandValue === 'both') {
+      return { src: '/fighter-neutral.webp', alt: 'Stance ambidextre' };
+    }
+    if (dominantHandValue === 'right') {
+      return { src: '/fighter-right.webp', alt: 'Stance droitier' };
+    }
+    return { src: '/fighter-neutral.webp', alt: 'Profil recherché' };
+  }, [dominantHandValue]);
 
   return (
-    <form className="space-y-8" onSubmit={handleSubmit} ref={formRef} noValidate>
+    <form
+      className="space-y-8"
+      onSubmit={handleSubmit}
+      ref={formRef}
+      noValidate
+    >
       {isCreate ? (
         <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
           <div className="flex items-center gap-3 text-sm">
@@ -590,7 +607,11 @@ export function SessionForm({
               >
                 1
               </span>
-              <span className={step === 1 ? 'font-semibold text-slate-900' : 'text-slate-500'}>
+              <span
+                className={
+                  step === 1 ? 'font-semibold text-slate-900' : 'text-slate-500'
+                }
+              >
                 Infos session
               </span>
             </button>
@@ -609,7 +630,11 @@ export function SessionForm({
               >
                 2
               </span>
-              <span className={step === 2 ? 'font-semibold text-slate-900' : 'text-slate-500'}>
+              <span
+                className={
+                  step === 2 ? 'font-semibold text-slate-900' : 'text-slate-500'
+                }
+              >
                 Profil recherché
               </span>
             </button>
@@ -645,10 +670,16 @@ export function SessionForm({
                   if (selectedPlace) setSelectedPlace(null);
                 }}
               />
-              <input type="hidden" name="place_id" value={selectedPlace?.id ?? ''} />
+              <input
+                type="hidden"
+                name="place_id"
+                value={selectedPlace?.id ?? ''}
+              />
               {selectedPlace ? (
                 <div className="text-xs text-muted-foreground">
-                  {selectedPlace.address ?? selectedPlace.city ?? 'Lieu sélectionné'}
+                  {selectedPlace.address ??
+                    selectedPlace.city ??
+                    'Lieu sélectionné'}
                 </div>
               ) : placeLoading ? (
                 <div className="text-xs text-muted-foreground">
@@ -794,7 +825,9 @@ export function SessionForm({
                           key={item.id}
                           type="button"
                           onClick={() =>
-                            updateEntry(index, { skillLevelId: String(item.id) })
+                            updateEntry(index, {
+                              skillLevelId: String(item.id),
+                            })
                           }
                           className={`rounded-full border px-3 py-1.5 text-sm transition ${
                             isActive
@@ -815,7 +848,7 @@ export function SessionForm({
       </div>
 
       <div className={showStep2 ? 'space-y-5' : 'hidden'}>
-        <section className="grid gap-6 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm md:grid-cols-[1.2fr_0.8fr] md:items-start">
+        <section className="grid gap-6 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm md:grid-cols-[1.2fr_0.8fr] md:items-stretch">
           <div className="space-y-4">
             <div>
               <h3 className="text-base font-semibold text-slate-900">
@@ -1001,14 +1034,14 @@ export function SessionForm({
             </div>
           </div>
 
-          <div className="hidden md:block">
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+          <div className="hidden md:flex md:h-full md:items-center md:justify-center">
+            <div className="w-1/2">
               <Image
-                src="/illustration-fighter.webp"
-                alt="Sparring"
+                src={dominantHandPreview.src}
+                alt={dominantHandPreview.alt}
                 width={420}
                 height={520}
-                className="h-auto w-full object-cover"
+                className="h-auto w-full object-contain"
               />
             </div>
           </div>
