@@ -4,7 +4,13 @@ import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { CalendarClock, MapPin, Route, UserRound } from 'lucide-react';
+import {
+  CalendarClock,
+  ChevronRight,
+  MapPin,
+  Route,
+  UserRound,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -423,6 +429,10 @@ export function SessionsResults({
                       ) : null}
                     </div>
                   </div>
+                </div>
+                <div className="flex items-center justify-end text-xs font-medium text-slate-500 md:hidden">
+                  <span>Appuyer pour voir</span>
+                  <ChevronRight className="ml-1 h-4 w-4" />
                 </div>
               </div>
             </Card>

@@ -167,7 +167,9 @@ export default async function SessionDetailPage({
   const placeName = placeDetails?.name ?? listing.place_name ?? 'Lieu';
   const placeAddress =
     placeDetails?.address ??
-    (placeDetails?.city ?? listing.city ?? 'Adresse non renseignée');
+    placeDetails?.city ??
+    listing.city ??
+    'Adresse non renseignée';
 
   const scheduleLabel = `${new Date(listing.starts_at).toLocaleString('fr-FR')}${
     listing.duration_minutes ? ` · ${listing.duration_minutes} min` : ''
@@ -216,7 +218,9 @@ export default async function SessionDetailPage({
                       <p className="text-xs uppercase tracking-[0.12em] text-slate-500">
                         Date & heure
                       </p>
-                      <p className="font-medium text-slate-900">{scheduleLabel}</p>
+                      <p className="font-medium text-slate-900">
+                        {scheduleLabel}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -356,7 +360,7 @@ export default async function SessionDetailPage({
         <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
           <Card className="border-slate-200/70 bg-white/95">
             <CardHeader>
-              <CardTitle>Host</CardTitle>
+              <CardTitle>{hostLabel}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
@@ -374,9 +378,6 @@ export default async function SessionDetailPage({
                   </div>
                 )}
                 <div>
-                  <p className="text-base font-semibold text-slate-900">
-                    {hostLabel}
-                  </p>
                   <Link
                     href={`/profile/${listing.host_id}`}
                     className="text-sm text-slate-600 underline"
@@ -387,7 +388,9 @@ export default async function SessionDetailPage({
               </div>
               <div className="grid gap-2 text-xs text-slate-600">
                 <p>Ville: {hostProfile?.city ?? 'Non renseigné'}</p>
-                <p>Main forte: {formatDominantHand(hostProfile?.dominant_hand)}</p>
+                <p>
+                  Main forte: {formatDominantHand(hostProfile?.dominant_hand)}
+                </p>
                 <p>
                   Taille:{' '}
                   {hostProfile?.height_cm
@@ -424,11 +427,19 @@ export default async function SessionDetailPage({
               {isHost ? (
                 <BoostSessionButton sessionId={listing.id} />
               ) : (
-                <RequestJoinButton sessionId={listing.id} isFull={listing.is_full} />
+                <RequestJoinButton
+                  sessionId={listing.id}
+                  isFull={listing.is_full}
+                />
               )}
               {canChat ? (
-                <Button asChild className="bg-slate-900 text-white hover:bg-slate-800">
-                  <Link href={`/app/chat/${conversation?.id}`}>Ouvrir le chat</Link>
+                <Button
+                  asChild
+                  className="bg-slate-900 text-white hover:bg-slate-800"
+                >
+                  <Link href={`/app/chat/${conversation?.id}`}>
+                    Ouvrir le chat
+                  </Link>
                 </Button>
               ) : null}
             </CardContent>
