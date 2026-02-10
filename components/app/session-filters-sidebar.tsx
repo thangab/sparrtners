@@ -4,6 +4,15 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
+import {
+  CalendarDays,
+  Clock3,
+  Hand,
+  Ruler,
+  SlidersHorizontal,
+  Target,
+  Weight,
+} from 'lucide-react';
 
 const DEFAULT_RADIUS = 25;
 const DEFAULT_HEIGHT_RANGE: [number, number] = [0, 250];
@@ -152,33 +161,86 @@ export function SessionFiltersSidebar({
     setSelectedDominantHands(defaultDominantHands);
   }, [defaultDominantHands]);
 
+  const activeFiltersCount = React.useMemo(() => {
+    let count = 0;
+    if (dateStartValue) count += 1;
+    if (dateEndValue) count += 1;
+    if (selectedTrainingTypes.length > 0) count += 1;
+    if (selectedDisciplines.length > 0) count += 1;
+    if (selectedDominantHands.length > 0) count += 1;
+    if (durationValue !== DEFAULT_DURATION) count += 1;
+    if (radiusValue !== DEFAULT_RADIUS) count += 1;
+    if (
+      heightValue[0] !== DEFAULT_HEIGHT_RANGE[0] ||
+      heightValue[1] !== DEFAULT_HEIGHT_RANGE[1]
+    ) {
+      count += 1;
+    }
+    if (
+      weightValue[0] !== DEFAULT_WEIGHT_RANGE[0] ||
+      weightValue[1] !== DEFAULT_WEIGHT_RANGE[1]
+    ) {
+      count += 1;
+    }
+    return count;
+  }, [
+    dateStartValue,
+    dateEndValue,
+    selectedTrainingTypes.length,
+    selectedDisciplines.length,
+    selectedDominantHands.length,
+    durationValue,
+    radiusValue,
+    heightValue,
+    weightValue,
+  ]);
+
+  const resetFilters = React.useCallback(() => {
+    setRadiusValue(DEFAULT_RADIUS);
+    setHeightValue(DEFAULT_HEIGHT_RANGE);
+    setWeightValue(DEFAULT_WEIGHT_RANGE);
+    setDurationValue(DEFAULT_DURATION);
+    setDateStartValue('');
+    setDateEndValue('');
+    setSelectedTrainingTypes([]);
+    setSelectedDisciplines([]);
+    setSelectedDominantHands([]);
+    router.replace('/find-sessions');
+  }, [router]);
+
   return (
-    <aside className="space-y-6 rounded-3xl border border-slate-200/70 bg-white/85 p-6 shadow-sm">
-      <div className="space-y-2 flex items-center justify-between">
-        <div className="text-sm font-semibold text-slate-900">Trier par</div>
-        <Button
-          type="button"
-          variant="ghost"
-          className="text-xs text-slate-600 cursor-pointer"
-          onClick={() => {
-            setRadiusValue(DEFAULT_RADIUS);
-            setHeightValue(DEFAULT_HEIGHT_RANGE);
-            setWeightValue(DEFAULT_WEIGHT_RANGE);
-            setDurationValue(DEFAULT_DURATION);
-            setDateStartValue('');
-            setDateEndValue('');
-            setSelectedTrainingTypes([]);
-            setSelectedDisciplines([]);
-            setSelectedDominantHands([]);
-            router.replace('/find-sessions');
-          }}
-        >
-          Tout effacer
-        </Button>
+    <aside className="space-y-4 rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-sm lg:p-5">
+      <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-slate-700 shadow-sm">
+              <SlidersHorizontal className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Filtres</p>
+              <p className="text-xs text-slate-500">
+                {activeFiltersCount > 0
+                  ? `${activeFiltersCount} actif${activeFiltersCount > 1 ? 's' : ''}`
+                  : 'Aucun actif'}
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-8 px-2 text-xs text-slate-600 hover:text-slate-900"
+            onClick={resetFilters}
+          >
+            Reinitialiser
+          </Button>
+        </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="text-sm font-medium text-slate-700">Date</div>
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+          <CalendarDays className="h-4 w-4 text-slate-500" />
+          Date
+        </div>
         <div className="grid gap-2">
           <input
             type="date"
@@ -188,7 +250,7 @@ export function SessionFiltersSidebar({
               setDateStartValue(event.target.value);
               scheduleSubmit();
             }}
-            className="h-10 w-full rounded-(--radius) border border-border bg-white px-3 text-sm shadow-sm"
+            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm shadow-sm"
           />
           <input
             type="date"
@@ -198,18 +260,25 @@ export function SessionFiltersSidebar({
               setDateEndValue(event.target.value);
               scheduleSubmit();
             }}
-            className="h-10 w-full rounded-(--radius) border border-border bg-white px-3 text-sm shadow-sm"
+            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm shadow-sm"
           />
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="text-sm font-medium text-slate-700">
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="text-sm font-semibold text-slate-800">
           Type d&apos;entraînement
         </div>
-        <div className="flex flex-col gap-2 text-sm text-slate-700">
+        <div className="flex flex-wrap gap-2 text-sm text-slate-700">
           {trainingTypes.map((type) => (
-            <label key={type.id} className="flex items-center gap-2">
+            <label
+              key={type.id}
+              className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                selectedTrainingTypes.includes(String(type.id))
+                  ? 'border-slate-900 bg-slate-900 text-white'
+                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300'
+              }`}
+            >
               <input
                 type="checkbox"
                 name="training_type_id"
@@ -221,16 +290,20 @@ export function SessionFiltersSidebar({
                   });
                   scheduleSubmit();
                 }}
-                className="h-4 w-4 rounded border-slate-400"
+                className="sr-only"
               />
               {type.name}
             </label>
           ))}
+          {trainingTypes.length === 0 ? (
+            <p className="text-xs text-slate-500">Aucun type disponible.</p>
+          ) : null}
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="text-sm font-medium text-slate-700">
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+          <Clock3 className="h-4 w-4 text-slate-500" />
           Durée de la session
         </div>
         <Slider
@@ -256,8 +329,9 @@ export function SessionFiltersSidebar({
         />
       </div>
 
-      <div className="space-y-3">
-        <div className="text-sm font-medium text-slate-700">
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+          <Target className="h-4 w-4 text-slate-500" />
           Distance autour de moi
         </div>
         <Slider
@@ -283,8 +357,11 @@ export function SessionFiltersSidebar({
         />
       </div>
 
-      <div className="space-y-3">
-        <div className="text-sm font-medium text-slate-700">Taille</div>
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+          <Ruler className="h-4 w-4 text-slate-500" />
+          Taille
+        </div>
         <Slider
           min={0}
           max={250}
@@ -322,8 +399,11 @@ export function SessionFiltersSidebar({
         />
       </div>
 
-      <div className="space-y-3">
-        <div className="text-sm font-medium text-slate-700">Poids</div>
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+          <Weight className="h-4 w-4 text-slate-500" />
+          Poids
+        </div>
         <Slider
           min={0}
           max={200}
@@ -359,13 +439,20 @@ export function SessionFiltersSidebar({
         />
       </div>
 
-      <div className="space-y-3">
-        <div className="text-sm font-medium text-slate-700">
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="text-sm font-semibold text-slate-800">
           Disciplines recherchées
         </div>
-        <div className="flex flex-col gap-2 text-sm text-slate-700">
+        <div className="flex flex-wrap gap-2 text-sm text-slate-700">
           {DISCIPLINE_OPTIONS.map((item) => (
-            <label key={item.value} className="flex items-center gap-2">
+            <label
+              key={item.value}
+              className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                selectedDisciplines.includes(item.value)
+                  ? 'border-slate-900 bg-slate-900 text-white'
+                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300'
+              }`}
+            >
               <input
                 type="checkbox"
                 name="disciplines"
@@ -377,7 +464,7 @@ export function SessionFiltersSidebar({
                   });
                   scheduleSubmit();
                 }}
-                className="h-4 w-4 rounded border-slate-400"
+                className="sr-only"
               />
               {item.label}
             </label>
@@ -385,11 +472,21 @@ export function SessionFiltersSidebar({
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="text-sm font-medium text-slate-700">Main forte</div>
-        <div className="flex flex-col gap-2 text-sm text-slate-700">
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+          <Hand className="h-4 w-4 text-slate-500" />
+          Main forte
+        </div>
+        <div className="flex flex-wrap gap-2 text-sm text-slate-700">
           {DOMINANT_HAND_OPTIONS.map((item) => (
-            <label key={item.value} className="flex items-center gap-2">
+            <label
+              key={item.value}
+              className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                selectedDominantHands.includes(item.value)
+                  ? 'border-slate-900 bg-slate-900 text-white'
+                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300'
+              }`}
+            >
               <input
                 type="checkbox"
                 name="dominant_hand"
@@ -401,14 +498,13 @@ export function SessionFiltersSidebar({
                   });
                   scheduleSubmit();
                 }}
-                className="h-4 w-4 rounded border-slate-400"
+                className="sr-only"
               />
               {item.label}
             </label>
           ))}
         </div>
       </div>
-
     </aside>
   );
 }
