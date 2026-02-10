@@ -84,6 +84,9 @@ export function TopHeader({ user, notificationsCount = 0 }: TopHeaderProps) {
                       ) : null}
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/settings/account">Paramètres</Link>
+                  </DropdownMenuItem>
                 </>
               ) : (
                 <>
@@ -247,6 +250,9 @@ export function TopHeader({ user, notificationsCount = 0 }: TopHeaderProps) {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/app/me">Modifier mon profil</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/settings/account">Paramètres</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="p-0">
