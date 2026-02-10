@@ -14,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Sparrtners',
-  description: 'Find training partners and host sparring sessions near you.',
+  title: 'Sparrtners | Sparring, boxe, MMA : trouve ton partenaire d’entraînement',
+  description:
+    'Trouve des partenaires d’entraînement en boxe, MMA et sports de combat, rejoins des sessions proches de toi et organise tes sparrings facilement avec Sparrtners.',
 };
 
 export default function RootLayout({
