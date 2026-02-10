@@ -30,7 +30,26 @@ export const postSchema = {
       },
     },
     { name: 'excerpt', title: 'Excerpt', type: 'text', rows: 3 },
-    { name: 'body', title: 'Body', type: 'array', of: [{ type: 'block' }] },
+    {
+      name: 'mainImage',
+      title: 'Main image',
+      type: 'image',
+      options: { hotspot: true },
+      fields: [{ name: 'alt', title: 'Alt text', type: 'string' }],
+    },
+    {
+      name: 'body',
+      title: 'Body',
+      type: 'array',
+      of: [
+        { type: 'block' },
+        {
+          type: 'image',
+          options: { hotspot: true },
+          fields: [{ name: 'alt', title: 'Alt text', type: 'string' }],
+        },
+      ],
+    },
     { name: 'publishedAt', title: 'Published at', type: 'datetime' },
     {
       name: 'seo',

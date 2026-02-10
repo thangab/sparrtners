@@ -1,11 +1,13 @@
 const apiVersion = '2024-01-01';
 
 export type SanityBlock = {
-  _type: 'block';
+  _type: 'block' | 'image';
   style?: string;
   listItem?: 'bullet' | 'number';
   level?: number;
   children?: Array<{ _type: 'span'; text?: string }>;
+  url?: string;
+  alt?: string;
 };
 
 export type SanityStaticPage = {
@@ -22,6 +24,10 @@ export type SanityBlogPostSummary = {
   slug: string;
   excerpt?: string | null;
   publishedAt?: string | null;
+  mainImage?: {
+    url?: string | null;
+    alt?: string | null;
+  } | null;
 };
 
 export type SanityBlogPost = SanityBlogPostSummary & {
@@ -85,6 +91,7 @@ export async function sanityFetch<T>({
 }
 
 export function blockText(block?: SanityBlock | null) {
+  if (block?._type !== 'block') return '';
   if (!block?.children || block.children.length === 0) return '';
   return block.children.map((child) => child.text ?? '').join('');
 }
@@ -124,7 +131,11 @@ export async function getBlogPosts() {
       title,
       "slug": slug.current,
       excerpt,
-      publishedAt
+      publishedAt,
+      "mainImage": {
+        "url": mainImage.asset->url,
+        "alt": mainImage.alt
+      }
     }`,
   });
 }
@@ -144,7 +155,17 @@ export async function getBlogPostBySlug(slug: string) {
       "slug": slug.current,
       excerpt,
       publishedAt,
-      body,
+      body[]{
+        ...,
+        _type == "image" => {
+          ...,
+          "url": asset->url
+        }
+      },
+      "mainImage": {
+        "url": mainImage.asset->url,
+        "alt": mainImage.alt
+      },
       "seoTitle": seo.title,
       "seoDescription": seo.description
     }`,
