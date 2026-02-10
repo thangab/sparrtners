@@ -28,8 +28,8 @@ type TopHeaderProps = {
 };
 
 const primaryLinks = [
-  { href: '/', label: 'A propos' },
-  { href: '/', label: 'Blog' },
+  { href: '/about', label: 'À propos' },
+  { href: '/blog', label: 'Blog' },
 ];
 
 export function TopHeader({ user, notificationsCount = 0 }: TopHeaderProps) {

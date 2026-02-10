@@ -1,5 +1,6 @@
 import { TopHeader } from '@/components/app/top-header';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
+import Link from 'next/link';
 
 export default async function PublicLayout({
   children,
@@ -55,21 +56,21 @@ export default async function PublicLayout({
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
-              <a className="hover:text-slate-900" href="/find-sessions">
-                Trouver une session
-              </a>
-              <a className="hover:text-slate-900" href="/pricing">
-                Tarifs
-              </a>
-              <a className="hover:text-slate-900" href="#">
+              <Link className="hover:text-slate-900" href="/about">
+                À propos
+              </Link>
+              <Link className="hover:text-slate-900" href="/blog">
+                Blog
+              </Link>
+              <Link className="hover:text-slate-900" href="/terms">
                 Conditions générales
-              </a>
-              <a className="hover:text-slate-900" href="#">
+              </Link>
+              <Link className="hover:text-slate-900" href="/privacy-policy">
                 Politique de confidentialité
-              </a>
-              <a className="hover:text-slate-900" href="#">
+              </Link>
+              <Link className="hover:text-slate-900" href="/contact">
                 Nous contacter
-              </a>
+              </Link>
             </div>
           </div>
           <div className="border-t border-slate-200 pt-4 text-xs text-slate-500">
