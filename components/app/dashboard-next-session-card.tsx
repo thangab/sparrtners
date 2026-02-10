@@ -4,10 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OpenChatButton } from '@/components/app/open-chat-button';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
-import { CalendarClock, Clock3, Dumbbell, MapPin } from 'lucide-react';
+import {
+  ArrowRight,
+  CalendarClock,
+  Clock3,
+  Dumbbell,
+  MapPin,
+  Timer,
+} from 'lucide-react';
 
-type NamedRelation = { name?: string | null } | { name?: string | null }[] | null;
-type TrainingTypeRow = { name?: string | null } | { name?: string | null }[] | null;
+type NamedRelation =
+  | { name?: string | null }
+  | { name?: string | null }[]
+  | null;
+type TrainingTypeRow =
+  | { name?: string | null }
+  | { name?: string | null }[]
+  | null;
 type PlaceRow =
   | { name?: string | null; city?: string | null }
   | { name?: string | null; city?: string | null }[]
@@ -65,6 +78,45 @@ export async function DashboardNextSessionCard({
           timeZone: 'Europe/Paris',
         }).format(new Date(value))
       : '';
+  const getCountdownInfo = (value?: string | null, referenceMs?: number) => {
+    if (!value) return null;
+    const diffMs = new Date(value).getTime() - (referenceMs ?? 0);
+    if (diffMs <= 0) {
+      return {
+        label: 'En cours',
+        className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+      };
+    }
+
+    const totalMinutes = Math.floor(diffMs / (1000 * 60));
+    const totalHours = Math.floor(totalMinutes / 60);
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+
+    if (totalMinutes < 60) {
+      return {
+        label: `Dans ${Math.max(1, totalMinutes)} min`,
+        className: 'border-rose-200 bg-rose-50 text-rose-700',
+      };
+    }
+    if (days === 0) {
+      return {
+        label: `Aujourd'hui · ${Math.max(1, totalHours)}h`,
+        className: 'border-amber-200 bg-amber-50 text-amber-800',
+      };
+    }
+    if (days === 1) {
+      return {
+        label: `Demain · ${hours > 0 ? `${hours}h` : '0h'}`,
+        className: 'border-orange-200 bg-orange-50 text-orange-800',
+      };
+    }
+
+    return {
+      label: `Dans ${days} jours${hours > 0 ? ` · ${hours}h` : ''}`,
+      className: 'border-slate-300 bg-white text-slate-700',
+    };
+  };
 
   if (!userId) {
     return (
@@ -179,7 +231,9 @@ export async function DashboardNextSessionCard({
   );
   const nextUpcomingSession = upcomingCandidates[0] ?? null;
   const nextUpcomingPlace = normalizeOne(nextUpcomingSession?.session.place);
-  const nextUpcomingType = normalizeOne(nextUpcomingSession?.session.training_type);
+  const nextUpcomingType = normalizeOne(
+    nextUpcomingSession?.session.training_type,
+  );
   const nextUpcomingDisciplines = (
     nextUpcomingSession?.session.session_disciplines ?? []
   )
@@ -202,7 +256,9 @@ export async function DashboardNextSessionCard({
     return Array.from(
       new Set(
         (nextUpcomingSession.session.session_requests ?? [])
-          .filter((request) => request.status === 'accepted' && !!request.user_id)
+          .filter(
+            (request) => request.status === 'accepted' && !!request.user_id,
+          )
           .sort(
             (a, b) =>
               new Date(a.created_at).getTime() -
@@ -226,61 +282,98 @@ export async function DashboardNextSessionCard({
     const profile = nextUpcomingChatProfileMap.get(id);
     return {
       userId: id,
-      displayName: profile?.display_name ?? `Participant ${id.slice(0, 6).toUpperCase()}`,
+      displayName:
+        profile?.display_name ?? `Participant ${id.slice(0, 6).toUpperCase()}`,
     };
   });
+  const nextUpcomingCountdown = getCountdownInfo(
+    nextUpcomingSession?.session.starts_at,
+    nowTimestamp,
+  );
 
   return (
-    <Card className="w-full max-w-full overflow-hidden border-slate-200/80 shadow-sm">
+    <Card className="w-full max-w-full overflow-hidden rounded-3xl bg-white">
       <CardHeader className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
-            <CardTitle className="text-xl font-black text-slate-950">
-              Prochaine session
-            </CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="text-xl font-black text-slate-950">
+                Prochaine session
+              </CardTitle>
+              {nextUpcomingCountdown ? (
+                <Badge
+                  variant="outline"
+                  className="border-amber-300 bg-amber-100 px-3 py-1.5 text-sm font-bold text-amber-900 shadow-[0_8px_20px_-14px_rgba(217,119,6,0.7)]"
+                >
+                  <Timer className="mr-1.5 h-3.5 w-3.5" />
+                  {nextUpcomingCountdown.label}
+                </Badge>
+              ) : null}
+            </div>
             <p className="text-sm text-muted-foreground">
               La session à venir la plus proche de ton planning.
             </p>
           </div>
           {nextUpcomingSession ? (
-            <Badge
-              variant="secondary"
-              className="bg-orange-100 text-orange-900 hover:bg-orange-100"
-            >
-              {nextUpcomingSession.source === 'host'
-                ? 'Session créée'
-                : 'Demande acceptée'}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="secondary"
+                className="bg-orange-100 text-orange-900 hover:bg-orange-100"
+              >
+                {nextUpcomingSession.source === 'host'
+                  ? 'Session créée'
+                  : 'Demande acceptée'}
+              </Badge>
+            </div>
           ) : null}
         </div>
       </CardHeader>
       <CardContent>
         {nextUpcomingSession ? (
-          <div className="space-y-4 rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/70 p-4">
-            <div className="grid gap-2 rounded-xl border border-slate-200 bg-white p-3 sm:grid-cols-2">
-              <div className="flex items-center gap-2 text-sm text-slate-700">
-                <CalendarClock className="h-4 w-4 text-slate-400" />
-                <span>{formatLongDate(nextUpcomingSession.session.starts_at)}</span>
+          <div className="space-y-4 rounded-2xl bg-linear-to-b from-white via-slate-50/60 to-white">
+            <div className="rounded-2xl bg-white p-3 shadow-sm sm:p-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <p className="text-lg font-black text-slate-900">
+                    Session de {nextUpcomingType?.name ?? 'Entraînement'}
+                  </p>
+                </div>
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/sessions/${nextUpcomingSession.session.id}`}>
+                    Voir la session
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
               </div>
-              <div className="flex items-center gap-2 text-sm text-slate-700">
-                <Clock3 className="h-4 w-4 text-slate-400" />
-                <span>
-                  {formatTime(nextUpcomingSession.session.starts_at)}
-                  {nextUpcomingSession.session.duration_minutes
-                    ? ` · ${nextUpcomingSession.session.duration_minutes} min`
-                    : ''}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-slate-700">
-                <MapPin className="h-4 w-4 text-slate-400" />
-                <span>
-                  {nextUpcomingPlace?.name ?? 'Lieu'}
-                  {nextUpcomingPlace?.city ? ` · ${nextUpcomingPlace.city}` : ''}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-slate-700">
-                <Dumbbell className="h-4 w-4 text-slate-400" />
-                <span>{nextUpcomingType?.name ?? 'Entraînement'}</span>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="flex items-center gap-2 text-sm text-slate-700">
+                  <CalendarClock className="h-4 w-4 text-slate-400" />
+                  <span>
+                    {formatLongDate(nextUpcomingSession.session.starts_at)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-700">
+                  <Clock3 className="h-4 w-4 text-slate-400" />
+                  <span>
+                    {formatTime(nextUpcomingSession.session.starts_at)}
+                    {nextUpcomingSession.session.duration_minutes
+                      ? ` · ${nextUpcomingSession.session.duration_minutes} min`
+                      : ''}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-700">
+                  <MapPin className="h-4 w-4 text-slate-400" />
+                  <span>
+                    {nextUpcomingPlace?.name ?? 'Lieu'}
+                    {nextUpcomingPlace?.city
+                      ? ` · ${nextUpcomingPlace.city}`
+                      : ''}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-700">
+                  <Dumbbell className="h-4 w-4 text-slate-400" />
+                  <span>{nextUpcomingType?.name ?? 'Entraînement'}</span>
+                </div>
               </div>
             </div>
 
@@ -305,38 +398,37 @@ export async function DashboardNextSessionCard({
               )}
             </div>
 
-            <div className="space-y-2">
-              <div className="flex flex-wrap gap-2">
-                <Button asChild size="sm" variant="outline">
-                  <Link href={`/sessions/${nextUpcomingSession.session.id}`}>
-                    Voir la session
-                  </Link>
-                </Button>
-              </div>
-              {nextUpcomingChatParticipants.length > 0 ? (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    Chat rapide
+            {nextUpcomingChatParticipants.length > 0 ? (
+              <div className="space-y-3 rounded-2xl bg-slate-50/70 p-3 sm:p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-slate-900">
+                    Discuter avec les participants
                   </p>
-                  <div className="flex min-w-0 flex-wrap gap-2">
-                    {nextUpcomingChatParticipants.map((participant) => (
-                      <div
-                        key={participant.userId}
-                        className="flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1.5 sm:w-auto sm:justify-start"
-                      >
-                        <span className="min-w-0 max-w-[140px] truncate text-xs text-muted-foreground">
-                          {participant.displayName}
-                        </span>
-                        <OpenChatButton
-                          sessionId={nextUpcomingSession.session.id}
-                          otherUserId={participant.userId}
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  <span className="text-xs text-slate-500">
+                    {nextUpcomingChatParticipants.length}{' '}
+                    {nextUpcomingChatParticipants.length > 1
+                      ? 'contacts'
+                      : 'contact'}
+                  </span>
                 </div>
-              ) : null}
-            </div>
+                <div className="space-y-2">
+                  {nextUpcomingChatParticipants.map((participant) => (
+                    <div
+                      key={participant.userId}
+                      className="flex w-full min-w-0 items-center justify-between gap-2 rounded-xl bg-white px-2 py-2 shadow-sm"
+                    >
+                      <span className="min-w-0 truncate text-sm font-medium text-slate-700">
+                        {participant.displayName}
+                      </span>
+                      <OpenChatButton
+                        sessionId={nextUpcomingSession.session.id}
+                        otherUserId={participant.userId}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-muted-foreground">

@@ -14,9 +14,9 @@ import { getEntitlements, isPremium } from '@/lib/entitlements';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { DashboardNextSessionCard } from '@/components/app/dashboard-next-session-card';
+import { BoostHelpPopover } from '@/components/app/boost-help-popover';
 import {
   ArrowRight,
-  CircleHelp,
   Flame,
   Rocket,
   Sparkles,
@@ -254,7 +254,7 @@ export default async function DashboardPage() {
               </div>
             ) : (
               <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-sm text-emerald-800">
-                Tu as accès à toutes les publications et fonctionnalités PRO.
+                Tu as accès à toutes les publications et fonctionnalités.
               </div>
             )}
             <div className="flex flex-wrap gap-2">
@@ -270,20 +270,7 @@ export default async function DashboardPage() {
             <CardTitle className="flex items-center gap-2 text-base">
               <Rocket className="h-4 w-4 text-slate-700" />
               Boosts
-              <span className="relative inline-flex items-center">
-                <button
-                  type="button"
-                  className="group inline-flex h-6 w-6 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-                  aria-label="À quoi sert un boost ?"
-                >
-                  <CircleHelp className="h-4 w-4" />
-                  <span className="pointer-events-none absolute left-0 top-full z-20 mt-2 hidden w-[min(90vw,18rem)] rounded-xl border border-slate-200 bg-white p-3 text-xs font-normal leading-relaxed text-slate-600 shadow-xl group-hover:block group-focus-visible:block sm:left-1/2 sm:w-64 sm:-translate-x-1/2">
-                    Un boost met ta session en avant dans les résultats pendant
-                    24h pour augmenter sa visibilité et recevoir plus de
-                    demandes.
-                  </span>
-                </button>
-              </span>
+              <BoostHelpPopover />
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">

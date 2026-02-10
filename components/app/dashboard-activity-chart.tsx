@@ -126,7 +126,7 @@ export function DashboardActivityChart() {
   );
 
   return (
-    <Card className="w-full max-w-full overflow-hidden border-slate-200/80 shadow-sm">
+    <Card className="w-full max-w-full overflow-hidden">
       <CardHeader className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
           <div className="space-y-1">
@@ -143,13 +143,11 @@ export function DashboardActivityChart() {
                 key={option.key}
                 variant="ghost"
                 size="sm"
-                className={
-                  `min-w-0 px-2 text-xs sm:text-sm ${
-                    metric === option.key
-                      ? 'bg-white text-slate-900 shadow-sm hover:bg-white'
-                      : 'text-slate-600 hover:bg-white/70'
-                  }`
-                }
+                className={`min-w-0 px-2 text-xs sm:text-sm ${
+                  metric === option.key
+                    ? 'bg-white text-slate-900 shadow-sm hover:bg-white'
+                    : 'text-slate-600 hover:bg-white/70'
+                }`}
                 onClick={() => setMetric(option.key)}
               >
                 {option.label}
@@ -164,13 +162,11 @@ export function DashboardActivityChart() {
                 key={option.key}
                 variant="ghost"
                 size="sm"
-                className={
-                  `min-w-0 px-2 text-xs sm:text-sm ${
-                    range === option.key
-                      ? 'bg-white text-slate-900 shadow-sm hover:bg-white'
-                      : 'text-slate-600 hover:bg-white/70'
-                  }`
-                }
+                className={`min-w-0 px-2 text-xs sm:text-sm ${
+                  range === option.key
+                    ? 'bg-white text-slate-900 shadow-sm hover:bg-white'
+                    : 'text-slate-600 hover:bg-white/70'
+                }`}
                 onClick={() => setRange(option.key)}
               >
                 {option.label}

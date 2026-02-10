@@ -67,11 +67,11 @@ export async function PricingSection({
   ].filter(Boolean) as PricingPlan[];
 
   const features = [
-    ['Inscriptions illimitées aux évènements', '✓', '✓'],
+    ['Inscriptions illimitées aux sessions', '✓', '✓'],
     ['Historique', '✓', '✓'],
-    ['Publication d’évènement illimitée', '4/mois', '✓'],
+    ['Publication de session illimitée', '4/mois', '✓'],
     ['Statistiques avancées des publications', '✗', '✓'],
-    ['Boosts des événements', 'à l’unité', '4'],
+    ['Boosts des sessions pendant 24h', 'à l’unité', '4'],
   ];
 
   const leftOrder = checkoutFirstOnMobile ? 'order-2 md:order-1' : '';
