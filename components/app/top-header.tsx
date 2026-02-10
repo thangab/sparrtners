@@ -100,11 +100,17 @@ export function TopHeader({ user, notificationsCount = 0 }: TopHeaderProps) {
 
           <Link className="transition hover:text-slate-900" href="/">
             <div className="flex items-center gap-2 md:gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold uppercase tracking-wide text-white">
-                Sp
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 shadow-sm">
+                <span className="bg-linear-to-b from-orange-400 to-orange-600 bg-clip-text text-lg font-black italic leading-none text-transparent">
+                  S
+                </span>
+                <span className="absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full bg-white/90" />
               </div>
               <div className="hidden text-sm font-semibold min-[430px]:block md:text-base">
-                Sparrtners
+                <span className="text-orange-600 uppercase font-extrabold italic">
+                  Sparr
+                </span>
+                <span className="italic font-normal">tners</span>
               </div>
             </div>
           </Link>
