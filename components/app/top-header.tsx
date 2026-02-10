@@ -49,8 +49,8 @@ export function TopHeader({ user, notificationsCount = 0 }: TopHeaderProps) {
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                className="md:hidden"
+                size="sm"
+                className="h-9 w-9 p-0 md:hidden"
                 aria-label="Ouvrir le menu"
               >
                 <Menu className="h-5 w-5" />
