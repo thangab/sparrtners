@@ -29,6 +29,7 @@ const DISCIPLINE_OPTIONS = [
 const DOMINANT_HAND_OPTIONS = [
   { value: 'right', label: 'Droitier' },
   { value: 'left', label: 'Gaucher' },
+  { value: 'both', label: 'Ambidextre' },
 ];
 
 const toggleArrayValue = (current: string[], next: string) => {
@@ -83,8 +84,8 @@ export function SessionFiltersSidebar({
   const [selectedDisciplines, setSelectedDisciplines] = React.useState(
     defaultDisciplines,
   );
-  const [selectedDominantHands, setSelectedDominantHands] = React.useState(
-    defaultDominantHands,
+  const [selectedDominantHand, setSelectedDominantHand] = React.useState(
+    defaultDominantHands[0] ?? '',
   );
   const submitFrameRef = React.useRef<number | null>(null);
 
@@ -158,7 +159,7 @@ export function SessionFiltersSidebar({
   }, [defaultDisciplines]);
 
   React.useEffect(() => {
-    setSelectedDominantHands(defaultDominantHands);
+    setSelectedDominantHand(defaultDominantHands[0] ?? '');
   }, [defaultDominantHands]);
 
   const activeFiltersCount = React.useMemo(() => {
@@ -167,7 +168,7 @@ export function SessionFiltersSidebar({
     if (dateEndValue) count += 1;
     if (selectedTrainingTypes.length > 0) count += 1;
     if (selectedDisciplines.length > 0) count += 1;
-    if (selectedDominantHands.length > 0) count += 1;
+    if (selectedDominantHand) count += 1;
     if (durationValue !== DEFAULT_DURATION) count += 1;
     if (radiusValue !== DEFAULT_RADIUS) count += 1;
     if (
@@ -188,7 +189,7 @@ export function SessionFiltersSidebar({
     dateEndValue,
     selectedTrainingTypes.length,
     selectedDisciplines.length,
-    selectedDominantHands.length,
+    selectedDominantHand,
     durationValue,
     radiusValue,
     heightValue,
@@ -204,7 +205,7 @@ export function SessionFiltersSidebar({
     setDateEndValue('');
     setSelectedTrainingTypes([]);
     setSelectedDisciplines([]);
-    setSelectedDominantHands([]);
+    setSelectedDominantHand('');
     router.replace('/find-sessions');
   }, [router]);
 
@@ -482,20 +483,18 @@ export function SessionFiltersSidebar({
             <label
               key={item.value}
               className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                selectedDominantHands.includes(item.value)
+                selectedDominantHand === item.value
                   ? 'border-slate-900 bg-slate-900 text-white'
                   : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300'
               }`}
             >
               <input
-                type="checkbox"
+                type="radio"
                 name="dominant_hand"
                 value={item.value}
-                checked={selectedDominantHands.includes(item.value)}
-                onChange={() => {
-                  setSelectedDominantHands((current) => {
-                    return toggleArrayValue(current, item.value);
-                  });
+                checked={selectedDominantHand === item.value}
+                onChange={(event) => {
+                  setSelectedDominantHand(event.target.value);
                   scheduleSubmit();
                 }}
                 className="sr-only"
