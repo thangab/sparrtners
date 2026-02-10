@@ -193,7 +193,7 @@ export default async function RequestsPage() {
       timeStyle: 'short',
       timeZone: 'Europe/Paris',
     }).format(new Date(value));
-  const nowTimestamp = Date.now();
+  const nowTimestamp = Date.parse(new Date().toISOString());
   const sessionIsFinished = (startsAt: string, durationMinutes: number | null) =>
     new Date(startsAt).getTime() +
       (durationMinutes ?? 60) * 60 * 1000 <=
@@ -300,13 +300,20 @@ export default async function RequestsPage() {
   const totalItems = createdItems.length + requestedItems.length;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Mes sessions</h1>
-        <p className="text-muted-foreground">
-          Gère tes publications et demandes.
+    <div className="space-y-6 overflow-x-hidden">
+      <section className="rounded-3xl border border-slate-200/80 bg-[radial-gradient(circle_at_top_left,#fff7ed_0,#ffffff_45%,#f8fafc_100%)] px-6 py-6 shadow-[0_20px_45px_-35px_rgba(15,23,42,0.3)] md:px-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          Sessions
         </p>
-      </div>
+        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+          Mes sessions et demandes
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm text-slate-600 md:text-base">
+          Pilote tes publications, réponds rapidement aux demandes et laisse
+          tes avis de session au bon moment.
+        </p>
+      </section>
+
       <div className="space-y-4">
         {createdSessionsError || myRequestsError ? (
           <Card>
@@ -318,7 +325,7 @@ export default async function RequestsPage() {
             </CardContent>
           </Card>
         ) : totalItems === 0 ? (
-          <Card>
+          <Card className="rounded-3xl border-dashed border-slate-300 bg-slate-50/70">
             <CardHeader>
               <CardTitle>Aucune session</CardTitle>
             </CardHeader>

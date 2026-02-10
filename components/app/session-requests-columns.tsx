@@ -12,10 +12,17 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { Switch } from '@/components/ui/switch';
 import { OpenChatButton } from '@/components/app/open-chat-button';
 import { SessionReviewModal } from '@/components/app/session-review-modal';
-import { MoreVertical, Eye, EyeOff } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  CalendarClock,
+  MapPin,
+  Users,
+  Activity,
+  ChevronDown,
+} from 'lucide-react';
 import { SessionTableRow } from '@/components/app/session-requests-types';
 
 type ColumnsOptions = {
@@ -46,41 +53,61 @@ export function getSessionRequestsColumns({
     {
       accessorKey: 'title',
       header: 'Session',
-      cell: ({ row }) => (
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="font-medium text-slate-900">
-              {row.original.title}
-            </div>
-            {row.original.kind === 'host' &&
-            row.original.requests?.some(
+      cell: ({ row }) => {
+        const isHost = row.original.kind === 'host';
+        const reviewPending = isHost
+          ? row.original.requests?.some(
               (request) => request.can_review && !request.reviewed,
-            ) ? (
-              <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">
-                Avis à donner
+            ) ?? false
+          : !!row.original.can_review && !row.original.reviewed;
+
+        return (
+          <div className="min-w-[260px] rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 p-3 shadow-sm">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <p className="font-semibold text-slate-900">{row.original.title}</p>
+              <Badge
+                variant="outline"
+                className="border-slate-300 bg-white text-slate-600"
+              >
+                {isHost ? 'Hôte' : 'Demandeur'}
               </Badge>
-            ) : null}
-            {row.original.kind === 'requester' &&
-            row.original.can_review &&
-            !row.original.reviewed ? (
-              <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">
-                Avis à donner
-              </Badge>
-            ) : null}
-          </div>
-          <div className="text-xs text-slate-500">{row.original.starts_at}</div>
-          <div className="text-xs text-slate-500">{row.original.place}</div>
-          {row.original.kind === 'host' ? (
-            <div className="text-xs text-slate-500">
-              {row.original.impressions ?? 0} impressions ·{' '}
-              {row.original.detail_clicks ?? 0} clics
+              {reviewPending ? (
+                <Badge className="bg-orange-100 text-orange-900 hover:bg-orange-100">
+                  Avis à donner
+                </Badge>
+              ) : null}
+              {!row.original.is_published ? (
+                <Badge variant="secondary">Désactivée</Badge>
+              ) : null}
             </div>
-          ) : null}
-          {!row.original.is_published ? (
-            <Badge variant="secondary">Session désactivée</Badge>
-          ) : null}
-        </div>
-      ),
+
+            <div className="space-y-1.5 text-xs text-slate-600">
+              <div className="flex items-center gap-2">
+                <CalendarClock className="h-3.5 w-3.5 text-slate-400" />
+                <span>{row.original.starts_at}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                <span>{row.original.place}</span>
+              </div>
+              {isHost ? (
+                <div className="flex items-center gap-2">
+                  <Activity className="h-3.5 w-3.5 text-slate-400" />
+                  <span>
+                    {row.original.impressions ?? 0} impressions ·{' '}
+                    {row.original.detail_clicks ?? 0} clics
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Users className="h-3.5 w-3.5 text-slate-400" />
+                  <span>{row.original.participant_count ?? 1} participant(s)</span>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'status',
@@ -92,36 +119,63 @@ export function getSessionRequestsColumns({
             : 'Statut / demandes',
       cell: ({ row }) =>
         row.original.kind === 'requester' ? (
-          <Badge variant="outline">{row.original.status ?? 'pending'}</Badge>
+          <Badge variant="outline" className="capitalize">
+            {row.original.status ?? 'pending'}
+          </Badge>
         ) : (
-          <div className="text-sm text-slate-600">
-            {row.original.pending_count ?? 0} en attente ·{' '}
-            {row.original.requests_count ?? 0} total
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant="outline"
+              className="border-orange-200 bg-orange-50 text-orange-700"
+            >
+              {row.original.pending_count ?? 0} en attente
+            </Badge>
+            <Badge
+              variant="outline"
+              className="border-slate-200 bg-slate-100 text-slate-700"
+            >
+              {row.original.requests_count ?? 0} total
+            </Badge>
           </div>
         ),
     },
     {
       accessorKey: 'participant_count',
-      header: view === 'requester' ? 'Participants' : 'Actions',
+      header: view === 'requester' ? 'Participants' : 'Gestion',
       cell: ({ row }) =>
         row.original.kind === 'requester' ? (
           <div className="text-sm text-slate-600">
             {row.original.participant_count ?? 1}
           </div>
         ) : (
-          <div className="flex items-center gap-2 text-sm text-slate-600">
-            <Switch
-              checked={row.original.is_full ?? false}
-              onCheckedChange={(checked) =>
-                handleFullChange(row.original.id, checked)
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className={
+                row.original.is_full
+                  ? 'border-rose-200 bg-rose-50 text-rose-700'
+                  : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+              }
+            >
+              {row.original.is_full
+                ? 'Demandes fermées'
+                : 'Demandes ouvertes'}
+            </Badge>
+            <Button
+              size="sm"
+              variant={row.original.is_full ? 'outline' : 'default'}
+              className={row.original.is_full ? '' : 'bg-slate-900 text-white hover:bg-slate-800'}
+              onClick={() =>
+                handleFullChange(row.original.id, !(row.original.is_full ?? false))
               }
               disabled={
                 !row.original.is_published ||
                 !!switchLoading[row.original.id] ||
                 row.original.is_finished
               }
-            />
-            <span>Session complète</span>
+            >
+              {row.original.is_full ? 'Rouvrir' : 'Fermer'}
+            </Button>
           </div>
         ),
     },
@@ -155,6 +209,9 @@ export function getSessionRequestsColumns({
                   <Eye className="mr-2 h-4 w-4" />
                 )}
                 Demandes
+                <span className="ml-2 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600">
+                  {row.original.requests_count ?? 0}
+                </span>
               </Button>
             ) : null}
             {row.original.kind === 'requester' &&
@@ -194,12 +251,13 @@ export function getSessionRequestsColumns({
                 <DropdownMenuTrigger asChild>
                   <Button
                     size="sm"
-                    variant="ghost"
+                    variant="outline"
                     disabled={
                       !row.original.is_published || row.original.is_finished
                     }
                   >
-                    <MoreVertical className="h-4 w-4" />
+                    Options
+                    <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

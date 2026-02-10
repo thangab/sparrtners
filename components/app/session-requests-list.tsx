@@ -150,7 +150,7 @@ export function SessionRequestsList({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {items.map((request) => {
         const requesterName = request.requester?.display_name ?? 'Sportif';
         const requestDate = new Intl.DateTimeFormat('fr-FR', {
@@ -161,24 +161,26 @@ export function SessionRequestsList({
         return (
           <div
             key={request.id}
-            className="flex flex-col gap-2 rounded-2xl border border-border bg-slate-50 p-3 text-sm"
+            className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="font-medium text-foreground">
+              <div className="font-semibold text-foreground">
                 <Link
                   href={`/profile/${request.user_id}`}
-                  className="hover:underline"
+                  className="underline-offset-4 hover:underline"
                 >
                   {requesterName}
                 </Link>
               </div>
-              <Badge variant="outline">{request.status}</Badge>
+              <Badge variant="outline" className="capitalize">
+                {request.status}
+              </Badge>
             </div>
             <div className="text-xs text-muted-foreground">
               {requestDate} · {request.participant_count ?? 1} participant(s)
             </div>
             {request.message ? (
-              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
                 {request.message}
               </div>
             ) : null}
