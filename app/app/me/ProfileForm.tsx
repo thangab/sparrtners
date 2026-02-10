@@ -305,8 +305,8 @@ export function ProfileForm({
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
       <div className="rounded-xl border border-orange-200 bg-orange-50/70 px-3 py-2 text-xs text-orange-800">
-        Pour atteindre 100% de complétion: Nom public, genre, prénom, nom,
-        date de naissance, ville, main forte, taille, poids et au moins une
+        Pour atteindre 100% de complétion: Nom public, genre, prénom, nom, date
+        de naissance, ville, main forte, taille, poids et au moins une
         discipline avec niveau.
       </div>
 
@@ -529,7 +529,12 @@ export function ProfileForm({
                 })}
               </div>
               {languageValues.map((language) => (
-                <input key={language} type="hidden" name="languages" value={language} />
+                <input
+                  key={language}
+                  type="hidden"
+                  name="languages"
+                  value={language}
+                />
               ))}
             </div>
           </div>
@@ -619,7 +624,9 @@ export function ProfileForm({
                           key={item.id}
                           type="button"
                           onClick={() =>
-                            updateEntry(index, { skillLevelId: String(item.id) })
+                            updateEntry(index, {
+                              skillLevelId: String(item.id),
+                            })
                           }
                           className={`rounded-full border px-3 py-1.5 text-sm transition ${
                             isActive
@@ -688,12 +695,12 @@ export function ProfileForm({
               </Label>
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { value: 'right', label: 'Droitier', src: '/droitier.webp' },
-                  { value: 'left', label: 'Gaucher', src: '/gaucher.webp' },
+                  { value: 'right', label: 'Droitier', src: '/right.webp' },
+                  { value: 'left', label: 'Gaucher', src: '/left.webp' },
                   {
                     value: 'both',
                     label: 'Ambidextre',
-                    src: '/ambidextre.webp',
+                    src: '/ambidextrous.webp',
                   },
                 ].map((option) => {
                   const isActive = dominantHandValue === option.value;
@@ -708,12 +715,12 @@ export function ProfileForm({
                           : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                       }`}
                     >
-                      <div className="h-12 w-12 overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-12 w-15">
                         <Image
                           src={option.src}
                           alt={option.label}
-                          width={48}
-                          height={48}
+                          width={58}
+                          height={58}
                           className="h-full w-full object-cover"
                         />
                       </div>

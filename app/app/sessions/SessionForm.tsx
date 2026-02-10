@@ -946,13 +946,13 @@ export function SessionForm({
                     {
                       value: 'right',
                       label: 'Droitier',
-                      src: '/droitier.webp',
+                      src: '/right.webp',
                     },
-                    { value: 'left', label: 'Gaucher', src: '/gaucher.webp' },
+                    { value: 'left', label: 'Gaucher', src: '/left.webp' },
                     {
                       value: 'both',
                       label: 'Ambidextre',
-                      src: '/ambidextre.webp',
+                      src: '/ambidextrous.webp',
                     },
                   ].map((option) => {
                     const isActive = dominantHandValue === option.value;
@@ -967,12 +967,12 @@ export function SessionForm({
                             : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                         }`}
                       >
-                        <div className="h-12 w-12 overflow-hidden rounded-full bg-slate-100">
+                        <div className="h-12 w-15">
                           <Image
                             src={option.src}
                             alt={option.label}
-                            width={48}
-                            height={48}
+                            width={58}
+                            height={58}
                             className="h-full w-full object-cover"
                           />
                         </div>
