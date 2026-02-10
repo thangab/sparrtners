@@ -14,6 +14,14 @@ import { getEntitlements, isPremium } from '@/lib/entitlements';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { DashboardNextSessionCard } from '@/components/app/dashboard-next-session-card';
+import {
+  ArrowRight,
+  CircleHelp,
+  Flame,
+  Rocket,
+  Sparkles,
+  Users2,
+} from 'lucide-react';
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClientReadOnly();
@@ -151,17 +159,47 @@ export default async function DashboardPage() {
   const remainingSessions = Math.max(0, 4 - (monthlySessionCount ?? 0));
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Overview</h1>
-      </div>
-      <div className="grid gap-4 lg:grid-cols-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Plan actuel</CardTitle>
+    <div className="w-full max-w-full space-y-6 overflow-x-hidden">
+      <section className="w-full max-w-full min-w-0 rounded-3xl border border-slate-200/80 bg-[radial-gradient(circle_at_top_right,#fff7ed_0,#ffffff_50%,#f8fafc_100%)] px-5 py-5 shadow-[0_24px_50px_-40px_rgba(15,23,42,0.5)] md:px-7">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+              Dashboard
+            </p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+              Ton cockpit d&apos;entraînement
+            </h1>
+            <p className="max-w-2xl text-sm text-slate-600 md:text-base">
+              Suis ton activité, prépare ta prochaine session et active
+              rapidement les actions importantes.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild className="bg-slate-900 text-white hover:bg-slate-800">
+              <Link href="/app/sessions/new">
+                Créer une session
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/app/sessions/requests?tab=requester">
+                Mes demandes
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid min-w-0 gap-4 lg:grid-cols-12">
+        <Card className="border-slate-200/80 lg:col-span-5">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="h-4 w-4 text-orange-500" />
+              Plan actuel
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-2">
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
               <Badge variant={premium ? 'default' : 'secondary'}>
                 {premium ? 'PRO' : 'Free'}
               </Badge>
@@ -170,7 +208,7 @@ export default async function DashboardPage() {
               ) : null}
               {entitlement?.premium_until ? (
                 <span className="text-sm text-muted-foreground">
-                  Jusquau{' '}
+                  Jusqu&apos;au{' '}
                   {new Date(entitlement.premium_until).toLocaleDateString(
                     'fr-FR',
                   )}
@@ -178,46 +216,55 @@ export default async function DashboardPage() {
               ) : null}
             </div>
             {!premium ? (
-              <div className="space-y-1 text-sm text-muted-foreground">
-                <p>
-                  Sessions restantes ce mois-ci:{' '}
-                  <span className="font-semibold text-foreground">
-                    {remainingSessions} / 4
-                  </span>
-                </p>
+              <div className="rounded-xl border border-orange-100 bg-orange-50/70 px-3 py-2 text-sm text-slate-700">
+                Sessions restantes ce mois-ci:{' '}
+                <span className="font-semibold text-slate-900">
+                  {remainingSessions} / 4
+                </span>
               </div>
-            ) : null}
+            ) : (
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-sm text-emerald-800">
+                Tu as accès à toutes les publications et fonctionnalités PRO.
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
-              <Button variant="default" asChild>
-                <Link href="/pricing">Upgrade mon plan</Link>
+              <Button asChild>
+                <Link href="/pricing">Voir les offres</Link>
               </Button>
-              {/* <CheckoutButton sku="premium_monthly" label="PRO mensuel" />
-              <CheckoutButton
-                sku="premium_yearly"
-                label="PRO annuel"
-                variant="secondary"
-              />
-              <CheckoutButton
-                sku="premium_lifetime"
-                label="PRO à vie"
-                variant="outline"
-              /> */}
+              <Button asChild variant="outline">
+                <Link href="/app/sessions/requests">Gérer mes sessions</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Boosts</CardTitle>
+
+        <Card className="border-slate-200/80 lg:col-span-3">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Rocket className="h-4 w-4 text-slate-700" />
+              Boosts
+              <span className="relative inline-flex items-center">
+                <button
+                  type="button"
+                  className="group inline-flex h-6 w-6 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                  aria-label="À quoi sert un boost ?"
+                >
+                  <CircleHelp className="h-4 w-4" />
+                  <span className="pointer-events-none absolute left-0 top-full z-20 mt-2 hidden w-[min(90vw,18rem)] rounded-xl border border-slate-200 bg-white p-3 text-xs font-normal leading-relaxed text-slate-600 shadow-xl group-hover:block group-focus-visible:block sm:left-1/2 sm:w-64 sm:-translate-x-1/2">
+                    Un boost met ta session en avant dans les résultats pendant
+                    24h pour augmenter sa visibilité et recevoir plus de
+                    demandes.
+                  </span>
+                </button>
+              </span>
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {/* <div className="flex items-center gap-2 text-sm">
-              Pour mettre en avant tes sessions et attirer plus de partenaires,
-              utilise les boosts pour apparaître en haut des résultats de
-              recherche pendant 24 heures.
-            </div> */}
             <p className="text-sm text-muted-foreground">
               Crédits disponibles:{' '}
-              <span className="font-semibold">{creditsData?.credits ?? 0}</span>
+              <span className="font-semibold text-slate-900">
+                {creditsData?.credits ?? 0}
+              </span>
             </p>
             <CheckoutButton
               sku="boost_pack_5"
@@ -226,36 +273,48 @@ export default async function DashboardPage() {
             />
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Sessions créées</CardTitle>
+
+        <Card className="border-slate-200/80 lg:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm text-slate-700">
+              <Flame className="h-4 w-4 text-orange-500" />
+              Sessions créées
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-2 text-3xl">
+          <CardContent className="space-y-2">
+            <p className="text-3xl font-black text-slate-900">
               {createdSessionsCount ?? 0}
-            </div>
-            <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+            </p>
+            <p className="text-sm text-slate-500">
               {createdSessionsMonthCount ?? 0} ce mois-ci
-            </div>
+            </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Demandes envoyées</CardTitle>
+
+        <Card className="border-slate-200/80 lg:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm text-slate-700">
+              <Users2 className="h-4 w-4 text-slate-700" />
+              Demandes envoyées
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-2 text-3xl">
+          <CardContent className="space-y-2">
+            <p className="text-3xl font-black text-slate-900">
               {sentRequestsCount ?? 0}
-            </div>
-            <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+            </p>
+            <p className="text-sm text-slate-500">
               {sentRequestsMonthCount ?? 0} ce mois-ci
-            </div>
+            </p>
           </CardContent>
         </Card>
-      </div>
-      <DashboardNextSessionCard userId={user?.id} />
-      <DashboardActivityChart />
-      <div className="grid gap-4 lg:grid-cols-2">
+      </section>
+
+      <section className="grid min-w-0 gap-4 xl:grid-cols-[1fr_1.3fr] xl:items-start">
+        <DashboardNextSessionCard userId={user?.id} />
+        <DashboardActivityChart />
+      </section>
+
+      <section className="grid min-w-0 gap-4 lg:grid-cols-2">
         <DashboardMiniTable
           title="Mes sessions"
           linkHref="/app/sessions/requests"
@@ -264,6 +323,7 @@ export default async function DashboardPage() {
           emptyLabel="Aucune session récente."
           data={recentSessions}
           columns={dashboardSessionsColumns}
+          mobileVariant="sessions"
         />
         <DashboardMiniTable
           title="Mes demandes"
@@ -273,8 +333,9 @@ export default async function DashboardPage() {
           emptyLabel="Aucune demande récente."
           data={recentRequests}
           columns={dashboardRequestsColumns}
+          mobileVariant="requests"
         />
-      </div>
+      </section>
     </div>
   );
 }

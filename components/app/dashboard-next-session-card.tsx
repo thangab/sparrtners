@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OpenChatButton } from '@/components/app/open-chat-button';
 import { createSupabaseServerClientReadOnly } from '@/lib/supabase/server';
+import { CalendarClock, Clock3, Dumbbell, MapPin } from 'lucide-react';
 
 type NamedRelation = { name?: string | null } | { name?: string | null }[] | null;
 type TrainingTypeRow = { name?: string | null } | { name?: string | null }[] | null;
@@ -67,9 +68,9 @@ export async function DashboardNextSessionCard({
 
   if (!userId) {
     return (
-      <Card>
+      <Card className="border-slate-200/80">
         <CardHeader className="space-y-3">
-          <CardTitle>Prochaine session</CardTitle>
+          <CardTitle className="text-base">Prochaine session</CardTitle>
           <p className="text-sm text-muted-foreground">
             La session à venir la plus proche de ton planning.
           </p>
@@ -230,79 +231,117 @@ export async function DashboardNextSessionCard({
   });
 
   return (
-    <Card>
-      <CardHeader className="space-y-3">
+    <Card className="w-full max-w-full overflow-hidden border-slate-200/80 shadow-sm">
+      <CardHeader className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <CardTitle>Prochaine session</CardTitle>
+          <div className="space-y-1">
+            <CardTitle className="text-xl font-black text-slate-950">
+              Prochaine session
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              La session à venir la plus proche de ton planning.
+            </p>
+          </div>
           {nextUpcomingSession ? (
-            <Badge variant="secondary">
+            <Badge
+              variant="secondary"
+              className="bg-orange-100 text-orange-900 hover:bg-orange-100"
+            >
               {nextUpcomingSession.source === 'host'
                 ? 'Session créée'
                 : 'Demande acceptée'}
             </Badge>
           ) : null}
         </div>
-        <p className="text-sm text-muted-foreground">
-          La session à venir la plus proche de ton planning.
-        </p>
       </CardHeader>
       <CardContent>
         {nextUpcomingSession ? (
-          <div className="space-y-2 text-sm">
-            <p>
-              <span className="font-medium text-foreground">Date:</span>{' '}
-              {formatLongDate(nextUpcomingSession.session.starts_at)}
-            </p>
-            <p>
-              <span className="font-medium text-foreground">Heure:</span>{' '}
-              {formatTime(nextUpcomingSession.session.starts_at)}
-              {nextUpcomingSession.session.duration_minutes
-                ? ` · ${nextUpcomingSession.session.duration_minutes} min`
-                : ''}
-            </p>
-            <p>
-              <span className="font-medium text-foreground">Lieu:</span>{' '}
-              {nextUpcomingPlace?.name ?? 'Lieu'}
-              {nextUpcomingPlace?.city ? ` · ${nextUpcomingPlace.city}` : ''}
-            </p>
-            <p>
-              <span className="font-medium text-foreground">Type:</span>{' '}
-              {nextUpcomingType?.name ?? 'Entraînement'}
-            </p>
-            <p>
-              <span className="font-medium text-foreground">Disciplines:</span>{' '}
-              {nextUpcomingDisciplines.length > 0
-                ? nextUpcomingDisciplines.join(' · ')
-                : 'Non renseignées'}
-            </p>
-            <div className="pt-1">
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/70 p-4">
+            <div className="grid gap-2 rounded-xl border border-slate-200 bg-white p-3 sm:grid-cols-2">
+              <div className="flex items-center gap-2 text-sm text-slate-700">
+                <CalendarClock className="h-4 w-4 text-slate-400" />
+                <span>{formatLongDate(nextUpcomingSession.session.starts_at)}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-700">
+                <Clock3 className="h-4 w-4 text-slate-400" />
+                <span>
+                  {formatTime(nextUpcomingSession.session.starts_at)}
+                  {nextUpcomingSession.session.duration_minutes
+                    ? ` · ${nextUpcomingSession.session.duration_minutes} min`
+                    : ''}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-700">
+                <MapPin className="h-4 w-4 text-slate-400" />
+                <span>
+                  {nextUpcomingPlace?.name ?? 'Lieu'}
+                  {nextUpcomingPlace?.city ? ` · ${nextUpcomingPlace.city}` : ''}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-700">
+                <Dumbbell className="h-4 w-4 text-slate-400" />
+                <span>{nextUpcomingType?.name ?? 'Entraînement'}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Disciplines
+              </p>
+              {nextUpcomingDisciplines.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {nextUpcomingDisciplines.map((discipline) => (
+                    <Badge
+                      key={discipline}
+                      variant="outline"
+                      className="border-slate-300 bg-white text-slate-700"
+                    >
+                      {discipline}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">Non renseignées</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
               <div className="flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="outline">
                   <Link href={`/sessions/${nextUpcomingSession.session.id}`}>
                     Voir la session
                   </Link>
                 </Button>
-                {nextUpcomingChatParticipants.map((participant) => (
-                  <div
-                    key={participant.userId}
-                    className="flex items-center gap-2 rounded-md border px-2 py-1"
-                  >
-                    <span className="text-xs text-muted-foreground">
-                      {participant.displayName}
-                    </span>
-                    <OpenChatButton
-                      sessionId={nextUpcomingSession.session.id}
-                      otherUserId={participant.userId}
-                    />
-                  </div>
-                ))}
               </div>
+              {nextUpcomingChatParticipants.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    Chat rapide
+                  </p>
+                  <div className="flex min-w-0 flex-wrap gap-2">
+                    {nextUpcomingChatParticipants.map((participant) => (
+                      <div
+                        key={participant.userId}
+                        className="flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1.5 sm:w-auto sm:justify-start"
+                      >
+                        <span className="min-w-0 max-w-[140px] truncate text-xs text-muted-foreground">
+                          {participant.displayName}
+                        </span>
+                        <OpenChatButton
+                          sessionId={nextUpcomingSession.session.id}
+                          otherUserId={participant.userId}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-muted-foreground">
             Aucune session à venir pour le moment.
-          </p>
+          </div>
         )}
       </CardContent>
     </Card>

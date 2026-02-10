@@ -38,31 +38,67 @@ export function OpenChatButton({
     }
 
     const [userA, userB] = [currentUserId, otherUserId].sort();
-    const { data: conversation, error } = await supabase
+
+    const { data: existingConversation, error: existingError } = await supabase
       .from('conversations')
-      .upsert(
-        {
-          session_id: sessionId,
-          user_a: userA,
-          user_b: userB,
-        },
-        { onConflict: 'session_id,user_a,user_b' },
-      )
       .select('id')
+      .eq('session_id', sessionId)
+      .eq('user_a', userA)
+      .eq('user_b', userB)
       .maybeSingle();
 
-    if (error) {
+    if (existingError) {
       toast({
         title: 'Erreur',
-        description: error.message,
+        description: existingError.message,
         variant: 'destructive',
       });
       setIsLoading(false);
       return;
     }
 
-    if (conversation?.id) {
-      router.push(`/app/chat/${conversation.id}`);
+    if (existingConversation?.id) {
+      router.push(`/app/chat/${existingConversation.id}`);
+      setIsLoading(false);
+      return;
+    }
+
+    const { data: createdConversation, error: createError } = await supabase
+      .from('conversations')
+      .insert({
+        session_id: sessionId,
+        user_a: userA,
+        user_b: userB,
+      })
+      .select('id')
+      .maybeSingle();
+
+    if (createError && (createError as { code?: string }).code !== '23505') {
+      toast({
+        title: 'Erreur',
+        description: createError.message,
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    if (createdConversation?.id) {
+      router.push(`/app/chat/${createdConversation.id}`);
+      setIsLoading(false);
+      return;
+    }
+
+    const { data: fallbackConversation } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('user_a', userA)
+      .eq('user_b', userB)
+      .maybeSingle();
+
+    if (fallbackConversation?.id) {
+      router.push(`/app/chat/${fallbackConversation.id}`);
     }
     setIsLoading(false);
   };
@@ -73,10 +109,17 @@ export function OpenChatButton({
       variant="default"
       onClick={handleOpenChat}
       disabled={isLoading}
-      className="bg-gradient-to-r from-slate-900 to-slate-700 text-white hover:from-slate-800 hover:to-slate-600"
+      className="max-w-full bg-gradient-to-r from-slate-900 to-slate-700 text-white hover:from-slate-800 hover:to-slate-600"
     >
       <MessageCircle className="mr-2 h-4 w-4" />
-      {isLoading ? 'Ouverture...' : 'Discuter maintenant'}
+      {isLoading ? (
+        'Ouverture...'
+      ) : (
+        <>
+          <span className="sm:hidden">Chat</span>
+          <span className="hidden sm:inline">Discuter maintenant</span>
+        </>
+      )}
     </Button>
   );
 }

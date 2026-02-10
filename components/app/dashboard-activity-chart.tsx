@@ -126,21 +126,30 @@ export function DashboardActivityChart() {
   );
 
   return (
-    <Card>
+    <Card className="w-full max-w-full overflow-hidden border-slate-200/80 shadow-sm">
       <CardHeader className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <CardTitle>Activité sportive</CardTitle>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+          <div className="space-y-1">
+            <CardTitle className="text-xl font-black text-slate-950">
+              Activité sportive
+            </CardTitle>
             <p className="text-sm text-muted-foreground">
               Suis tes sessions et tes heures sur la période choisie.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid w-full min-w-0 grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-slate-100/80 p-1.5 sm:w-auto">
             {metricOptions.map((option) => (
               <Button
                 key={option.key}
-                variant={metric === option.key ? 'default' : 'outline'}
+                variant="ghost"
                 size="sm"
+                className={
+                  `min-w-0 px-2 text-xs sm:text-sm ${
+                    metric === option.key
+                      ? 'bg-white text-slate-900 shadow-sm hover:bg-white'
+                      : 'text-slate-600 hover:bg-white/70'
+                  }`
+                }
                 onClick={() => setMetric(option.key)}
               >
                 {option.label}
@@ -148,28 +157,38 @@ export function DashboardActivityChart() {
             ))}
           </div>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="grid w-full min-w-0 grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-slate-100/80 p-1.5 sm:w-auto">
             {rangeOptions.map((option) => (
               <Button
                 key={option.key}
-                variant={range === option.key ? 'secondary' : 'outline'}
+                variant="ghost"
                 size="sm"
+                className={
+                  `min-w-0 px-2 text-xs sm:text-sm ${
+                    range === option.key
+                      ? 'bg-white text-slate-900 shadow-sm hover:bg-white'
+                      : 'text-slate-600 hover:bg-white/70'
+                  }`
+                }
                 onClick={() => setRange(option.key)}
               >
                 {option.label}
               </Button>
             ))}
           </div>
-          <div>
+          <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
             {metric === 'sessions'
               ? `${totalSessions} sessions`
               : `${totalHours} h`}
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <ChartContainer className="h-72" config={chartConfig}>
+      <CardContent className="space-y-2">
+        <ChartContainer
+          className="h-72 rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/70 p-2"
+          config={chartConfig}
+        >
           <LineChart data={series} margin={{ left: 0, right: 8, top: 8 }}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis
@@ -194,13 +213,13 @@ export function DashboardActivityChart() {
               type="linear"
               dataKey={metric}
               stroke={`var(--color-${metric})`}
-              strokeWidth={2}
+              strokeWidth={2.5}
               dot={false}
             />
           </LineChart>
         </ChartContainer>
         {loading ? (
-          <p className="mt-2 text-xs text-muted-foreground">Chargement…</p>
+          <p className="text-xs text-muted-foreground">Chargement…</p>
         ) : null}
       </CardContent>
     </Card>

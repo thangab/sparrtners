@@ -106,38 +106,88 @@ export function SessionRequestsList({
       return;
     }
     const [userA, userB] = [hostId, request.user_id].sort();
-    const { data: conversation, error } = await supabase
+
+    const { data: existingConversation, error: existingError } = await supabase
       .from('conversations')
-      .upsert(
-        {
-          session_id: request.session_id,
-          user_a: userA,
-          user_b: userB,
-        },
-        { onConflict: 'session_id,user_a,user_b' },
-      )
       .select('id')
+      .eq('session_id', request.session_id)
+      .eq('user_a', userA)
+      .eq('user_b', userB)
       .maybeSingle();
 
-    if (error) {
+    if (existingError) {
       toast({
         title: 'Erreur',
-        description: error.message,
+        description: existingError.message,
         variant: 'destructive',
       });
       setLoadingId(null);
       return;
     }
 
-    if (conversation?.id) {
+    if (existingConversation?.id) {
       setItems((current) =>
         current.map((item) =>
           item.id === request.id
-            ? { ...item, conversation_id: conversation.id }
+            ? { ...item, conversation_id: existingConversation.id }
             : item,
         ),
       );
-      router.push(`/app/chat/${conversation.id}`);
+      router.push(`/app/chat/${existingConversation.id}`);
+      setLoadingId(null);
+      return;
+    }
+
+    const { data: createdConversation, error: createError } = await supabase
+      .from('conversations')
+      .insert({
+        session_id: request.session_id,
+        user_a: userA,
+        user_b: userB,
+      })
+      .select('id')
+      .maybeSingle();
+
+    if (createError && (createError as { code?: string }).code !== '23505') {
+      toast({
+        title: 'Erreur',
+        description: createError.message,
+        variant: 'destructive',
+      });
+      setLoadingId(null);
+      return;
+    }
+
+    if (createdConversation?.id) {
+      setItems((current) =>
+        current.map((item) =>
+          item.id === request.id
+            ? { ...item, conversation_id: createdConversation.id }
+            : item,
+        ),
+      );
+      router.push(`/app/chat/${createdConversation.id}`);
+      setLoadingId(null);
+      return;
+    }
+
+    const { data: fallbackConversation } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('session_id', request.session_id)
+      .eq('user_a', userA)
+      .eq('user_b', userB)
+      .maybeSingle();
+
+    if (fallbackConversation?.id) {
+      setItems((current) =>
+        current.map((item) =>
+          item.id === request.id
+            ? { ...item, conversation_id: fallbackConversation.id }
+            : item,
+        ),
+      );
+      router.push(`/app/chat/${fallbackConversation.id}`);
     }
     setLoadingId(null);
   };

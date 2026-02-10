@@ -77,32 +77,71 @@ export function RequestsClient({
       const hostId = userData?.user?.id;
       if (hostId) {
         const [userA, userB] = [hostId, request.user_id].sort();
-        const { data: conversation, error: convoError } = await supabase
+        const { data: existingConversation, error: existingError } = await supabase
           .from('conversations')
-          .upsert(
-            {
-              session_id: request.session_id,
-              user_a: userA,
-              user_b: userB,
-            },
-            { onConflict: 'session_id,user_a,user_b' },
-          )
           .select('id')
+          .eq('session_id', request.session_id)
+          .eq('user_a', userA)
+          .eq('user_b', userB)
           .maybeSingle();
-        if (convoError) {
+
+        if (existingError) {
           toast({
             title: 'Erreur',
-            description: convoError.message,
+            description: existingError.message,
             variant: 'destructive',
           });
-        } else if (conversation?.id) {
+        } else if (existingConversation?.id) {
           setRequests((current) =>
             current.map((item) =>
               item.id === request.id
-                ? { ...item, conversation_id: conversation.id }
+                ? { ...item, conversation_id: existingConversation.id }
                 : item,
             ),
           );
+        } else {
+          const { data: createdConversation, error: createError } = await supabase
+            .from('conversations')
+            .insert({
+              session_id: request.session_id,
+              user_a: userA,
+              user_b: userB,
+            })
+            .select('id')
+            .maybeSingle();
+
+          if (createError && (createError as { code?: string }).code !== '23505') {
+            toast({
+              title: 'Erreur',
+              description: createError.message,
+              variant: 'destructive',
+            });
+          } else if (createdConversation?.id) {
+            setRequests((current) =>
+              current.map((item) =>
+                item.id === request.id
+                  ? { ...item, conversation_id: createdConversation.id }
+                  : item,
+              ),
+            );
+          } else {
+            const { data: fallbackConversation } = await supabase
+              .from('conversations')
+              .select('id')
+              .eq('session_id', request.session_id)
+              .eq('user_a', userA)
+              .eq('user_b', userB)
+              .maybeSingle();
+            if (fallbackConversation?.id) {
+              setRequests((current) =>
+                current.map((item) =>
+                  item.id === request.id
+                    ? { ...item, conversation_id: fallbackConversation.id }
+                    : item,
+                ),
+              );
+            }
+          }
         }
       }
     }
