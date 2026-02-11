@@ -342,7 +342,7 @@ export function SessionsResults({
                       href={profileHref}
                       onClick={(event) => event.stopPropagation()}
                       onKeyDown={(event) => event.stopPropagation()}
-                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-700"
+                      className="group inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-700 transition-all duration-200 hover:border-orange-500 hover:bg-orange-100/70 active:border-orange-500 active:bg-orange-100/70"
                     >
                       {session.host_avatar_url ? (
                         <Image
@@ -357,10 +357,10 @@ export function SessionsResults({
                           <UserRound className="h-3 w-3 text-slate-600" />
                         </span>
                       )}
-                      <span className="truncate max-w-36 font-medium">
+                      <span className="truncate max-w-36 font-medium transition-colors group-hover:text-slate-900">
                         {hostLabel}
                       </span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-slate-500 transition-colors group-hover:text-orange-700">
                         Voir profil
                       </span>
                     </Link>
