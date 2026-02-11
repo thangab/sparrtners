@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +40,7 @@ import {
   Users,
   Activity,
   ChevronDown,
+  CircleHelp,
 } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
@@ -787,35 +790,40 @@ export function SessionRequestsTable({
 
                   {row.kind === 'host' ? (
                     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2 text-sm">
-                      <Badge
-                        variant="outline"
-                        className={
-                          row.is_full
-                            ? 'border-rose-200 bg-rose-50 text-rose-700'
-                            : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        }
-                      >
-                        {row.is_full ? 'Demandes fermées' : 'Demandes ouvertes'}
-                      </Badge>
-                      <Button
-                        size="sm"
-                        variant={row.is_full ? 'outline' : 'default'}
-                        className={
-                          row.is_full
-                            ? ''
-                            : 'bg-slate-900 text-white hover:bg-slate-800'
-                        }
-                        onClick={() =>
-                          handleFullChange(row.id, !(row.is_full ?? false))
+                      <Switch
+                        checked={!!row.is_full}
+                        onCheckedChange={(checked) =>
+                          handleFullChange(row.id, checked)
                         }
                         disabled={
                           !row.is_published ||
                           !!switchLoading[row.id] ||
                           isFinished
                         }
-                      >
-                        {row.is_full ? 'Rouvrir' : 'Fermer'}
-                      </Button>
+                      />
+                      <span className="text-sm font-medium text-slate-700">
+                        {row.is_full ? 'Demandes fermées' : 'Demandes ouvertes'}
+                      </span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            className="inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"
+                            aria-label="Aide sur le statut des demandes"
+                          >
+                            <CircleHelp className="h-3.5 w-3.5" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          side="top"
+                          align="start"
+                          className="w-[min(92vw,20rem)] rounded-xl border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-600"
+                        >
+                          Quand ce switch est activé, personne ne peut envoyer
+                          de nouvelle demande sur cette session jusqu’à ce que
+                          tu la réouvres.
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   ) : null}
 

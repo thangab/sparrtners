@@ -92,6 +92,7 @@ export default async function DashboardPage() {
           .select(
             `
             id,
+            starts_at,
             created_at,
             is_published,
             training_type:training_types(name)
@@ -107,9 +108,11 @@ export default async function DashboardPage() {
           .select(
             `
             id,
+            session_id,
             created_at,
             status,
             session:sessions (
+              starts_at,
               training_type:training_types(name)
             )
           `,
@@ -135,6 +138,7 @@ export default async function DashboardPage() {
       recentSessionsResult as {
         data?: Array<{
           id: string;
+          starts_at: string | null;
           created_at: string;
           is_published: boolean;
           training_type?:
@@ -147,7 +151,7 @@ export default async function DashboardPage() {
   ).map((session) => ({
     id: session.id,
     title: `Session de ${normalizeOne(session.training_type)?.name ?? 'Entraînement'}`,
-    created_at: formatShortDate(session.created_at),
+    starts_at: formatShortDate(session.starts_at),
     is_published: session.is_published,
   }));
 
@@ -156,16 +160,19 @@ export default async function DashboardPage() {
       recentRequestsResult as {
         data?: Array<{
           id: string;
+          session_id: string;
           created_at: string;
           status: string;
           session?:
             | {
+                starts_at?: string | null;
                 training_type?:
                   | { name?: string | null }
                   | { name?: string | null }[]
                   | null;
               }
             | {
+                starts_at?: string | null;
                 training_type?:
                   | { name?: string | null }
                   | { name?: string | null }[]
@@ -177,11 +184,12 @@ export default async function DashboardPage() {
     ).data ?? []
   ).map((request) => ({
     id: request.id,
+    session_id: request.session_id,
     title: `Session de ${
       normalizeOne(normalizeOne(request.session)?.training_type)?.name ??
       'Entraînement'
     }`,
-    created_at: formatShortDate(request.created_at),
+    starts_at: formatShortDate(normalizeOne(request.session)?.starts_at),
     status: request.status,
   }));
 

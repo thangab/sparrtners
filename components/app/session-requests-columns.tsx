@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +24,7 @@ import {
   Users,
   Activity,
   ChevronDown,
+  CircleHelp,
 } from 'lucide-react';
 import { SessionTableRow } from '@/components/app/session-requests-types';
 
@@ -153,33 +156,40 @@ export function getSessionRequestsColumns({
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className={
-                row.original.is_full
-                  ? 'border-rose-200 bg-rose-50 text-rose-700'
-                  : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-              }
-            >
-              {row.original.is_full
-                ? 'Demandes fermées'
-                : 'Demandes ouvertes'}
-            </Badge>
-            <Button
-              size="sm"
-              variant={row.original.is_full ? 'outline' : 'default'}
-              className={row.original.is_full ? '' : 'bg-slate-900 text-white hover:bg-slate-800'}
-              onClick={() =>
-                handleFullChange(row.original.id, !(row.original.is_full ?? false))
+            <Switch
+              checked={!!row.original.is_full}
+              onCheckedChange={(checked) =>
+                handleFullChange(row.original.id, checked)
               }
               disabled={
                 !row.original.is_published ||
                 !!switchLoading[row.original.id] ||
                 row.original.is_finished
               }
-            >
-              {row.original.is_full ? 'Rouvrir' : 'Fermer'}
-            </Button>
+            />
+            <span className="text-sm font-medium text-slate-700">
+              {row.original.is_full ? 'Demandes fermées' : 'Demandes ouvertes'}
+            </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                  aria-label="Aide sur le statut des demandes"
+                >
+                  <CircleHelp className="h-3.5 w-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                side="top"
+                align="start"
+                className="w-[min(92vw,20rem)] rounded-xl border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-600"
+              >
+                Quand ce switch est activé, personne ne peut envoyer de
+                nouvelle demande sur cette session jusqu’à ce que tu la
+                réouvres.
+              </PopoverContent>
+            </Popover>
           </div>
         ),
     },
