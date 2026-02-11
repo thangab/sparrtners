@@ -75,7 +75,10 @@ function getInitials(name: string) {
   return parts.map((part) => part[0]?.toUpperCase() ?? '').join('');
 }
 
-function getTrustAvatarStyle(score?: number | null, reviewCount?: number | null) {
+function getTrustAvatarStyle(
+  score?: number | null,
+  reviewCount?: number | null,
+) {
   const safeScore =
     typeof score === 'number' && Number.isFinite(score)
       ? Math.max(0, Math.min(5, score))
@@ -95,7 +98,8 @@ function getTrustAvatarStyle(score?: number | null, reviewCount?: number | null)
 
   if (safeScore >= 4.5) {
     return {
-      ringClass: 'ring-4 ring-emerald-400 shadow-[0_0_0_6px_rgba(16,185,129,0.18)]',
+      ringClass:
+        'ring-4 ring-emerald-400 shadow-[0_0_0_6px_rgba(16,185,129,0.18)]',
       badgeClass: 'border-emerald-200 bg-emerald-50 text-emerald-800',
       badgeLabel: 'Fiabilité élevée',
     };
@@ -103,7 +107,8 @@ function getTrustAvatarStyle(score?: number | null, reviewCount?: number | null)
 
   if (safeScore >= 3.8) {
     return {
-      ringClass: 'ring-4 ring-blue-400 shadow-[0_0_0_6px_rgba(59,130,246,0.16)]',
+      ringClass:
+        'ring-4 ring-blue-400 shadow-[0_0_0_6px_rgba(59,130,246,0.16)]',
       badgeClass: 'border-blue-200 bg-blue-50 text-blue-800',
       badgeLabel: 'Fiabilité confirmée',
     };
@@ -139,7 +144,8 @@ export default async function FighterProfilePage({
 
   const supabase = await createSupabaseServerClientReadOnly();
   const admin =
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY
       ? createSupabaseAdminClient()
       : null;
   const {
@@ -154,55 +160,61 @@ export default async function FighterProfilePage({
     trustResult,
     reviewsResult,
     entitlementResult,
-  ] =
-    await Promise.all([
-      supabase
-        .from('public_profiles')
-        .select(
-          'display_name, avatar_url, city, created_at, bio, club, dominant_hand, height_cm, weight_kg, gender',
-        )
-        .eq('id', id)
-        .maybeSingle(),
-      supabase
-        .from('public_user_sport_profiles')
-        .select('discipline_id, skill_level_id, discipline_name, skill_level_name')
-        .eq('user_id', id)
-        .order('discipline_id', { ascending: true }),
-      supabase
-        .from('session_listings')
-        .select('id, starts_at, place_name, city, training_type_name, disciplines')
-        .eq('host_id', id)
-        .gt('starts_at', nowIso)
-        .order('starts_at', { ascending: true })
-        .limit(4),
-      supabase
-        .from('session_listings')
-        .select('id', { count: 'exact', head: true })
-        .eq('host_id', id)
-        .not('id', 'is', null),
-      supabase
-        .from('user_trust_scores')
-        .select('score, review_count')
-        .eq('user_id', id)
-        .maybeSingle(),
-      supabase
-        .from('reviews')
-        .select('reviewer_id, rating, comment, created_at')
-        .eq('reviewed_user_id', id)
-        .order('created_at', { ascending: false })
-        .limit(5),
-      admin
-        ? admin
-            .from('entitlements')
-            .select('user_id, plan, premium_until, is_lifetime, updated_at, source')
-            .eq('user_id', id)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
+  ] = await Promise.all([
+    supabase
+      .from('public_profiles')
+      .select(
+        'display_name, avatar_url, city, created_at, bio, club, dominant_hand, height_cm, weight_kg, gender',
+      )
+      .eq('id', id)
+      .maybeSingle(),
+    supabase
+      .from('public_user_sport_profiles')
+      .select(
+        'discipline_id, skill_level_id, discipline_name, skill_level_name',
+      )
+      .eq('user_id', id)
+      .order('discipline_id', { ascending: true }),
+    supabase
+      .from('session_listings')
+      .select(
+        'id, starts_at, place_name, city, training_type_name, disciplines',
+      )
+      .eq('host_id', id)
+      .gt('starts_at', nowIso)
+      .order('starts_at', { ascending: true })
+      .limit(4),
+    supabase
+      .from('session_listings')
+      .select('id', { count: 'exact', head: true })
+      .eq('host_id', id)
+      .not('id', 'is', null),
+    supabase
+      .from('user_trust_scores')
+      .select('score, review_count')
+      .eq('user_id', id)
+      .maybeSingle(),
+    supabase
+      .from('reviews')
+      .select('reviewer_id, rating, comment, created_at')
+      .eq('reviewed_user_id', id)
+      .order('created_at', { ascending: false })
+      .limit(5),
+    admin
+      ? admin
+          .from('entitlements')
+          .select(
+            'user_id, plan, premium_until, is_lifetime, updated_at, source',
+          )
+          .eq('user_id', id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
 
   const profile = profileResult.data;
   const sportProfiles = (sportProfilesResult.data ?? []) as SportProfileRow[];
-  const activeSessions = (activeSessionsResult.data ?? []) as ActiveSessionRow[];
+  const activeSessions = (activeSessionsResult.data ??
+    []) as ActiveSessionRow[];
   const publishedSessionsCount = publishedSessionsCountResult.count ?? 0;
   const trustScore = trustResult.data;
   const reviews = (reviewsResult.data ?? []) as ReviewRow[];
@@ -413,7 +425,9 @@ export default async function FighterProfilePage({
                   Poids
                 </div>
                 <p className="mt-1 font-medium text-slate-900">
-                  {profile?.weight_kg ? `${profile.weight_kg} kg` : 'Non renseigné'}
+                  {profile?.weight_kg
+                    ? `${profile.weight_kg} kg`
+                    : 'Non renseigné'}
                 </p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -422,7 +436,9 @@ export default async function FighterProfilePage({
                   Taille
                 </div>
                 <p className="mt-1 font-medium text-slate-900">
-                  {profile?.height_cm ? `${profile.height_cm} cm` : 'Non renseigné'}
+                  {profile?.height_cm
+                    ? `${profile.height_cm} cm`
+                    : 'Non renseigné'}
                 </p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -430,7 +446,9 @@ export default async function FighterProfilePage({
                   <Hand className="h-4 w-4" />
                   Main forte
                 </div>
-                <p className="mt-1 font-medium text-slate-900">{dominantHandLabel}</p>
+                <p className="mt-1 font-medium text-slate-900">
+                  {dominantHandLabel}
+                </p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-slate-500">
@@ -446,16 +464,25 @@ export default async function FighterProfilePage({
 
           <Card className="border-slate-200/70 bg-white/95">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Users className="h-5 w-5 text-slate-500" />
-                Avis récents
-              </CardTitle>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Users className="h-5 w-5 text-slate-500" />
+                  Avis récents
+                </CardTitle>
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                  Score confiance:{' '}
+                  <span className="ml-1 text-slate-900">
+                    {trustDisplayScore ? `${trustDisplayScore}/5` : 'N/A'}
+                  </span>
+                </span>
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
               {reviews.length > 0 ? (
                 reviews.map((review) => {
                   const reviewer =
-                    reviewerMap.get(review.reviewer_id)?.display_name ?? 'Sportif';
+                    reviewerMap.get(review.reviewer_id)?.display_name ??
+                    'Sportif';
                   return (
                     <div
                       key={`${review.reviewer_id}-${review.created_at}`}
@@ -478,13 +505,17 @@ export default async function FighterProfilePage({
                         </p>
                       )}
                       <p className="mt-2 text-xs text-slate-500">
-                        {new Date(review.created_at).toLocaleDateString('fr-FR')}
+                        {new Date(review.created_at).toLocaleDateString(
+                          'fr-FR',
+                        )}
                       </p>
                     </div>
                   );
                 })
               ) : (
-                <p className="text-sm text-slate-600">Aucun avis pour le moment.</p>
+                <p className="text-sm text-slate-600">
+                  Aucun avis pour le moment.
+                </p>
               )}
             </CardContent>
           </Card>
@@ -513,12 +544,21 @@ export default async function FighterProfilePage({
                       className="rounded-xl border border-slate-200 bg-slate-50 p-3"
                     >
                       <p className="font-medium text-slate-900">{title}</p>
-                      <p className="mt-1 text-xs text-slate-600">{placeLabel}</p>
+                      <p className="mt-1 text-xs text-slate-600">
+                        {placeLabel}
+                      </p>
                       <p className="mt-1 text-xs text-slate-600">
                         {new Date(session.starts_at).toLocaleString('fr-FR')}
                       </p>
-                      <Button variant="outline" size="sm" asChild className="mt-3">
-                        <Link href={`/sessions/${session.id}`}>Voir la session</Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="mt-3"
+                      >
+                        <Link href={`/sessions/${session.id}`}>
+                          Voir la session
+                        </Link>
                       </Button>
                     </div>
                   );
