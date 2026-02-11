@@ -65,7 +65,7 @@ export function AccountSettingsTabs({
               </div>
               <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
                 <p className="text-xs uppercase tracking-wide text-slate-500">
-                  Préom
+                  Prénom
                 </p>
                 <p className="text-sm font-semibold text-slate-900">
                   {firstname}
@@ -105,9 +105,6 @@ export function AccountSettingsTabs({
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="outline">
                 <Link href="/app/me">Modifier mon profil</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/app/notifications">Mes notifications</Link>
               </Button>
             </div>
           </CardContent>

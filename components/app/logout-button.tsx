@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { LogOut } from "lucide-react";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -12,8 +13,15 @@ export function LogoutButton() {
   };
 
   return (
-    <Button variant="ghost" onClick={handleLogout}>
+    <DropdownMenuItem
+      onSelect={(event) => {
+        event.preventDefault();
+        void handleLogout();
+      }}
+      className="gap-2"
+    >
+      <LogOut className="h-4 w-4 text-slate-500" />
       Se déconnecter
-    </Button>
+    </DropdownMenuItem>
   );
 }

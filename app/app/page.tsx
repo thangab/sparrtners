@@ -17,6 +17,7 @@ import { DashboardNextSessionCard } from '@/components/app/dashboard-next-sessio
 import { BoostHelpPopover } from '@/components/app/boost-help-popover';
 import {
   ArrowRight,
+  CheckCircle2,
   Flame,
   Rocket,
   Sparkles,
@@ -36,6 +37,7 @@ export default async function DashboardPage() {
   const nextMonthStart = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
   );
+  const nowIso = now.toISOString();
 
   const entitlement = user ? await getEntitlements(user.id) : null;
   const premium = isPremium(entitlement);
@@ -84,6 +86,67 @@ export default async function DashboardPage() {
         .gte('created_at', monthStart.toISOString())
         .lt('created_at', nextMonthStart.toISOString())
     : { count: 0 };
+  const [hostCompletedRowsResult, requesterCompletedRowsResult] = user
+    ? await Promise.all([
+        supabase
+          .from('session_requests')
+          .select(
+            `
+            session_id,
+            session:sessions!inner(
+              starts_at
+            )
+          `,
+          )
+          .eq('status', 'accepted')
+          .eq('session.host_id', user.id)
+          .lt('session.starts_at', nowIso),
+        supabase
+          .from('session_requests')
+          .select(
+            `
+            session_id,
+            session:sessions!inner(
+              starts_at
+            )
+          `,
+          )
+          .eq('status', 'accepted')
+          .eq('user_id', user.id)
+          .lt('session.starts_at', nowIso),
+      ])
+    : [{ data: [] }, { data: [] }];
+
+  const completedSessionRows = [
+    ...(((hostCompletedRowsResult as { data?: unknown[] }).data ??
+      []) as Array<{
+      session_id: string;
+      session?: { starts_at?: string | null } | { starts_at?: string | null }[];
+    }>),
+    ...(((requesterCompletedRowsResult as { data?: unknown[] }).data ??
+      []) as Array<{
+      session_id: string;
+      session?: { starts_at?: string | null } | { starts_at?: string | null }[];
+    }>),
+  ];
+
+  const completedSessionMap = new Map<string, string>();
+  completedSessionRows.forEach((row) => {
+    const session = Array.isArray(row.session)
+      ? (row.session[0] ?? null)
+      : (row.session ?? null);
+    const startsAt = session?.starts_at ?? null;
+    if (!row.session_id || !startsAt) return;
+    completedSessionMap.set(row.session_id, startsAt);
+  });
+
+  const completedSessionsCount = completedSessionMap.size;
+  const completedSessionsMonthCount = Array.from(
+    completedSessionMap.values(),
+  ).filter((startsAt) => {
+    const date = new Date(startsAt);
+    return date >= monthStart && date < nextMonthStart && date < now;
+  }).length;
 
   const [recentSessionsResult, recentRequestsResult] = await Promise.all([
     user
@@ -229,7 +292,7 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid min-w-0 gap-4 lg:grid-cols-12">
-        <Card className="border-slate-200/80 lg:col-span-5">
+        <Card className="border-slate-200/80 lg:col-span-4">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles className="h-4 w-4 text-orange-500" />
@@ -252,6 +315,9 @@ export default async function DashboardPage() {
                   )}
                 </span>
               ) : null}
+              <Button asChild>
+                <Link href="/pricing">Voir les offres</Link>
+              </Button>
             </div>
             {!premium ? (
               <div className="rounded-xl border border-orange-100 bg-orange-50/70 px-3 py-2 text-sm text-slate-700">
@@ -265,15 +331,10 @@ export default async function DashboardPage() {
                 Tu as accès à toutes les publications et fonctionnalités.
               </div>
             )}
-            <div className="flex flex-wrap gap-2">
-              <Button asChild>
-                <Link href="/pricing">Voir les offres</Link>
-              </Button>
-            </div>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200/80 lg:col-span-3">
+        <Card className="border-slate-200/80 lg:col-span-2">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Rocket className="h-4 w-4 text-slate-700" />
@@ -293,6 +354,23 @@ export default async function DashboardPage() {
               label="Acheter 5 boosts"
               variant="default"
             />
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200/80 lg:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm text-slate-700">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              Sessions complétées
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p className="text-3xl font-black text-slate-900">
+              {completedSessionsCount ?? 0}
+            </p>
+            <p className="text-sm text-slate-500">
+              {completedSessionsMonthCount ?? 0} ce mois-ci
+            </p>
           </CardContent>
         </Card>
 

@@ -10,11 +10,20 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { LogoutButton } from '@/components/app/logout-button';
 import {
+  Bell,
+  BookOpen,
   ChevronDown,
   CirclePlus,
   CircleUserRound,
+  DoorOpen,
+  Home,
+  Info,
   Menu,
   Search,
+  Settings,
+  User,
+  UserPlus,
+  Users,
 } from 'lucide-react';
 
 type TopHeaderProps = {
@@ -59,24 +68,46 @@ export function TopHeader({ user, notificationsCount = 0 }: TopHeaderProps) {
             <DropdownMenuContent align="start" className="w-64">
               {primaryLinks.map((item) => (
                 <DropdownMenuItem key={`${item.href}-${item.label}`} asChild>
-                  <Link href={item.href}>{item.label}</Link>
+                  <Link href={item.href} className="flex items-center gap-2">
+                    {item.href === '/about' ? (
+                      <Info className="h-4 w-4 text-slate-500" />
+                    ) : (
+                      <BookOpen className="h-4 w-4 text-slate-500" />
+                    )}
+                    {item.label}
+                  </Link>
                 </DropdownMenuItem>
               ))}
               <DropdownMenuItem asChild>
-                <Link href="/app/sessions/new">Publier une session</Link>
+                <Link href="/app/sessions/new" className="flex items-center gap-2">
+                  <CirclePlus className="h-4 w-4 text-slate-500" />
+                  Publier une session
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {hasUser ? (
                 <>
                   <DropdownMenuItem asChild>
-                    <Link href="/app">Dashboard</Link>
+                    <Link href="/app" className="flex items-center gap-2">
+                      <Home className="h-4 w-4 text-slate-500" />
+                      Dashboard
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/app/sessions/requests">Mes sessions</Link>
+                    <Link
+                      href="/app/sessions/requests"
+                      className="flex items-center gap-2"
+                    >
+                      <Users className="h-4 w-4 text-slate-500" />
+                      Mes sessions
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/app/notifications" className="justify-between">
-                      <span>Notifications</span>
+                      <span className="flex items-center gap-2">
+                        <Bell className="h-4 w-4 text-slate-500" />
+                        Notifications
+                      </span>
                       {hasNotifications ? (
                         <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
                           {badgeLabel}
@@ -85,16 +116,28 @@ export function TopHeader({ user, notificationsCount = 0 }: TopHeaderProps) {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/app/settings/account">Paramètres</Link>
+                    <Link
+                      href="/app/settings/account"
+                      className="flex items-center gap-2"
+                    >
+                      <Settings className="h-4 w-4 text-slate-500" />
+                      Paramètres
+                    </Link>
                   </DropdownMenuItem>
                 </>
               ) : (
                 <>
                   <DropdownMenuItem asChild>
-                    <Link href="/login">Se connecter</Link>
+                    <Link href="/login" className="flex items-center gap-2">
+                      <DoorOpen className="h-4 w-4 text-slate-500" />
+                      Se connecter
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/signup">S&apos;inscrire</Link>
+                    <Link href="/signup" className="flex items-center gap-2">
+                      <UserPlus className="h-4 w-4 text-slate-500" />
+                      S&apos;inscrire
+                    </Link>
                   </DropdownMenuItem>
                 </>
               )}
@@ -230,7 +273,10 @@ export function TopHeader({ user, notificationsCount = 0 }: TopHeaderProps) {
                       href="/app/notifications"
                       className="flex w-full items-center justify-between"
                     >
-                      <span>Mes notifications</span>
+                      <span className="flex items-center gap-2">
+                        <Bell className="h-4 w-4 text-slate-500" />
+                        Mes notifications
+                      </span>
                       {hasNotifications ? (
                         <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
                           {badgeLabel}
@@ -240,29 +286,51 @@ export function TopHeader({ user, notificationsCount = 0 }: TopHeaderProps) {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/app">Dashboard</Link>
+                    <Link href="/app" className="flex items-center gap-2">
+                      <Home className="h-4 w-4 text-slate-500" />
+                      Dashboard
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/app/sessions/requests">Mes sessions</Link>
+                    <Link
+                      href="/app/sessions/requests"
+                      className="flex items-center gap-2"
+                    >
+                      <Users className="h-4 w-4 text-slate-500" />
+                      Mes sessions
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href={profileHref}>Mon profil</Link>
+                    <Link href={profileHref} className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-slate-500" />
+                      Mon profil
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/app/settings/account">Paramètres</Link>
+                    <Link
+                      href="/app/settings/account"
+                      className="flex items-center gap-2"
+                    >
+                      <Settings className="h-4 w-4 text-slate-500" />
+                      Paramètres
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="p-0">
-                    <LogoutButton />
-                  </DropdownMenuItem>
+                  <LogoutButton />
                 </>
               ) : (
                 <>
                   <DropdownMenuItem asChild>
-                    <Link href="/login">Se connecter</Link>
+                    <Link href="/login" className="flex items-center gap-2">
+                      <DoorOpen className="h-4 w-4 text-slate-500" />
+                      Se connecter
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/signup">S&apos;inscrire</Link>
+                    <Link href="/signup" className="flex items-center gap-2">
+                      <UserPlus className="h-4 w-4 text-slate-500" />
+                      S&apos;inscrire
+                    </Link>
                   </DropdownMenuItem>
                 </>
               )}

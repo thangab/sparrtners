@@ -224,7 +224,7 @@ export const dashboardSessionsColumns: Array<ColumnDef<DashboardSessionRow>> = [
     cell: ({ row }) =>
       row.original.is_published ? (
         <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">
-          Publié
+          Publiée
         </Badge>
       ) : (
         <Badge variant="outline" className="border-slate-300">
