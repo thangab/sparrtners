@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { CartesianGrid, Line, LineChart, XAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -187,6 +187,17 @@ export function DashboardActivityChart() {
         >
           <LineChart data={series} margin={{ left: 0, right: 8, top: 8 }}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              width={30}
+              allowDecimals={metric === 'hours'}
+              tickMargin={8}
+              tickFormatter={(value) =>
+                metric === 'sessions' ? String(Math.round(value)) : `${value}`
+              }
+              fontSize={11}
+            />
             <XAxis
               dataKey="label"
               tickLine={false}
